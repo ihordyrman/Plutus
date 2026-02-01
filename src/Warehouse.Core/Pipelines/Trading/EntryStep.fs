@@ -20,17 +20,29 @@ module EntryStep =
         elif ctx.Quantity.IsNone then Error "Quantity required"
         else Ok ctx
 
-    let private buy
+    let private placeOrder
         (services: IServiceProvider)
         (ctx: TradingContext)
         (ct: CancellationToken)
         : Task<Result<TradingContext, ServiceError>>
         =
-        Transaction.execute
-            services
-            (fun db txn ->
-                taskResult {
-                    let! order =
+        taskResult {
+            let side, positionStatus, price =
+                match ctx.Action with
+                | Buy -> OrderSide.Buy, PositionStatus.Open, ctx.BuyPrice.Value
+                | Sell -> OrderSide.Sell, PositionStatus.Closed, ctx.CurrentPrice
+                | _ -> failwith "Invalid action for placing order"
+
+            let executors = services.GetRequiredService<OrderExecutor.T list>()
+
+            let! executor =
+                OrderExecutor.tryFind ctx.MarketType executors
+                |> Result.requireSome (ServiceError.NotFound $"No executor for {ctx.MarketType}")
+
+            let! order =
+                Transaction.execute
+                    services
+                    (fun db txn ->
                         OrderRepository.create
                             db
                             txn
@@ -38,38 +50,44 @@ module EntryStep =
                               Symbol = ctx.Symbol
                               MarketType = ctx.MarketType
                               Quantity = ctx.Quantity.Value
-                              Side = OrderSide.Buy
-                              Price = ctx.BuyPrice.Value }
+                              Side = side
+                              Price = price }
                             ct
+                    )
 
-                    use scope = services.CreateScope()
-                    let executor = scope.ServiceProvider.GetService<OrderExecutor.T>()
-                    executor
+            do!
+                Transaction.execute
+                    services
+                    (fun db txn ->
+                        taskResult {
+                            let! exchangeOrderId = OrderExecutor.executeOrder order ct executor
 
+                            let placedOrder =
+                                { order with
+                                    ExchangeOrderId = exchangeOrderId
+                                    Status = OrderStatus.Placed
+                                    PlacedAt = Nullable DateTime.UtcNow }
 
-                    let! _ =
-                        PositionRepository.create
-                            db
-                            txn
-                            { PipelineId = ctx.PipelineId
-                              BuyOrderId = order.Id
-                              EntryPrice = order.Price.Value
-                              Quantity = order.Quantity
-                              Status = PositionStatus.Open
-                              Symbol = order.Symbol }
-                            ct
+                            let! _ = OrderRepository.update db txn placedOrder ct
 
-                    return { ctx with ActiveOrderId = Some order.Id }
-                }
-            )
+                            let! _ =
+                                PositionRepository.create
+                                    db
+                                    txn
+                                    { PipelineId = ctx.PipelineId
+                                      BuyOrderId = order.Id
+                                      EntryPrice = order.Price.Value
+                                      Quantity = order.Quantity
+                                      Status = positionStatus
+                                      Symbol = order.Symbol }
+                                    ct
 
-    let private sell
-        (services: IServiceProvider)
-        (ctx: TradingContext)
-        (ct: CancellationToken)
-        : Task<Result<TradingContext, ServiceError>>
-        =
-        failwith "Not implemented"
+                            return ()
+                        }
+                    )
+
+            return { ctx with ActiveOrderId = Some order.Id }
+        }
 
     let entryStep: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
@@ -79,11 +97,11 @@ module EntryStep =
                 task {
                     match ctx.ActiveOrderId, ctx.Action with
                     | None, Buy ->
-                        match! buy services ctx ct with
+                        match! placeOrder services { ctx with Quantity = Some tradeAmount } ct with
                         | Ok ctx -> return Continue(ctx, $"Placed buy order for order ID {ctx.ActiveOrderId.Value}.")
                         | Error err -> return Fail $"Error placing buy order: {err}"
-                    | Some orderId, TradingAction.Sell ->
-                        match! sell services ctx ct with
+                    | Some _, Sell ->
+                        match! placeOrder services ctx ct with
                         | Ok ctx -> return Continue(ctx, $"Placed sell order for order ID {ctx.ActiveOrderId.Value}.")
                         | Error err -> return Fail $"Error placing sell order: {err}"
                     | _ -> return Continue(ctx, "No action taken.")
