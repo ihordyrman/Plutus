@@ -1,6 +1,7 @@
 namespace Warehouse.Core.Pipelines.Trading
 
 open System
+open System.Data
 open Warehouse.Core.Pipelines.Core.Parameters
 open Warehouse.Core.Pipelines.Core.Steps
 open Microsoft.Extensions.DependencyInjection
@@ -15,31 +16,27 @@ module PositionGateStep =
 
             fun ctx ct ->
                 task {
-                    match (ctx.ActiveOrderId, ctx.Action) with
-                    | Option.None, TradingAction.None ->
+                    match ctx.ActiveOrderId, ctx.Action with
+                    | None, NoAction ->
                         use scope = services.CreateScope()
-                        let repo = scope.ServiceProvider.GetRequiredService<PositionRepository.T>()
+                        use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                        match! repo.GetOpen ctx.PipelineId ct with
+                        match! PositionRepository.getOpen db ctx.PipelineId ct with
                         | Error err -> return Stop $"Error retrieving position: {err}"
-                        | Ok position ->
-                            match position with
-                            | Some position when position.Status = PositionStatus.Open ->
-                                return
-                                    Continue(
-                                        { ctx with ActiveOrderId = Some position.BuyOrderId },
-                                        "Open position exists, setting action to Hold"
-                                    )
-                            | _ -> return Continue(ctx, $"No active orders or positions, ready to place entry order.")
+                        | Ok(Some position) when position.Status = PositionStatus.Open ->
+                            return
+                                Continue(
+                                    { ctx with ActiveOrderId = Some position.BuyOrderId },
+                                    "Open position exists, setting action to Hold"
+                                )
+                        | Ok _ -> return Continue(ctx, $"No active orders or positions, ready to place entry order.")
                     | _ -> return Continue(ctx, "Already have an active order or action in progress")
                 }
 
-        {
-            Key = "position-gate-step"
-            Name = "Position Gate Step"
-            Description = "Determines if an entry trade should be placed based on existing positions and orders."
-            Category = StepCategory.Validation
-            Icon = "fa-sign-in-alt"
-            ParameterSchema = { Parameters = [] }
-            Create = create
-        }
+        { Key = "position-gate-step"
+          Name = "Position Gate Step"
+          Description = "Determines if an entry trade should be placed based on existing positions and orders."
+          Category = StepCategory.Validation
+          Icon = "fa-sign-in-alt"
+          ParameterSchema = { Parameters = [] }
+          Create = create }

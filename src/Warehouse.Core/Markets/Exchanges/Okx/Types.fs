@@ -42,196 +42,182 @@ type OkxEvent =
 
 [<CLIMutable>]
 type OkxAssetsValuationDetail =
-    {
-        [<JsonPropertyName("classic")>]
-        Classic: string
-        [<JsonPropertyName("earn")>]
-        Earn: string
-        [<JsonPropertyName("funding")>]
-        Funding: string
-        [<JsonPropertyName("trading")>]
-        Trading: string
-    }
+    { [<JsonPropertyName("classic")>]
+      Classic: string
+      [<JsonPropertyName("earn")>]
+      Earn: string
+      [<JsonPropertyName("funding")>]
+      Funding: string
+      [<JsonPropertyName("trading")>]
+      Trading: string }
 
 [<CLIMutable>]
 type OkxAssetsValuation =
-    {
-        [<JsonPropertyName("details")>]
-        Details: OkxAssetsValuationDetail
-        [<JsonPropertyName("totalBal")>]
-        TotalBalance: string
-        [<JsonPropertyName("ts")>]
-        Timestamp: string
-    }
+    { [<JsonPropertyName("details")>]
+      Details: OkxAssetsValuationDetail
+      [<JsonPropertyName("totalBal")>]
+      TotalBalance: string
+      [<JsonPropertyName("ts")>]
+      Timestamp: string }
 
 [<CLIMutable>]
 type OkxBalanceDetail =
-    {
-        [<JsonPropertyName("accAvgPx")>]
-        AccAvgPx: string
-        [<JsonPropertyName("autoLendAmt")>]
-        AutoLendAmt: string
-        [<JsonPropertyName("autoLendMtAmt")>]
-        AutoLendMtAmt: string
-        [<JsonPropertyName("autoLendStatus")>]
-        AutoLendStatus: string
-        [<JsonPropertyName("availBal")>]
-        AvailBal: string
-        [<JsonPropertyName("availEq")>]
-        AvailEq: string
-        [<JsonPropertyName("borrowFroz")>]
-        BorrowFroz: string
-        [<JsonPropertyName("cashBal")>]
-        CashBal: string
-        [<JsonPropertyName("ccy")>]
-        Ccy: string
-        [<JsonPropertyName("clSpotInUseAmt")>]
-        ClSpotInUseAmt: string
-        [<JsonPropertyName("colBorrAutoConversion")>]
-        ColBorrAutoConversion: string
-        [<JsonPropertyName("colRes")>]
-        ColRes: string
-        [<JsonPropertyName("collateralEnabled")>]
-        CollateralEnabled: bool
-        [<JsonPropertyName("collateralRestrict")>]
-        CollateralRestrict: bool
-        [<JsonPropertyName("crossLiab")>]
-        CrossLiab: string
-        [<JsonPropertyName("disEq")>]
-        DisEq: string
-        [<JsonPropertyName("eq")>]
-        Eq: string
-        [<JsonPropertyName("eqUsd")>]
-        EqUsd: string
-        [<JsonPropertyName("fixedBal")>]
-        FixedBal: string
-        [<JsonPropertyName("frozenBal")>]
-        FrozenBal: string
-        [<JsonPropertyName("imr")>]
-        Imr: string
-        [<JsonPropertyName("interest")>]
-        Interest: string
-        [<JsonPropertyName("isoEq")>]
-        IsoEq: string
-        [<JsonPropertyName("isoLiab")>]
-        IsoLiab: string
-        [<JsonPropertyName("isoUpl")>]
-        IsoUpl: string
-        [<JsonPropertyName("liab")>]
-        Liab: string
-        [<JsonPropertyName("maxLoan")>]
-        MaxLoan: string
-        [<JsonPropertyName("maxSpotInUse")>]
-        MaxSpotInUse: string
-        [<JsonPropertyName("mgnRatio")>]
-        MgnRatio: string
-        [<JsonPropertyName("mmr")>]
-        Mmr: string
-        [<JsonPropertyName("notionalLever")>]
-        NotionalLever: string
-        [<JsonPropertyName("openAvgPx")>]
-        OpenAvgPx: string
-        [<JsonPropertyName("ordFrozen")>]
-        OrdFrozen: string
-        [<JsonPropertyName("rewardBal")>]
-        RewardBal: string
-        [<JsonPropertyName("smtSyncEq")>]
-        SmtSyncEq: string
-        [<JsonPropertyName("spotBal")>]
-        SpotBal: string
-        [<JsonPropertyName("spotCopyTradingEq")>]
-        SpotCopyTradingEq: string
-        [<JsonPropertyName("spotInUseAmt")>]
-        SpotInUseAmt: string
-        [<JsonPropertyName("spotIsoBal")>]
-        SpotIsoBal: string
-        [<JsonPropertyName("spotUpl")>]
-        SpotUpl: string
-        [<JsonPropertyName("spotUplRatio")>]
-        SpotUplRatio: string
-        [<JsonPropertyName("stgyEq")>]
-        StgyEq: string
-        [<JsonPropertyName("totalPnl")>]
-        TotalPnl: string
-        [<JsonPropertyName("totalPnlRatio")>]
-        TotalPnlRatio: string
-        [<JsonPropertyName("twap")>]
-        Twap: string
-        [<JsonPropertyName("uTime")>]
-        UTime: string
-        [<JsonPropertyName("upl")>]
-        Upl: string
-        [<JsonPropertyName("uplLiab")>]
-        UplLiab: string
-    }
+    { [<JsonPropertyName("accAvgPx")>]
+      AccAvgPx: string
+      [<JsonPropertyName("autoLendAmt")>]
+      AutoLendAmt: string
+      [<JsonPropertyName("autoLendMtAmt")>]
+      AutoLendMtAmt: string
+      [<JsonPropertyName("autoLendStatus")>]
+      AutoLendStatus: string
+      [<JsonPropertyName("availBal")>]
+      AvailBal: string
+      [<JsonPropertyName("availEq")>]
+      AvailEq: string
+      [<JsonPropertyName("borrowFroz")>]
+      BorrowFroz: string
+      [<JsonPropertyName("cashBal")>]
+      CashBal: string
+      [<JsonPropertyName("ccy")>]
+      Ccy: string
+      [<JsonPropertyName("clSpotInUseAmt")>]
+      ClSpotInUseAmt: string
+      [<JsonPropertyName("colBorrAutoConversion")>]
+      ColBorrAutoConversion: string
+      [<JsonPropertyName("colRes")>]
+      ColRes: string
+      [<JsonPropertyName("collateralEnabled")>]
+      CollateralEnabled: bool
+      [<JsonPropertyName("collateralRestrict")>]
+      CollateralRestrict: bool
+      [<JsonPropertyName("crossLiab")>]
+      CrossLiab: string
+      [<JsonPropertyName("disEq")>]
+      DisEq: string
+      [<JsonPropertyName("eq")>]
+      Eq: string
+      [<JsonPropertyName("eqUsd")>]
+      EqUsd: string
+      [<JsonPropertyName("fixedBal")>]
+      FixedBal: string
+      [<JsonPropertyName("frozenBal")>]
+      FrozenBal: string
+      [<JsonPropertyName("imr")>]
+      Imr: string
+      [<JsonPropertyName("interest")>]
+      Interest: string
+      [<JsonPropertyName("isoEq")>]
+      IsoEq: string
+      [<JsonPropertyName("isoLiab")>]
+      IsoLiab: string
+      [<JsonPropertyName("isoUpl")>]
+      IsoUpl: string
+      [<JsonPropertyName("liab")>]
+      Liab: string
+      [<JsonPropertyName("maxLoan")>]
+      MaxLoan: string
+      [<JsonPropertyName("maxSpotInUse")>]
+      MaxSpotInUse: string
+      [<JsonPropertyName("mgnRatio")>]
+      MgnRatio: string
+      [<JsonPropertyName("mmr")>]
+      Mmr: string
+      [<JsonPropertyName("notionalLever")>]
+      NotionalLever: string
+      [<JsonPropertyName("openAvgPx")>]
+      OpenAvgPx: string
+      [<JsonPropertyName("ordFrozen")>]
+      OrdFrozen: string
+      [<JsonPropertyName("rewardBal")>]
+      RewardBal: string
+      [<JsonPropertyName("smtSyncEq")>]
+      SmtSyncEq: string
+      [<JsonPropertyName("spotBal")>]
+      SpotBal: string
+      [<JsonPropertyName("spotCopyTradingEq")>]
+      SpotCopyTradingEq: string
+      [<JsonPropertyName("spotInUseAmt")>]
+      SpotInUseAmt: string
+      [<JsonPropertyName("spotIsoBal")>]
+      SpotIsoBal: string
+      [<JsonPropertyName("spotUpl")>]
+      SpotUpl: string
+      [<JsonPropertyName("spotUplRatio")>]
+      SpotUplRatio: string
+      [<JsonPropertyName("stgyEq")>]
+      StgyEq: string
+      [<JsonPropertyName("totalPnl")>]
+      TotalPnl: string
+      [<JsonPropertyName("totalPnlRatio")>]
+      TotalPnlRatio: string
+      [<JsonPropertyName("twap")>]
+      Twap: string
+      [<JsonPropertyName("uTime")>]
+      UTime: string
+      [<JsonPropertyName("upl")>]
+      Upl: string
+      [<JsonPropertyName("uplLiab")>]
+      UplLiab: string }
 
 [<CLIMutable>]
 type OkxAccountBalance =
-    {
-        [<JsonPropertyName("adjEq")>]
-        AdjEq: string
-        [<JsonPropertyName("availEq")>]
-        AvailEq: string
-        [<JsonPropertyName("borrowFroz")>]
-        BorrowFroz: string
-        [<JsonPropertyName("imr")>]
-        Imr: string
-        [<JsonPropertyName("isoEq")>]
-        IsoEq: string
-        [<JsonPropertyName("mgnRatio")>]
-        MgnRatio: string
-        [<JsonPropertyName("mmr")>]
-        Mmr: string
-        [<JsonPropertyName("notionalUsd")>]
-        NotionalUsd: string
-        [<JsonPropertyName("notionalUsdForBorrow")>]
-        NotionalUsdForBorrow: string
-        [<JsonPropertyName("notionalUsdForFutures")>]
-        NotionalUsdForFutures: string
-        [<JsonPropertyName("notionalUsdForOption")>]
-        NotionalUsdForOption: string
-        [<JsonPropertyName("notionalUsdForSwap")>]
-        NotionalUsdForSwap: string
-        [<JsonPropertyName("ordFroz")>]
-        OrdFroz: string
-        [<JsonPropertyName("totalEq")>]
-        TotalEq: string
-        [<JsonPropertyName("uTime")>]
-        UTime: string
-        [<JsonPropertyName("upl")>]
-        Upl: string
-        [<JsonPropertyName("details")>]
-        Details: OkxBalanceDetail list
-    }
+    { [<JsonPropertyName("adjEq")>]
+      AdjEq: string
+      [<JsonPropertyName("availEq")>]
+      AvailEq: string
+      [<JsonPropertyName("borrowFroz")>]
+      BorrowFroz: string
+      [<JsonPropertyName("imr")>]
+      Imr: string
+      [<JsonPropertyName("isoEq")>]
+      IsoEq: string
+      [<JsonPropertyName("mgnRatio")>]
+      MgnRatio: string
+      [<JsonPropertyName("mmr")>]
+      Mmr: string
+      [<JsonPropertyName("notionalUsd")>]
+      NotionalUsd: string
+      [<JsonPropertyName("notionalUsdForBorrow")>]
+      NotionalUsdForBorrow: string
+      [<JsonPropertyName("notionalUsdForFutures")>]
+      NotionalUsdForFutures: string
+      [<JsonPropertyName("notionalUsdForOption")>]
+      NotionalUsdForOption: string
+      [<JsonPropertyName("notionalUsdForSwap")>]
+      NotionalUsdForSwap: string
+      [<JsonPropertyName("ordFroz")>]
+      OrdFroz: string
+      [<JsonPropertyName("totalEq")>]
+      TotalEq: string
+      [<JsonPropertyName("uTime")>]
+      UTime: string
+      [<JsonPropertyName("upl")>]
+      Upl: string
+      [<JsonPropertyName("details")>]
+      Details: OkxBalanceDetail list }
 
 [<CLIMutable>]
 type OkxFundingBalance =
-    {
-        [<JsonPropertyName("availBal")>]
-        AvailBal: string
-        [<JsonPropertyName("bal")>]
-        Bal: string
-        [<JsonPropertyName("ccy")>]
-        Ccy: string
-        [<JsonPropertyName("frozenBal")>]
-        FrozenBal: string
-    }
+    { [<JsonPropertyName("availBal")>]
+      AvailBal: string
+      [<JsonPropertyName("bal")>]
+      Bal: string
+      [<JsonPropertyName("ccy")>]
+      Ccy: string
+      [<JsonPropertyName("frozenBal")>]
+      FrozenBal: string }
 
 [<CLIMutable>]
 type OkxHttpResponse<'T> =
-    {
-        [<JsonPropertyName("code")>]
-        Code: OkxResponseCode
-        [<JsonPropertyName("msg")>]
-        Message: string
-        [<JsonPropertyName("data")>]
-        Data: 'T option
-    }
+    { [<JsonPropertyName("code")>]
+      Code: OkxResponseCode
+      [<JsonPropertyName("msg")>]
+      Message: string
+      [<JsonPropertyName("data")>]
+      Data: 'T option }
 
 type OkxCandlestick =
-    {
-        Data: string[]
-    }
+    { Data: string[] }
 
     member x.Timestamp =
         if x.Data.Length > 0 then
@@ -310,124 +296,108 @@ type OkxCandlestickWrapper = OkxCandlestick
 
 [<CLIMutable>]
 type OkxPlaceOrderRequest =
-    {
-        [<JsonPropertyName("instId")>]
-        InstrumentId: string
-        [<JsonPropertyName("tdMode")>]
-        TradeMode: string
-        [<JsonPropertyName("side")>]
-        Side: string
-        [<JsonPropertyName("ordType")>]
-        OrderType: string
-        [<JsonPropertyName("sz")>]
-        Size: string
-        [<JsonPropertyName("px"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
-        Price: string option
-        [<JsonPropertyName("clOrdId"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
-        ClientOrderId: string option
-        [<JsonPropertyName("tag"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
-        Tag: string option
-        [<JsonPropertyName("reduceOnly"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
-        ReduceOnly: bool option
-        [<JsonPropertyName("tgtCcy"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
-        TargetCurrency: string option
-    }
+    { [<JsonPropertyName("instId")>]
+      InstrumentId: string
+      [<JsonPropertyName("tdMode")>]
+      TradeMode: string
+      [<JsonPropertyName("side")>]
+      Side: string
+      [<JsonPropertyName("ordType")>]
+      OrderType: string
+      [<JsonPropertyName("sz")>]
+      Size: string
+      [<JsonPropertyName("px"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
+      Price: string option
+      [<JsonPropertyName("clOrdId"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
+      ClientOrderId: string option
+      [<JsonPropertyName("tag"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
+      Tag: string option
+      [<JsonPropertyName("reduceOnly"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
+      ReduceOnly: bool option
+      [<JsonPropertyName("tgtCcy"); JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)>]
+      TargetCurrency: string option }
 
 [<CLIMutable>]
 type OkxPlaceOrderResponse =
-    {
-        [<JsonPropertyName("ordId")>]
-        OrderId: string
-        [<JsonPropertyName("clOrdId")>]
-        ClientOrderId: string
-        [<JsonPropertyName("tag")>]
-        Tag: string
-        [<JsonPropertyName("sCode")>]
-        StatusCode: string
-        [<JsonPropertyName("sMsg")>]
-        StatusMessage: string
-        [<JsonPropertyName("ts")>]
-        Timestamp: string option
-    }
+    { [<JsonPropertyName("ordId")>]
+      OrderId: string
+      [<JsonPropertyName("clOrdId")>]
+      ClientOrderId: string
+      [<JsonPropertyName("tag")>]
+      Tag: string
+      [<JsonPropertyName("sCode")>]
+      StatusCode: string
+      [<JsonPropertyName("sMsg")>]
+      StatusMessage: string
+      [<JsonPropertyName("ts")>]
+      Timestamp: string option }
 
     member x.IsSuccess = x.StatusCode = "0"
 
 [<CLIMutable>]
 type OkxSocketArgs =
-    {
-        [<JsonPropertyName("channel")>]
-        Channel: string option
-        [<JsonPropertyName("instId")>]
-        InstrumentId: string option
-    }
+    { [<JsonPropertyName("channel")>]
+      Channel: string option
+      [<JsonPropertyName("instId")>]
+      InstrumentId: string option }
 
 [<CLIMutable>]
 type OkxSocketBookData =
-    {
-        [<JsonPropertyName("asks")>]
-        Asks: string[][] option
-        [<JsonPropertyName("bids")>]
-        Bids: string[][] option
-        [<JsonPropertyName("ts")>]
-        Timestamp: string option
-        [<JsonPropertyName("checksum")>]
-        Checksum: int64 option
-        [<JsonPropertyName("seqId")>]
-        SequenceId: int64
-        [<JsonPropertyName("prevSeqId")>]
-        PreviousSequenceId: int64
-    }
+    { [<JsonPropertyName("asks")>]
+      Asks: string[][] option
+      [<JsonPropertyName("bids")>]
+      Bids: string[][] option
+      [<JsonPropertyName("ts")>]
+      Timestamp: string option
+      [<JsonPropertyName("checksum")>]
+      Checksum: int64 option
+      [<JsonPropertyName("seqId")>]
+      SequenceId: int64
+      [<JsonPropertyName("prevSeqId")>]
+      PreviousSequenceId: int64 }
 
 [<CLIMutable>]
 type OkxSocketEventResponse =
-    {
-        [<JsonPropertyName("event")>]
-        Event: OkxEvent option
-    }
+    { [<JsonPropertyName("event")>]
+      Event: OkxEvent option }
 
 [<CLIMutable>]
 type OkxSocketResponse =
-    {
-        [<JsonPropertyName("event")>]
-        Event: OkxEvent option
-        [<JsonPropertyName("arg")>]
-        Arguments: OkxSocketArgs option
-        [<JsonPropertyName("action")>]
-        Action: OkxAction option
-        [<JsonPropertyName("data")>]
-        Data: OkxSocketBookData[] option
-        [<JsonPropertyName("msg")>]
-        Message: string option
-        [<JsonPropertyName("code")>]
-        Code: OkxResponseCode option
-    }
+    { [<JsonPropertyName("event")>]
+      Event: OkxEvent option
+      [<JsonPropertyName("arg")>]
+      Arguments: OkxSocketArgs option
+      [<JsonPropertyName("action")>]
+      Action: OkxAction option
+      [<JsonPropertyName("data")>]
+      Data: OkxSocketBookData[] option
+      [<JsonPropertyName("msg")>]
+      Message: string option
+      [<JsonPropertyName("code")>]
+      Code: OkxResponseCode option }
 
 [<CLIMutable>]
 type OkxSocketLoginResponse =
-    {
-        [<JsonPropertyName("event")>]
-        Event: OkxEvent option
-        [<JsonPropertyName("msg")>]
-        Message: string option
-        [<JsonPropertyName("code")>]
-        Code: OkxResponseCode option
-        [<JsonPropertyName("connId")>]
-        ConnectionId: string option
-    }
+    { [<JsonPropertyName("event")>]
+      Event: OkxEvent option
+      [<JsonPropertyName("msg")>]
+      Message: string option
+      [<JsonPropertyName("code")>]
+      Code: OkxResponseCode option
+      [<JsonPropertyName("connId")>]
+      ConnectionId: string option }
 
 [<CLIMutable>]
 type OkxSocketSubscriptionData =
-    {
-        [<JsonPropertyName("asks")>]
-        Asks: string list list
-        [<JsonPropertyName("bids")>]
-        Bids: string list list
-        [<JsonPropertyName("ts")>]
-        Timestamp: string
-        [<JsonPropertyName("checksum")>]
-        Checksum: int64
-        [<JsonPropertyName("seqId")>]
-        SequenceId: int64
-        [<JsonPropertyName("prevSeqId")>]
-        PreviousSequenceId: int64
-    }
+    { [<JsonPropertyName("asks")>]
+      Asks: string list list
+      [<JsonPropertyName("bids")>]
+      Bids: string list list
+      [<JsonPropertyName("ts")>]
+      Timestamp: string
+      [<JsonPropertyName("checksum")>]
+      Checksum: int64
+      [<JsonPropertyName("seqId")>]
+      SequenceId: int64
+      [<JsonPropertyName("prevSeqId")>]
+      PreviousSequenceId: int64 }

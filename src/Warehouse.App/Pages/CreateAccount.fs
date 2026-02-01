@@ -21,13 +21,11 @@ type CreateResult =
     | ServerError of message: string
 
 type FormDataInfo =
-    {
-        MarketType: int option
-        ApiKey: string option
-        SecretKey: string option
-        Passphrase: string option
-        IsSandbox: bool
-    }
+    { MarketType: int option
+      ApiKey: string option
+      SecretKey: string option
+      Passphrase: string option
+      IsSandbox: bool }
 
     static member Empty = { MarketType = None; ApiKey = None; SecretKey = None; Passphrase = None; IsSandbox = true }
 
@@ -37,13 +35,11 @@ module Data =
     let getMarketTypes () : MarketType list = marketTypes
 
     let parseFormData (form: FormData) : FormDataInfo =
-        {
-            MarketType = form.TryGetInt "marketType"
-            ApiKey = form.TryGetString "apiKey"
-            SecretKey = form.TryGetString "secretKey"
-            Passphrase = form.TryGetString "passphrase"
-            IsSandbox = form.TryGetString "isSandbox" |> Option.map (fun _ -> true) |> Option.defaultValue false
-        }
+        { MarketType = form.TryGetInt "marketType"
+          ApiKey = form.TryGetString "apiKey"
+          SecretKey = form.TryGetString "secretKey"
+          Passphrase = form.TryGetString "passphrase"
+          IsSandbox = form.TryGetString "isSandbox" |> Option.map (fun _ -> true) |> Option.defaultValue false }
 
     let validateAndCreate (formData: FormDataInfo) : Result<CreateAccountInput, string> =
         match formData.ApiKey, formData.SecretKey with
@@ -58,13 +54,11 @@ module Data =
             let passphrase = formData.Passphrase |> Option.defaultValue ""
 
             Ok
-                {
-                    MarketType = marketType
-                    ApiKey = apiKey.Trim()
-                    SecretKey = secretKey.Trim()
-                    Passphrase = passphrase.Trim()
-                    IsSandbox = formData.IsSandbox
-                }
+                { MarketType = marketType
+                  ApiKey = apiKey.Trim()
+                  SecretKey = secretKey.Trim()
+                  Passphrase = passphrase.Trim()
+                  IsSandbox = formData.IsSandbox }
 
     let createAccount (scopeFactory: IServiceScopeFactory) (input: CreateAccountInput) : Task<CreateResult> =
         task {
@@ -74,25 +68,23 @@ module Data =
                 let! existingMarket = repository.Exists input.MarketType CancellationToken.None
 
                 match existingMarket with
-                | Result.Error err -> return ServerError $"Failed to check existing accounts: {err}"
-                | Result.Ok exist ->
+                | Error err -> return ServerError $"Failed to check existing accounts: {err}"
+                | Ok exist ->
                     if exist then
                         return AlreadyExists(input.MarketType.ToString())
                     else
                         let! market =
                             repository.Create
-                                {
-                                    Type = input.MarketType
-                                    ApiKey = input.ApiKey
-                                    SecretKey = input.SecretKey
-                                    Passphrase = Some input.Passphrase
-                                    IsSandbox = input.IsSandbox
-                                }
+                                { Type = input.MarketType
+                                  ApiKey = input.ApiKey
+                                  SecretKey = input.SecretKey
+                                  Passphrase = Some input.Passphrase
+                                  IsSandbox = input.IsSandbox }
                                 CancellationToken.None
 
                         match market with
-                        | Result.Error err -> return ServerError $"Failed to create account: {err}"
-                        | Result.Ok market -> return Success(market.Type.ToString())
+                        | Error err -> return ServerError $"Failed to create account: {err}"
+                        | Ok market -> return Success(market.Type.ToString())
             with ex ->
                 return ServerError $"Failed to create account: {ex.Message}"
         }

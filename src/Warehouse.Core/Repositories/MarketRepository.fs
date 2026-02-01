@@ -16,24 +16,20 @@ module MarketRepository =
         { Type: MarketType; ApiKey: string; SecretKey: string; Passphrase: string option; IsSandbox: bool }
 
     type UpdateMarketRequest =
-        {
-            ApiKey: string option
-            SecretKey: string option
-            Passphrase: string option
-            IsSandbox: bool option
-        }
+        { ApiKey: string option
+          SecretKey: string option
+          Passphrase: string option
+          IsSandbox: bool option }
 
     type T =
-        {
-            GetById: int -> CancellationToken -> Task<Result<Market, ServiceError>>
-            GetByType: MarketType -> CancellationToken -> Task<Result<Market option, ServiceError>>
-            GetAll: CancellationToken -> Task<Result<Market list, ServiceError>>
-            Create: CreateMarketRequest -> CancellationToken -> Task<Result<Market, ServiceError>>
-            Update: int -> UpdateMarketRequest -> CancellationToken -> Task<Result<Market, ServiceError>>
-            Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
-            Count: CancellationToken -> Task<Result<int, ServiceError>>
-            Exists: MarketType -> CancellationToken -> Task<Result<bool, ServiceError>>
-        }
+        { GetById: int -> CancellationToken -> Task<Result<Market, ServiceError>>
+          GetByType: MarketType -> CancellationToken -> Task<Result<Market option, ServiceError>>
+          GetAll: CancellationToken -> Task<Result<Market list, ServiceError>>
+          Create: CreateMarketRequest -> CancellationToken -> Task<Result<Market, ServiceError>>
+          Update: int -> UpdateMarketRequest -> CancellationToken -> Task<Result<Market, ServiceError>>
+          Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
+          Count: CancellationToken -> Task<Result<int, ServiceError>>
+          Exists: MarketType -> CancellationToken -> Task<Result<bool, ServiceError>> }
 
     let private getById
         (scopeFactory: IServiceScopeFactory)
@@ -59,13 +55,13 @@ module MarketRepository =
                 match markets |> Seq.tryHead with
                 | None ->
                     logger.LogWarning("Market {Id} not found", id)
-                    return Result.Error(NotFound $"Market with id {id}")
+                    return Error(NotFound $"Market with id {id}")
                 | Some entity ->
                     logger.LogDebug("Retrieved market {Id}", id)
                     return Ok(entity)
             with ex ->
                 logger.LogError(ex, "Failed to get market {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getByType
@@ -98,7 +94,7 @@ module MarketRepository =
                     return Ok(Some(entity))
             with ex ->
                 logger.LogError(ex, "Failed to get market type {MarketType}", marketType)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getAll (scopeFactory: IServiceScopeFactory) (logger: ILogger) (cancellation: CancellationToken) =
@@ -121,7 +117,7 @@ module MarketRepository =
                 return Ok markets
             with ex ->
                 logger.LogError(ex, "Failed to get all markets")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private createMarket
@@ -143,7 +139,7 @@ module MarketRepository =
 
                 if existingCount > 0 then
                     logger.LogWarning("Market type {MarketType} already exists", request.Type)
-                    return Result.Error(ApiError($"Market {request.Type} already exists", Some 409))
+                    return Error(ApiError($"Market {request.Type} already exists", Some 409))
                 else
                     let now = DateTime.UtcNow
 
@@ -153,15 +149,13 @@ module MarketRepository =
                                 "INSERT INTO markets (type, api_key, secret_key, passphrase, is_sandbox, created_at, updated_at)
                                  VALUES (@Type, @ApiKey, @SecretKey, @Passphrase, @IsSandbox, @CreatedAt, @UpdatedAt)
                                  RETURNING id",
-                                {|
-                                    Type = int request.Type
-                                    ApiKey = request.ApiKey
-                                    SecretKey = request.SecretKey
-                                    Passphrase = request.Passphrase |> Option.defaultValue ""
-                                    IsSandbox = request.IsSandbox
-                                    CreatedAt = now
-                                    UpdatedAt = now
-                                |},
+                                {| Type = int request.Type
+                                   ApiKey = request.ApiKey
+                                   SecretKey = request.SecretKey
+                                   Passphrase = request.Passphrase |> Option.defaultValue ""
+                                   IsSandbox = request.IsSandbox
+                                   CreatedAt = now
+                                   UpdatedAt = now |},
                                 cancellationToken = cancellation
                             )
                         )
@@ -169,21 +163,19 @@ module MarketRepository =
                     logger.LogInformation("Created market {Id} of type {MarketType}", marketId, request.Type)
 
                     let market: Market =
-                        {
-                            Id = marketId
-                            Type = request.Type
-                            ApiKey = request.ApiKey
-                            SecretKey = request.SecretKey
-                            Passphrase = request.Passphrase
-                            IsSandbox = request.IsSandbox
-                            CreatedAt = now
-                            UpdatedAt = now
-                        }
+                        { Id = marketId
+                          Type = request.Type
+                          ApiKey = request.ApiKey
+                          SecretKey = request.SecretKey
+                          Passphrase = request.Passphrase
+                          IsSandbox = request.IsSandbox
+                          CreatedAt = now
+                          UpdatedAt = now }
 
                     return Ok market
             with ex ->
                 logger.LogError(ex, "Failed to create market of type {MarketType}", request.Type)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private updateMarket
@@ -211,7 +203,7 @@ module MarketRepository =
                 match existingResults |> Seq.tryHead with
                 | None ->
                     logger.LogWarning("Market {Id} not found for update", marketId)
-                    return Result.Error(NotFound $"Market with id {marketId}")
+                    return Error(NotFound $"Market with id {marketId}")
                 | Some existing ->
                     let now = DateTime.UtcNow
                     let newApiKey = request.ApiKey |> Option.defaultValue existing.ApiKey
@@ -228,34 +220,30 @@ module MarketRepository =
                                  is_sandbox = @IsSandbox,
                                  updated_at = @UpdatedAt
                              WHERE id = @Id",
-                            {|
-                                Id = marketId
-                                ApiKey = newApiKey
-                                SecretKey = newSecretKey
-                                Passphrase = newPassphrase
-                                IsSandbox = newIsSandbox
-                                UpdatedAt = now
-                            |}
+                            {| Id = marketId
+                               ApiKey = newApiKey
+                               SecretKey = newSecretKey
+                               Passphrase = newPassphrase
+                               IsSandbox = newIsSandbox
+                               UpdatedAt = now |}
                         )
 
                     logger.LogInformation("Updated market {Id}", marketId)
 
                     let updatedMarket: Market =
-                        {
-                            Id = marketId
-                            Type = existing.Type
-                            ApiKey = newApiKey
-                            SecretKey = newSecretKey
-                            Passphrase = newPassphrase
-                            IsSandbox = newIsSandbox
-                            CreatedAt = existing.CreatedAt
-                            UpdatedAt = now
-                        }
+                        { Id = marketId
+                          Type = existing.Type
+                          ApiKey = newApiKey
+                          SecretKey = newSecretKey
+                          Passphrase = newPassphrase
+                          IsSandbox = newIsSandbox
+                          CreatedAt = existing.CreatedAt
+                          UpdatedAt = now }
 
                     return Ok updatedMarket
             with ex ->
                 logger.LogError(ex, "Failed to update market {Id}", marketId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private deleteMarket (scopeFactory: IServiceScopeFactory) (logger: ILogger) (id: int) (_: CancellationToken) =
@@ -268,13 +256,13 @@ module MarketRepository =
 
                 if affected = 0 then
                     logger.LogWarning("Market {Id} not found for deletion", id)
-                    return Result.Error(NotFound $"Market with id {id}")
+                    return Error(NotFound $"Market with id {id}")
                 else
                     logger.LogInformation("Deleted market {Id}", id)
                     return Ok()
             with ex ->
                 logger.LogError(ex, "Failed to delete market {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private count (scopeFactory: IServiceScopeFactory) (logger: ILogger) (cancellation: CancellationToken) =
@@ -291,7 +279,7 @@ module MarketRepository =
                 return Ok count
             with ex ->
                 logger.LogError(ex, "Failed to count markets")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private exists
@@ -317,19 +305,17 @@ module MarketRepository =
                 return Ok(count > 0)
             with ex ->
                 logger.LogError(ex, "Failed to check if market {MarketType} exists", marketType)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let create (scopeFactory: IServiceScopeFactory) (loggerFactory: ILoggerFactory) : T =
         let logger = loggerFactory.CreateLogger("MarketRepository")
 
-        {
-            GetById = getById scopeFactory logger
-            GetByType = getByType scopeFactory logger
-            GetAll = getAll scopeFactory logger
-            Create = createMarket scopeFactory logger
-            Update = updateMarket scopeFactory logger
-            Delete = deleteMarket scopeFactory logger
-            Count = count scopeFactory logger
-            Exists = exists scopeFactory logger
-        }
+        { GetById = getById scopeFactory logger
+          GetByType = getByType scopeFactory logger
+          GetAll = getAll scopeFactory logger
+          Create = createMarket scopeFactory logger
+          Update = updateMarket scopeFactory logger
+          Delete = deleteMarket scopeFactory logger
+          Count = count scopeFactory logger
+          Exists = exists scopeFactory logger }

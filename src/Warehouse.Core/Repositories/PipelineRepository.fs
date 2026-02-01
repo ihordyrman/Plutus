@@ -14,36 +14,28 @@ module PipelineRepository =
     open Errors
 
     type SearchFilters =
-        {
-            SearchTerm: string option
-            Tag: string option
-            MarketType: string option
-            Status: PipelineStatus option
-            SortBy: string
-        }
+        { SearchTerm: string option
+          Tag: string option
+          MarketType: string option
+          Status: PipelineStatus option
+          SortBy: string }
 
-    type SearchResult =
-        {
-            Pipelines: Pipeline list
-            TotalCount: int
-        }
+    type SearchResult = { Pipelines: Pipeline list; TotalCount: int }
 
     type T =
-        {
-            GetById: int -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
-            GetAll: CancellationToken -> Task<Result<Pipeline list, ServiceError>>
-            GetEnabled: CancellationToken -> Task<Result<Pipeline list, ServiceError>>
-            Create: Pipeline -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
-            Update: Pipeline -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
-            Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
-            SetEnabled: int -> bool -> CancellationToken -> Task<Result<unit, ServiceError>>
-            UpdateLastExecuted: int -> DateTime -> CancellationToken -> Task<Result<unit, ServiceError>>
-            UpdateStatus: int -> PipelineStatus -> CancellationToken -> Task<Result<unit, ServiceError>>
-            Count: CancellationToken -> Task<Result<int, ServiceError>>
-            CountEnabled: CancellationToken -> Task<Result<int, ServiceError>>
-            GetAllTags: CancellationToken -> Task<Result<string list, ServiceError>>
-            Search: SearchFilters -> int -> int -> CancellationToken -> Task<Result<SearchResult, ServiceError>>
-        }
+        { GetById: int -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
+          GetAll: CancellationToken -> Task<Result<Pipeline list, ServiceError>>
+          GetEnabled: CancellationToken -> Task<Result<Pipeline list, ServiceError>>
+          Create: Pipeline -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
+          Update: Pipeline -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
+          Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
+          SetEnabled: int -> bool -> CancellationToken -> Task<Result<unit, ServiceError>>
+          UpdateLastExecuted: int -> DateTime -> CancellationToken -> Task<Result<unit, ServiceError>>
+          UpdateStatus: int -> PipelineStatus -> CancellationToken -> Task<Result<unit, ServiceError>>
+          Count: CancellationToken -> Task<Result<int, ServiceError>>
+          CountEnabled: CancellationToken -> Task<Result<int, ServiceError>>
+          GetAllTags: CancellationToken -> Task<Result<string list, ServiceError>>
+          Search: SearchFilters -> int -> int -> CancellationToken -> Task<Result<SearchResult, ServiceError>> }
 
     let private getById (scopeFactory: IServiceScopeFactory) (logger: ILogger) (id: int) (token: CancellationToken) =
         task {
@@ -63,14 +55,14 @@ module PipelineRepository =
                 match box pipeline with
                 | null ->
                     logger.LogWarning("Pipeline {Id} not found", id)
-                    return Result.Error(NotFound $"Pipeline with id {id}")
+                    return Error(NotFound $"Pipeline with id {id}")
                 | _ ->
                     logger.LogDebug("Retrieved pipeline {Id}", id)
                     return Ok pipeline
 
             with ex ->
                 logger.LogError(ex, "Failed to get pipeline {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getAll (scopeFactory: IServiceScopeFactory) (logger: ILogger) (token: CancellationToken) =
@@ -89,7 +81,7 @@ module PipelineRepository =
                 return Ok pipelines
             with ex ->
                 logger.LogError(ex, "Failed to get all pipelines")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getEnabled (scopeFactory: IServiceScopeFactory) (logger: ILogger) (token: CancellationToken) =
@@ -111,7 +103,7 @@ module PipelineRepository =
                 return Ok pipelines
             with ex ->
                 logger.LogError(ex, "Failed to get enabled pipelines")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private createPipeline
@@ -151,7 +143,7 @@ module PipelineRepository =
                 return Ok pipeline
             with ex ->
                 logger.LogError(ex, "Failed to create pipeline for symbol {Symbol}", pipeline.Symbol)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private updatePipeline
@@ -193,10 +185,10 @@ module PipelineRepository =
                     return Ok pipeline
                 else
                     logger.LogWarning("Pipeline {Id} not found for update", pipeline.Id)
-                    return Result.Error(NotFound $"Pipeline with id {pipeline.Id}")
+                    return Error(NotFound $"Pipeline with id {pipeline.Id}")
             with ex ->
                 logger.LogError(ex, "Failed to update pipeline {Id}", pipeline.Id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private deletePipeline
@@ -224,10 +216,10 @@ module PipelineRepository =
                     return Ok()
                 else
                     logger.LogWarning("Pipeline {Id} not found for deletion", id)
-                    return Result.Error(NotFound $"Pipeline with id {id}")
+                    return Error(NotFound $"Pipeline with id {id}")
             with ex ->
                 logger.LogError(ex, "Failed to delete pipeline {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private setEnabled
@@ -258,10 +250,10 @@ module PipelineRepository =
                     return Ok()
                 else
                     logger.LogWarning("Pipeline {Id} not found for enable/disable", pipelineId)
-                    return Result.Error(NotFound $"Pipeline with id {pipelineId}")
+                    return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
                 logger.LogError(ex, "Failed to set enabled for pipeline {Id}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private updateLastExecuted
@@ -292,10 +284,10 @@ module PipelineRepository =
                     return Ok()
                 else
                     logger.LogWarning("Pipeline {Id} not found for last executed update", pipelineId)
-                    return Result.Error(NotFound $"Pipeline with id {pipelineId}")
+                    return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
                 logger.LogError(ex, "Failed to update last executed for pipeline {Id}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private updateStatus
@@ -326,10 +318,10 @@ module PipelineRepository =
                     return Ok()
                 else
                     logger.LogWarning("Pipeline {Id} not found for status update", pipelineId)
-                    return Result.Error(NotFound $"Pipeline with id {pipelineId}")
+                    return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
                 logger.LogError(ex, "Failed to update status for pipeline {Id}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private count (scopeFactory: IServiceScopeFactory) (logger: ILogger) (token: CancellationToken) =
@@ -347,7 +339,7 @@ module PipelineRepository =
                 return Ok result
             with ex ->
                 logger.LogError(ex, "Failed to count pipelines")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private countEnabled (scopeFactory: IServiceScopeFactory) (logger: ILogger) (cancellation: CancellationToken) =
@@ -368,7 +360,7 @@ module PipelineRepository =
                 return Ok result
             with ex ->
                 logger.LogError(ex, "Failed to count enabled pipelines")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getAllTags (scopeFactory: IServiceScopeFactory) (logger: ILogger) (cancellation: CancellationToken) =
@@ -390,7 +382,7 @@ module PipelineRepository =
                 return Ok tags
             with ex ->
                 logger.LogError(ex, "Failed to get all tags")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private search
@@ -462,35 +454,32 @@ module PipelineRepository =
                         pipelines |> List.filter (fun p -> p.Tags |> List.contains tag)
                     | _ -> pipelines
 
-                logger.LogDebug("Search returned {Count} pipelines out of {Total}", filteredPipelines.Length, totalCount)
+                logger.LogDebug(
+                    "Search returned {Count} pipelines out of {Total}",
+                    filteredPipelines.Length,
+                    totalCount
+                )
 
-                return
-                    Ok
-                        {
-                            Pipelines = filteredPipelines
-                            TotalCount = totalCount
-                        }
+                return Ok { Pipelines = filteredPipelines; TotalCount = totalCount }
             with ex ->
                 logger.LogError(ex, "Failed to search pipelines")
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let create (scopeFactory: IServiceScopeFactory) : T =
         let loggerFactory = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILoggerFactory>()
         let logger = loggerFactory.CreateLogger("PipelineRepository")
 
-        {
-            GetById = getById scopeFactory logger
-            GetAll = getAll scopeFactory logger
-            GetEnabled = getEnabled scopeFactory logger
-            Create = createPipeline scopeFactory logger
-            Update = updatePipeline scopeFactory logger
-            Delete = deletePipeline scopeFactory logger
-            SetEnabled = setEnabled scopeFactory logger
-            UpdateLastExecuted = updateLastExecuted scopeFactory logger
-            UpdateStatus = updateStatus scopeFactory logger
-            Count = count scopeFactory logger
-            CountEnabled = countEnabled scopeFactory logger
-            GetAllTags = getAllTags scopeFactory logger
-            Search = search scopeFactory logger
-        }
+        { GetById = getById scopeFactory logger
+          GetAll = getAll scopeFactory logger
+          GetEnabled = getEnabled scopeFactory logger
+          Create = createPipeline scopeFactory logger
+          Update = updatePipeline scopeFactory logger
+          Delete = deletePipeline scopeFactory logger
+          SetEnabled = setEnabled scopeFactory logger
+          UpdateLastExecuted = updateLastExecuted scopeFactory logger
+          UpdateStatus = updateStatus scopeFactory logger
+          Count = count scopeFactory logger
+          CountEnabled = countEnabled scopeFactory logger
+          GetAllTags = getAllTags scopeFactory logger
+          Search = search scopeFactory logger }

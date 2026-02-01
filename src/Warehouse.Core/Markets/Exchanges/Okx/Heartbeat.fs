@@ -26,7 +26,7 @@ module Heartbeat =
                         if shouldContinue then
                             match! client.Send "ping" cts.Token with
                             | Ok() -> logger.LogDebug("Heartbeat sent")
-                            | Result.Error ex -> logger.LogWarning(ex, "Failed to send heartbeat")
+                            | Error ex -> logger.LogWarning(ex, "Failed to send heartbeat")
                 with
                 | :? OperationCanceledException -> ()
                 | ex -> logger.LogError(ex, "Heartbeat loop failed")

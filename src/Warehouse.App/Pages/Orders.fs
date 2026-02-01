@@ -11,70 +11,62 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Warehouse.Core.Domain
-open Warehouse.Core.Repositories.OrderRepository
+open Warehouse.Core.Repositories
 
 type OrderListItem =
-    {
-        Id: int64
-        PipelineId: int option
-        Symbol: string
-        Side: OrderSide
-        Status: OrderStatus
-        MarketType: MarketType
-        Quantity: decimal
-        Price: decimal option
-        Fee: decimal option
-        CreatedAt: DateTime
-        ExecutedAt: DateTime option
-    }
+    { Id: int64
+      PipelineId: int option
+      Symbol: string
+      Side: OrderSide
+      Status: OrderStatus
+      MarketType: MarketType
+      Quantity: decimal
+      Price: decimal option
+      Fee: decimal option
+      CreatedAt: DateTime
+      ExecutedAt: DateTime option }
 
 type OrdersGridData =
-    {
-        Orders: OrderListItem list
-        TotalCount: int
-        Page: int
-        PageSize: int
-    }
+    { Orders: OrderListItem list
+      TotalCount: int
+      Page: int
+      PageSize: int }
 
     static member Empty = { Orders = []; TotalCount = 0; Page = 1; PageSize = 20 }
 
 type OrderFilters =
-    {
-        SearchTerm: string option
-        Side: string option
-        Status: string option
-        MarketType: string option
-        SortBy: string
-        Page: int
-        PageSize: int
-    }
+    { SearchTerm: string option
+      Side: string option
+      Status: string option
+      MarketType: string option
+      SortBy: string
+      Page: int
+      PageSize: int }
 
     static member Empty =
-        {
-            SearchTerm = None
-            Side = None
-            Status = None
-            MarketType = None
-            SortBy = "created-desc"
-            Page = 1
-            PageSize = 20
-        }
+        { SearchTerm = None
+          Side = None
+          Status = None
+          MarketType = None
+          SortBy = "created-desc"
+          Page = 1
+          PageSize = 20 }
 
 module Data =
     let getCount (scopeFactory: IServiceScopeFactory) : Task<int> =
         task {
             use scope = scopeFactory.CreateScope()
             let db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("OrdersData")
-            return! count db logger CancellationToken.None
+
+            match! OrderRepository.count db CancellationToken.None with
+            | Ok n -> return n
+            | Error _ -> return 0
         }
 
     let getFilteredOrders (scopeFactory: IServiceScopeFactory) (filters: OrderFilters) : Task<OrdersGridData> =
         task {
             use scope = scopeFactory.CreateScope()
             let db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("OrdersData")
-            let search = search db logger
 
             let parseSide =
                 match filters.Side with
@@ -101,42 +93,38 @@ module Data =
                 | None -> None
 
             let searchFilters: SearchFilters =
-                {
-                    SearchTerm = filters.SearchTerm
-                    Side = parseSide
-                    Status = parseStatus
-                    MarketType = parseMarketType
-                    SortBy = filters.SortBy
-                }
+                { SearchTerm = filters.SearchTerm
+                  Side = parseSide
+                  Status = parseStatus
+                  MarketType = parseMarketType
+                  SortBy = filters.SortBy }
 
             let skip = (filters.Page - 1) * filters.PageSize
-            let! result = search searchFilters skip filters.PageSize CancellationToken.None
 
-            let orderItems =
-                result.Orders
-                |> List.map (fun o ->
-                    {
-                        Id = o.Id
-                        PipelineId = if o.PipelineId.HasValue then Some o.PipelineId.Value else None
-                        Symbol = o.Symbol
-                        Side = o.Side
-                        Status = o.Status
-                        MarketType = o.MarketType
-                        Quantity = o.Quantity
-                        Price = if o.Price.HasValue then Some o.Price.Value else None
-                        Fee = if o.Fee.HasValue then Some o.Fee.Value else None
-                        CreatedAt = o.CreatedAt
-                        ExecutedAt = if o.ExecutedAt.HasValue then Some o.ExecutedAt.Value else None
-                    }
-                )
+            match! OrderRepository.search db searchFilters skip filters.PageSize CancellationToken.None with
+            | Error _ -> return OrdersGridData.Empty
+            | Ok result ->
+                let orderItems =
+                    result.Orders
+                    |> List.map (fun o ->
+                        { Id = o.Id
+                          PipelineId = if o.PipelineId.HasValue then Some o.PipelineId.Value else None
+                          Symbol = o.Symbol
+                          Side = o.Side
+                          Status = o.Status
+                          MarketType = o.MarketType
+                          Quantity = o.Quantity
+                          Price = if o.Price.HasValue then Some o.Price.Value else None
+                          Fee = if o.Fee.HasValue then Some o.Fee.Value else None
+                          CreatedAt = o.CreatedAt
+                          ExecutedAt = if o.ExecutedAt.HasValue then Some o.ExecutedAt.Value else None }
+                    )
 
-            return
-                {
-                    Orders = orderItems
-                    TotalCount = result.TotalCount
-                    Page = filters.Page
-                    PageSize = filters.PageSize
-                }
+                return
+                    { Orders = orderItems
+                      TotalCount = result.TotalCount
+                      Page = filters.Page
+                      PageSize = filters.PageSize }
         }
 
 module View =
@@ -209,17 +197,15 @@ module View =
         _thead [ _class_ "bg-gray-50" ] [
             _tr [] [
                 for (text, align) in
-                    [
-                        "ID", "left"
-                        "Pipeline", "left"
-                        "Symbol", "left"
-                        "Side", "left"
-                        "Status", "left"
-                        "Quantity", "right"
-                        "Price", "right"
-                        "Fee", "right"
-                        "Created", "left"
-                    ] do
+                    [ "ID", "left"
+                      "Pipeline", "left"
+                      "Symbol", "left"
+                      "Side", "left"
+                      "Status", "left"
+                      "Quantity", "right"
+                      "Price", "right"
+                      "Fee", "right"
+                      "Created", "left" ] do
                     _th [ _class_ $"px-6 py-3 text-{align} text-xs font-medium text-gray-500 uppercase tracking-wider" ] [
                         Text.raw text
                     ]
@@ -422,16 +408,14 @@ module Handler =
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
 
                     let filters: OrderFilters =
-                        {
-                            SearchTerm = tryGetQueryStringValue ctx.Request.Query "searchTerm"
-                            Side = tryGetQueryStringValue ctx.Request.Query "filterSide"
-                            Status = tryGetQueryStringValue ctx.Request.Query "filterStatus"
-                            MarketType = tryGetQueryStringValue ctx.Request.Query "filterMarketType"
-                            SortBy =
-                                tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "created-desc"
-                            Page = tryGetQueryStringInt ctx.Request.Query "page" 1
-                            PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20
-                        }
+                        { SearchTerm = tryGetQueryStringValue ctx.Request.Query "searchTerm"
+                          Side = tryGetQueryStringValue ctx.Request.Query "filterSide"
+                          Status = tryGetQueryStringValue ctx.Request.Query "filterStatus"
+                          MarketType = tryGetQueryStringValue ctx.Request.Query "filterMarketType"
+                          SortBy =
+                            tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "created-desc"
+                          Page = tryGetQueryStringInt ctx.Request.Query "page" 1
+                          PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20 }
 
                     let! data = Data.getFilteredOrders scopeFactory filters
                     return! Response.ofHtml (View.tableBody data) ctx

@@ -10,15 +10,13 @@ open Microsoft.Extensions.Logging
 open Warehouse.Core.Domain
 
 type AccountDetailsInfo =
-    {
-        Id: int
-        MarketType: MarketType
-        HasCredentials: bool
-        IsSandbox: bool
-        ApiKeyMasked: string
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      MarketType: MarketType
+      HasCredentials: bool
+      IsSandbox: bool
+      ApiKeyMasked: string
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }
 
 module Data =
     open System.Threading
@@ -45,15 +43,13 @@ module Data =
 
                 return
                     Some
-                        {
-                            Id = data.Id
-                            MarketType = data.Type
-                            HasCredentials = true // is this needed? we always have apiKey
-                            IsSandbox = isSandbox
-                            ApiKeyMasked = maskApiKey apiKey
-                            CreatedAt = data.CreatedAt
-                            UpdatedAt = data.UpdatedAt
-                        }
+                        { Id = data.Id
+                          MarketType = data.Type
+                          HasCredentials = true // is this needed? we always have apiKey
+                          IsSandbox = isSandbox
+                          ApiKeyMasked = maskApiKey apiKey
+                          CreatedAt = data.CreatedAt
+                          UpdatedAt = data.UpdatedAt }
         }
 
 module View =

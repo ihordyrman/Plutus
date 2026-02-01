@@ -14,26 +14,24 @@ module CandlestickRepository =
     open Errors
 
     type T =
-        {
-            GetById: int64 -> CancellationToken -> Task<Result<Candlestick, ServiceError>>
-            GetLatest:
-                string -> MarketType -> string -> CancellationToken -> Task<Result<Candlestick option, ServiceError>>
-            Query:
-                string
-                    -> MarketType
-                    -> string
-                    -> DateTime option
-                    -> DateTime option
-                    -> int option
-                    -> CancellationToken
-                    -> Task<Result<Candlestick list, ServiceError>>
-            Save: Candlestick list -> CancellationToken -> Task<Result<int, ServiceError>>
-            SaveOne: Candlestick -> CancellationToken -> Task<Result<Candlestick, ServiceError>>
-            Delete: int64 -> CancellationToken -> Task<Result<unit, ServiceError>>
-            DeleteBySymbol: string -> MarketType -> CancellationToken -> Task<Result<int, ServiceError>>
-            DeleteOlderThan: DateTime -> CancellationToken -> Task<Result<int, ServiceError>>
-            Count: string -> MarketType -> string -> CancellationToken -> Task<Result<int, ServiceError>>
-        }
+        { GetById: int64 -> CancellationToken -> Task<Result<Candlestick, ServiceError>>
+          GetLatest:
+              string -> MarketType -> string -> CancellationToken -> Task<Result<Candlestick option, ServiceError>>
+          Query:
+              string
+                  -> MarketType
+                  -> string
+                  -> DateTime option
+                  -> DateTime option
+                  -> int option
+                  -> CancellationToken
+                  -> Task<Result<Candlestick list, ServiceError>>
+          Save: Candlestick list -> CancellationToken -> Task<Result<int, ServiceError>>
+          SaveOne: Candlestick -> CancellationToken -> Task<Result<Candlestick, ServiceError>>
+          Delete: int64 -> CancellationToken -> Task<Result<unit, ServiceError>>
+          DeleteBySymbol: string -> MarketType -> CancellationToken -> Task<Result<int, ServiceError>>
+          DeleteOlderThan: DateTime -> CancellationToken -> Task<Result<int, ServiceError>>
+          Count: string -> MarketType -> string -> CancellationToken -> Task<Result<int, ServiceError>> }
 
     let private getById
         (scopeFactory: IServiceScopeFactory)
@@ -61,10 +59,10 @@ module CandlestickRepository =
                     return Ok(candle)
                 | None ->
                     logger.LogWarning("Candlestick {Id} not found", id)
-                    return Result.Error(NotFound $"Candlestick with id {id}")
+                    return Error(NotFound $"Candlestick with id {id}")
             with ex ->
                 logger.LogError(ex, "Failed to get candlestick {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getLatest
@@ -101,7 +99,7 @@ module CandlestickRepository =
                     return Ok None
             with ex ->
                 logger.LogError(ex, "Failed to get latest candlestick for {Symbol}/{Timeframe}", symbol, timeframe)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private query
@@ -162,7 +160,7 @@ module CandlestickRepository =
                 return Ok candlesticks
             with ex ->
                 logger.LogError(ex, "Failed to query candlesticks for {Symbol}/{Timeframe}", symbol, timeframe)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private save
@@ -194,7 +192,7 @@ module CandlestickRepository =
                     return Ok result
                 with ex ->
                     logger.LogError(ex, "Failed to save {Count} candlesticks", candlesticks.Length)
-                    return Result.Error(Unexpected ex)
+                    return Error(Unexpected ex)
         }
 
     let private saveOne
@@ -223,7 +221,7 @@ module CandlestickRepository =
                 return Ok { candlestick with Id = result }
             with ex ->
                 logger.LogError(ex, "Failed to save candlestick for {Symbol}", candlestick.Symbol)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private delete
@@ -251,10 +249,10 @@ module CandlestickRepository =
                     return Ok()
                 else
                     logger.LogWarning("Candlestick {Id} not found for deletion", id)
-                    return Result.Error(NotFound $"Candlestick with id {id}")
+                    return Error(NotFound $"Candlestick with id {id}")
             with ex ->
                 logger.LogError(ex, "Failed to delete candlestick {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private deleteBySymbol
@@ -279,7 +277,7 @@ module CandlestickRepository =
                 return Ok rowsAffected
             with ex ->
                 logger.LogError(ex, "Failed to delete candlesticks for {Symbol}", symbol)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private deleteOlderThan
@@ -300,7 +298,7 @@ module CandlestickRepository =
                 return Ok rowsAffected
             with ex ->
                 logger.LogError(ex, "Failed to delete candlesticks older than {Before}", before)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private count
@@ -329,21 +327,19 @@ module CandlestickRepository =
                 return Ok result
             with ex ->
                 logger.LogError(ex, "Failed to count candlesticks for {Symbol}/{Timeframe}", symbol, timeframe)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let create (scopeFactory: IServiceScopeFactory) : T =
         let loggerFactory = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILoggerFactory>()
         let logger = loggerFactory.CreateLogger("CandlestickRepository")
 
-        {
-            GetById = getById scopeFactory logger
-            GetLatest = getLatest scopeFactory logger
-            Query = query scopeFactory logger
-            Save = save scopeFactory logger
-            SaveOne = saveOne scopeFactory logger
-            Delete = delete scopeFactory logger
-            DeleteBySymbol = deleteBySymbol scopeFactory logger
-            DeleteOlderThan = deleteOlderThan scopeFactory logger
-            Count = count scopeFactory logger
-        }
+        { GetById = getById scopeFactory logger
+          GetLatest = getLatest scopeFactory logger
+          Query = query scopeFactory logger
+          Save = save scopeFactory logger
+          SaveOne = saveOne scopeFactory logger
+          Delete = delete scopeFactory logger
+          DeleteBySymbol = deleteBySymbol scopeFactory logger
+          DeleteOlderThan = deleteOlderThan scopeFactory logger
+          Count = count scopeFactory logger }

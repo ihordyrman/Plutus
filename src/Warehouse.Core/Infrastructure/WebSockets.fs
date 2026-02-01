@@ -17,7 +17,7 @@ type WebSocketEvent =
     | Connected
     | Disconnected of reason: string
     | MessageReceived of WebSocketMessage
-    | Error of exn
+    | SocketError of exn
 
 type WebSocketCommand =
     | Connect of uri: Uri * AsyncReplyChannel<Result<unit, exn>>
@@ -50,16 +50,14 @@ module WebSocketClient =
     type State = { Socket: ClientWebSocket; ListenCts: CancellationTokenSource option; IsDisposed: bool }
 
     type T =
-        {
-            Connect: Uri -> CancellationToken -> Task<Result<unit, exn>>
-            Disconnect: string -> CancellationToken -> Task<unit>
-            Send: string -> CancellationToken -> Task<Result<unit, exn>>
-            SendBytes: byte[] -> CancellationToken -> Task<Result<unit, exn>>
-            SendJson: obj -> CancellationToken -> Task<Result<unit, exn>>
-            GetState: unit -> WebSocketState
-            Events: IObservable<WebSocketEvent>
-            Dispose: unit -> unit
-        }
+        { Connect: Uri -> CancellationToken -> Task<Result<unit, exn>>
+          Disconnect: string -> CancellationToken -> Task<unit>
+          Send: string -> CancellationToken -> Task<Result<unit, exn>>
+          SendBytes: byte[] -> CancellationToken -> Task<Result<unit, exn>>
+          SendJson: obj -> CancellationToken -> Task<Result<unit, exn>>
+          GetState: unit -> WebSocketState
+          Events: IObservable<WebSocketEvent>
+          Dispose: unit -> unit }
 
     let create (logger: ILogger) : T =
 
@@ -122,7 +120,7 @@ module WebSocketClient =
                         | :? OperationCanceledException -> ()
                         | ex ->
                             logger.LogError(ex, "Error in receive loop")
-                            raiseEvent (Error ex)
+                            raiseEvent (SocketError ex)
                 finally
                     arrayPool.Return(buffer)
 
@@ -135,7 +133,7 @@ module WebSocketClient =
                 try
                     if socket.State = WebSocketState.Open then
                         logger.LogInformation("Already connected to {Uri}", uri)
-                        return Result.Error(InvalidOperationException("WebSocket is already connected") :> exn)
+                        return Error(InvalidOperationException("WebSocket is already connected") :> exn)
                     else
                         if socket.State <> WebSocketState.None then
                             socket.Dispose()
@@ -152,8 +150,8 @@ module WebSocketClient =
                         return Ok()
                 with ex ->
                     logger.LogError(ex, "Failed to connect to {Uri}", uri)
-                    raiseEvent (Error ex)
-                    return Result.Error ex
+                    raiseEvent (SocketError ex)
+                    return Error ex
             }
 
         let disconnectAsync (reason: string) (ct: CancellationToken) =
@@ -179,7 +177,7 @@ module WebSocketClient =
         let sendBytesAsync (data: byte[]) (msgType: WebSocketMessageType) (ct: CancellationToken) =
             task {
                 if socket.State <> WebSocketState.Open then
-                    return Result.Error(InvalidOperationException($"Cannot send. State: {socket.State}") :> exn)
+                    return Error(InvalidOperationException($"Cannot send. State: {socket.State}") :> exn)
                 else
                     try
                         do! sendLock.WaitAsync(ct)
@@ -192,7 +190,7 @@ module WebSocketClient =
                             sendLock.Release() |> ignore
                     with ex ->
                         logger.LogError(ex, "Send failed")
-                        return Result.Error ex
+                        return Error ex
             }
 
         let dispose () =
@@ -208,20 +206,18 @@ module WebSocketClient =
                 socket.Dispose()
                 sendLock.Dispose()
 
-        {
-            Connect = connectAsync
-            Disconnect = disconnectAsync
-            Send =
-                fun text ct ->
-                    let bytes = Encoding.UTF8.GetBytes(text)
-                    sendBytesAsync bytes WebSocketMessageType.Text ct
-            SendBytes = fun bytes -> sendBytesAsync bytes WebSocketMessageType.Binary
-            SendJson =
-                fun obj ct ->
-                    let json = JsonSerializer.Serialize(obj)
-                    let bytes = Encoding.UTF8.GetBytes(json)
-                    sendBytesAsync bytes WebSocketMessageType.Text ct
-            GetState = fun () -> socket.State
-            Events = eventSubject.Publish
-            Dispose = dispose
-        }
+        { Connect = connectAsync
+          Disconnect = disconnectAsync
+          Send =
+            fun text ct ->
+                let bytes = Encoding.UTF8.GetBytes(text)
+                sendBytesAsync bytes WebSocketMessageType.Text ct
+          SendBytes = fun bytes -> sendBytesAsync bytes WebSocketMessageType.Binary
+          SendJson =
+            fun obj ct ->
+                let json = JsonSerializer.Serialize(obj)
+                let bytes = Encoding.UTF8.GetBytes(json)
+                sendBytesAsync bytes WebSocketMessageType.Text ct
+          GetState = fun () -> socket.State
+          Events = eventSubject.Publish
+          Dispose = dispose }

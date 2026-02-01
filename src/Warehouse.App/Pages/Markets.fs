@@ -8,7 +8,6 @@ open Microsoft.Extensions.Logging
 open Falco.Markup
 open Falco.Htmx
 open Warehouse.Core.Domain
-open Warehouse.Core.Queries
 open Warehouse.Core.Repositories
 
 type MarketInfo = { Id: int; Type: MarketType; Name: string; Enabled: bool; HasCredentials: bool }
@@ -22,7 +21,7 @@ module Data =
 
             match count with
             | Ok count -> return count
-            | Result.Error _ -> return 0
+            | Error _ -> return 0
         }
 
 
@@ -33,17 +32,16 @@ module Data =
             let! markets = repo.GetAll CancellationToken.None
 
             match markets with
-            | Result.Error _ -> return []
-            | Result.Ok markets ->
+            | Error _ -> return []
+            | Ok markets ->
                 return
                     markets
                     |> List.map (fun x ->
-                        {
-                            Id = x.Id
-                            Type = x.Type
-                            Name = x.Type.ToString()
-                            Enabled = true
-                            HasCredentials = true // tf is this
+                        { Id = x.Id
+                          Type = x.Type
+                          Name = x.Type.ToString()
+                          Enabled = true
+                          HasCredentials = true // tf is this
                         }
                     )
         }

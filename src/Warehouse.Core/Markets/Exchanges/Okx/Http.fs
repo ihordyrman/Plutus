@@ -30,14 +30,12 @@ module Http =
     type CandlestickParams = { Bar: string option; After: string option; Before: string option; Limit: int option }
 
     type T =
-        {
-            getBalance: string option -> Task<Result<OkxBalanceDetail[], ServiceError>>
-            getFundingBalance: string option -> Task<Result<OkxFundingBalance[], ServiceError>>
-            getAccountBalance: string option -> Task<Result<OkxAccountBalance[], ServiceError>>
-            getAssetsValuation: string option -> Task<Result<OkxAssetsValuation[], ServiceError>>
-            getCandlesticks: string -> CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>
-            placeOrder: OkxPlaceOrderRequest -> Task<Result<OkxPlaceOrderResponse[], ServiceError>>
-        }
+        { getBalance: string option -> Task<Result<OkxBalanceDetail[], ServiceError>>
+          getFundingBalance: string option -> Task<Result<OkxFundingBalance[], ServiceError>>
+          getAccountBalance: string option -> Task<Result<OkxAccountBalance[], ServiceError>>
+          getAssetsValuation: string option -> Task<Result<OkxAssetsValuation[], ServiceError>>
+          getCandlesticks: string -> CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>
+          placeOrder: OkxPlaceOrderRequest -> Task<Result<OkxPlaceOrderResponse[], ServiceError>> }
 
     let get endpoint = { Endpoint = endpoint; Method = Get; Parameters = Map.empty; Body = None }
     let post endpoint body = { Endpoint = endpoint; Method = Post; Parameters = Map.empty; Body = Some body }
@@ -73,13 +71,11 @@ module Http =
         client.DefaultRequestHeaders.Add("x-simulated-trading", if credentials.IsSandbox then "1" else "0")
 
     let private clearAuthHeaders (client: HttpClient) =
-        [
-            "OK-ACCESS-SIGN"
-            "OK-ACCESS-TIMESTAMP"
-            "OK-ACCESS-KEY"
-            "OK-ACCESS-PASSPHRASE"
-            "x-simulated-trading"
-        ]
+        [ "OK-ACCESS-SIGN"
+          "OK-ACCESS-TIMESTAMP"
+          "OK-ACCESS-KEY"
+          "OK-ACCESS-PASSPHRASE"
+          "x-simulated-trading" ]
         |> List.iter (client.DefaultRequestHeaders.Remove >> ignore)
 
     let private execute<'T>
@@ -152,22 +148,20 @@ module Http =
 
         let run req = exec httpClient jsonOpts credentials logger req
 
-        {
-            getBalance = fun ccy -> get "/api/v5/asset/balances" |> withParamOpt "ccy" ccy |> run
-            getFundingBalance = fun ccy -> get "/api/v5/asset/balances" |> withParamOpt "ccy" ccy |> run
-            getAccountBalance = fun ccy -> get "/api/v5/account/balance" |> withParamOpt "ccy" ccy |> run
-            getAssetsValuation =
-                fun ccy -> get "/api/v5/asset/asset-valuation" |> withParam "ccy" (defaultArg ccy "USDT") |> run
+        { getBalance = fun ccy -> get "/api/v5/asset/balances" |> withParamOpt "ccy" ccy |> run
+          getFundingBalance = fun ccy -> get "/api/v5/asset/balances" |> withParamOpt "ccy" ccy |> run
+          getAccountBalance = fun ccy -> get "/api/v5/account/balance" |> withParamOpt "ccy" ccy |> run
+          getAssetsValuation =
+            fun ccy -> get "/api/v5/asset/asset-valuation" |> withParam "ccy" (defaultArg ccy "USDT") |> run
 
-            getCandlesticks =
-                fun instId p ->
-                    get "/api/v5/market/candles"
-                    |> withParam "instId" instId
-                    |> withParamOpt "bar" p.Bar
-                    |> withParamOpt "after" p.After
-                    |> withParamOpt "before" p.Before
-                    |> withParamOpt "limit" (p.Limit |> Option.map string)
-                    |> run
+          getCandlesticks =
+            fun instId p ->
+                get "/api/v5/market/candles"
+                |> withParam "instId" instId
+                |> withParamOpt "bar" p.Bar
+                |> withParamOpt "after" p.After
+                |> withParamOpt "before" p.Before
+                |> withParamOpt "limit" (p.Limit |> Option.map string)
+                |> run
 
-            placeOrder = fun order -> post "/api/v5/trade/order" order |> run
-        }
+          placeOrder = fun order -> post "/api/v5/trade/order" order |> run }

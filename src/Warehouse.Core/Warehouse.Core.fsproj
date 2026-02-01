@@ -68,6 +68,7 @@
     <ItemGroup>
         <PackageReference Include="Dapper.FSharp" Version="4.9.0" />
         <PackageReference Include="FSharp.Control.TaskSeq" Version="0.4.0" />
+        <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="4.18.0" />
         <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.1" />
         <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.1" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.1" />

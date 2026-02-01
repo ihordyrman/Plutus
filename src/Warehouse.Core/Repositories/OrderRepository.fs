@@ -4,69 +4,29 @@ open System
 open System.Data
 open System.Threading
 open Dapper
-open Microsoft.Extensions.Logging
 open Warehouse.Core.Domain
+open Warehouse.Core.Shared.Errors
 
+type CreateOrderRequest =
+    { PipelineId: int
+      MarketType: MarketType
+      Symbol: string
+      Side: OrderSide
+      Quantity: decimal
+      Price: decimal }
 
-// type OrderSide =
-//     | Buy = 0
-//     | Sell = 1
-//
-// type OrderStatus =
-//     | Pending = 0
-//     | Placed = 1
-//     | PartiallyFilled = 2
-//     | Filled = 3
-//     | Cancelled = 4
-//     | Failed = 5
-//
-// [<CLIMutable>]
-// type Order =
-//     {
-//         Id: int
-//         PipelineId: Nullable<int>
-//         MarketType: MarketType
-//         ExchangeOrderId: string
-//         Symbol: string
-//         Side: OrderSide
-//         Status: OrderStatus
-//         Quantity: decimal
-//         Price: Nullable<decimal>
-//         StopPrice: Nullable<decimal>
-//         Fee: Nullable<decimal>
-//         PlacedAt: Nullable<DateTime>
-//         ExecutedAt: Nullable<DateTime>
-//         CancelledAt: Nullable<DateTime>
-//         TakeProfit: Nullable<decimal>
-//         StopLoss: Nullable<decimal>
-//         CreatedAt: DateTime
-//         UpdatedAt: DateTime
-//     }
+type SearchFilters =
+    { SearchTerm: string option
+      Side: OrderSide option
+      Status: OrderStatus option
+      MarketType: MarketType option
+      SortBy: string }
 
+type SearchResult = { Orders: Order list; TotalCount: int }
+
+[<RequireQualifiedAccess>]
 module OrderRepository =
-
-    type CreateOrderRequest =
-        {
-            PipelineId: int
-            MarketType: MarketType
-            Symbol: string
-            Side: OrderSide
-            Quantity: decimal
-            Price: decimal
-        }
-
-    type SearchFilters =
-        {
-            SearchTerm: string option
-            Side: OrderSide option
-            Status: OrderStatus option
-            MarketType: MarketType option
-            SortBy: string
-        }
-
-    type SearchResult = { Orders: Order list; TotalCount: int }
-
-    let getById (db: IDbConnection) (logger: ILogger) (orderId: int) (token: CancellationToken) =
+    let getById (db: IDbConnection) (orderId: int) (token: CancellationToken) =
         task {
             try
                 let! order =
@@ -79,20 +39,13 @@ module OrderRepository =
                     )
 
                 match box order with
-                | null -> return None
-                | _ -> return Some order
+                | null -> return Ok None
+                | _ -> return Ok(Some order)
             with ex ->
-                logger.LogError(ex, "Failed to get order {OrderId}", orderId)
-                return None
+                return Error(Unexpected ex)
         }
 
-    let getByExchangeId
-        (db: IDbConnection)
-        (logger: ILogger)
-        (exchangeOrderId: string)
-        (market: MarketType)
-        (token: CancellationToken)
-        =
+    let getByExchangeId (db: IDbConnection) (exchangeOrderId: string) (market: MarketType) (token: CancellationToken) =
         task {
             try
                 let! order =
@@ -105,20 +58,13 @@ module OrderRepository =
                     )
 
                 match box order with
-                | null -> return None
-                | _ -> return Some order
+                | null -> return Ok None
+                | _ -> return Ok(Some order)
             with ex ->
-                logger.LogError(ex, "Failed to get order by exchange id {ExchangeOrderId}", exchangeOrderId)
-                return None
+                return Error(Unexpected ex)
         }
 
-    let getByPipeline
-        (db: IDbConnection)
-        (logger: ILogger)
-        (pipelineId: int)
-        (status: OrderStatus option)
-        (token: CancellationToken)
-        =
+    let getByPipeline (db: IDbConnection) (pipelineId: int) (status: OrderStatus option) (token: CancellationToken) =
         task {
             try
                 let query =
@@ -133,13 +79,12 @@ module OrderRepository =
                     | None -> {| PipelineId = pipelineId |}
 
                 let! orders = db.QueryAsync<Order>(CommandDefinition(query, parameters, cancellationToken = token))
-                return orders |> Seq.toList
+                return Ok(orders |> Seq.toList)
             with ex ->
-                logger.LogError(ex, "Failed to get orders for pipeline {PipelineId}", pipelineId)
-                return []
+                return Error(Unexpected ex)
         }
 
-    let getHistory (db: IDbConnection) (logger: ILogger) (skip: int) (take: int) (token: CancellationToken) =
+    let getHistory (db: IDbConnection) (skip: int) (take: int) (token: CancellationToken) =
         task {
             try
                 let! orders =
@@ -151,13 +96,12 @@ module OrderRepository =
                         )
                     )
 
-                return orders |> Seq.toList
+                return Ok(orders |> Seq.toList)
             with ex ->
-                logger.LogError(ex, "Failed to get order history")
-                return []
+                return Error(Unexpected ex)
         }
 
-    let getTotalExposure (db: IDbConnection) (logger: ILogger) (market: MarketType option) (token: CancellationToken) =
+    let getTotalExposure (db: IDbConnection) (market: MarketType option) (token: CancellationToken) =
         task {
             try
                 let sql, parameters =
@@ -167,113 +111,96 @@ module OrderRepository =
                            FROM orders
                            WHERE status IN (@Placed, @PartiallyFilled, @Filled)
                            AND market_type = @MarketType""",
-                        {|
-                            Placed = int OrderStatus.Placed
-                            PartiallyFilled = int OrderStatus.PartiallyFilled
-                            Filled = int OrderStatus.Filled
-                            MarketType = int m
-                        |}
+                        {| Placed = int OrderStatus.Placed
+                           PartiallyFilled = int OrderStatus.PartiallyFilled
+                           Filled = int OrderStatus.Filled
+                           MarketType = int m |}
                         :> obj
                     | None ->
                         """SELECT COALESCE(SUM(quantity * COALESCE(price, 0)), 0)
                            FROM orders
                            WHERE status IN (@Placed, @PartiallyFilled, @Filled)""",
-                        {|
-                            Placed = int OrderStatus.Placed
-                            PartiallyFilled = int OrderStatus.PartiallyFilled
-                            Filled = int OrderStatus.Filled
-                        |}
+                        {| Placed = int OrderStatus.Placed
+                           PartiallyFilled = int OrderStatus.PartiallyFilled
+                           Filled = int OrderStatus.Filled |}
                         :> obj
 
                 let! result =
                     db.QuerySingleAsync<decimal>(CommandDefinition(sql, parameters, cancellationToken = token))
 
-                return result
+                return Ok result
             with ex ->
-                logger.LogError(ex, "Failed to get total exposure")
-                return 0m
+                return Error(Unexpected ex)
         }
 
-    let insert
-        (db: IDbConnection)
-        (txn: IDbTransaction)
-        (logger: ILogger)
-        (order: CreateOrderRequest)
-        (token: CancellationToken)
-        =
+    let create (db: IDbConnection) (txn: IDbTransaction) (order: CreateOrderRequest) (token: CancellationToken) =
         task {
-            let marketTypeInt = int order.MarketType
-            let sideInt = int order.Side
-            let statusInt = int OrderStatus.Pending
+            try
+                let marketTypeInt = int order.MarketType
+                let sideInt = int order.Side
+                let statusInt = int OrderStatus.Pending
 
-            let! order =
-                db.QuerySingleAsync<Order>(
-                    CommandDefinition(
-                        """INSERT INTO orders
-                           (pipeline_id, market_type, exchange_order_id, symbol, side, status, quantity, price, created_at, updated_at)
-                           VALUES (@PipelineId, @MarketType, @ExchangeOrderId, @Symbol, @Side, @Status, @Quantity, @Price, now(), now())
-                           RETURNING *""",
-                        {|
-                            PipelineId = order.PipelineId
-                            MarketType = marketTypeInt
-                            ExchangeOrderId = ""
-                            Symbol = order.Symbol
-                            Side = sideInt
-                            Status = statusInt
-                            Quantity = order.Quantity
-                            Price = order.Price
-                        |},
-                        cancellationToken = token,
-                        transaction = txn
+                let! order =
+                    db.QuerySingleAsync<Order>(
+                        CommandDefinition(
+                            """INSERT INTO orders
+                               (pipeline_id, market_type, exchange_order_id, symbol, side, status, quantity, price, created_at, updated_at)
+                               VALUES (@PipelineId, @MarketType, @ExchangeOrderId, @Symbol, @Side, @Status, @Quantity, @Price, now(), now())
+                               RETURNING *""",
+                            {| PipelineId = order.PipelineId
+                               MarketType = marketTypeInt
+                               ExchangeOrderId = ""
+                               Symbol = order.Symbol
+                               Side = sideInt
+                               Status = statusInt
+                               Quantity = order.Quantity
+                               Price = order.Price |},
+                            cancellationToken = token,
+                            transaction = txn
+                        )
                     )
-                )
 
-            logger.LogDebug("Inserted order {OrderId}", order.Id)
-            return order
+                return Ok order
+            with ex ->
+                return Error(Unexpected ex)
         }
 
-    let update (db: IDbConnection) (txn: IDbTransaction) (logger: ILogger) (order: Order) (token: CancellationToken) =
+    let update (db: IDbConnection) (txn: IDbTransaction) (order: Order) (token: CancellationToken) =
         task {
-            let! _ =
-                db.ExecuteAsync(
-                    CommandDefinition(
-                        """UPDATE orders
-                           SET status = @Status, quantity = @Quantity, price = @Price, stop_price = @StopPrice,
-                               take_profit = @TakeProfit, stop_loss = @StopLoss, exchange_order_id = @ExchangeOrderId,
-                               placed_at = @PlacedAt, executed_at = @ExecutedAt, cancelled_at = @CancelledAt,
-                               fee = @Fee, updated_at = @UpdatedAt
-                           WHERE id = @Id""",
-                        {|
-                            Id = order.Id
-                            Status = int order.Status
-                            Quantity = order.Quantity
-                            Price = order.Price
-                            StopPrice = order.StopPrice
-                            TakeProfit = order.TakeProfit
-                            StopLoss = order.StopLoss
-                            ExchangeOrderId = order.ExchangeOrderId
-                            PlacedAt = order.PlacedAt
-                            ExecutedAt = order.ExecutedAt
-                            CancelledAt = order.CancelledAt
-                            Fee = order.Fee
-                            UpdatedAt = order.UpdatedAt
-                        |},
-                        cancellationToken = token,
-                        transaction = txn
+            try
+                let! _ =
+                    db.ExecuteAsync(
+                        CommandDefinition(
+                            """UPDATE orders
+                               SET status = @Status, quantity = @Quantity, price = @Price, stop_price = @StopPrice,
+                                   take_profit = @TakeProfit, stop_loss = @StopLoss, exchange_order_id = @ExchangeOrderId,
+                                   placed_at = @PlacedAt, executed_at = @ExecutedAt, cancelled_at = @CancelledAt,
+                                   fee = @Fee, updated_at = @UpdatedAt
+                               WHERE id = @Id""",
+                            {| Id = order.Id
+                               Status = int order.Status
+                               Quantity = order.Quantity
+                               Price = order.Price
+                               StopPrice = order.StopPrice
+                               TakeProfit = order.TakeProfit
+                               StopLoss = order.StopLoss
+                               ExchangeOrderId = order.ExchangeOrderId
+                               PlacedAt = order.PlacedAt
+                               ExecutedAt = order.ExecutedAt
+                               CancelledAt = order.CancelledAt
+                               Fee = order.Fee
+                               UpdatedAt = order.UpdatedAt |},
+                            cancellationToken = token,
+                            transaction = txn
+                        )
                     )
-                )
 
-            logger.LogDebug("Updated order {OrderId}", order.Id)
+                return Ok()
+            with ex ->
+                return Error(Unexpected ex)
         }
 
-    let search
-        (db: IDbConnection)
-        (logger: ILogger)
-        (filters: SearchFilters)
-        (skip: int)
-        (take: int)
-        (token: CancellationToken)
-        =
+    let search (db: IDbConnection) (filters: SearchFilters) (skip: int) (take: int) (token: CancellationToken) =
         task {
             try
                 let conditions = ResizeArray<string>()
@@ -330,15 +257,12 @@ module OrderRepository =
 
                 let! orders = db.QueryAsync<Order>(CommandDefinition(dataSql, parameters, cancellationToken = token))
 
-                logger.LogDebug("Search returned {Count} orders out of {Total}", Seq.length orders, totalCount)
-
-                return { Orders = orders |> Seq.toList; TotalCount = totalCount }
+                return Ok { Orders = orders |> Seq.toList; TotalCount = totalCount }
             with ex ->
-                logger.LogError(ex, "Failed to search orders")
-                return { Orders = []; TotalCount = 0 }
+                return Error(Unexpected ex)
         }
 
-    let count (db: IDbConnection) (logger: ILogger) (token: CancellationToken) =
+    let count (db: IDbConnection) (token: CancellationToken) =
         task {
             try
                 let! result =
@@ -346,9 +270,7 @@ module OrderRepository =
                         CommandDefinition("SELECT COUNT(1) FROM orders", cancellationToken = token)
                     )
 
-                logger.LogDebug("Order count: {Count}", result)
-                return result
+                return Ok result
             with ex ->
-                logger.LogError(ex, "Failed to count orders")
-                return 0
+                return Error(Unexpected ex)
         }

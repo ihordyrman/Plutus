@@ -15,20 +15,18 @@ module CandlestickSync =
     let toPairSymbol (instrument: Instrument) = { Left = instrument; Right = Instrument.USDT }.ToString()
 
     let toCandlestick (symbol: string) (timeframe: string) (c: OkxCandlestick) : Candlestick =
-        {
-            Id = 0
-            Symbol = symbol
-            MarketType = int MarketType.Okx
-            Timestamp = c.Timestamp
-            Open = c.Open
-            High = c.High
-            Low = c.Low
-            Close = c.Close
-            Volume = c.Volume
-            VolumeQuote = c.VolumeQuoteCurrency
-            IsCompleted = c.IsCompleted
-            Timeframe = timeframe
-        }
+        { Id = 0
+          Symbol = symbol
+          MarketType = int MarketType.Okx
+          Timestamp = c.Timestamp
+          Open = c.Open
+          High = c.High
+          Low = c.Low
+          Close = c.Close
+          Volume = c.Volume
+          VolumeQuote = c.VolumeQuoteCurrency
+          IsCompleted = c.IsCompleted
+          Timeframe = timeframe }
 
     let sync
         (http: Http.T)
@@ -57,16 +55,14 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
     inherit BackgroundService()
 
     let symbols =
-        [|
-            Instrument.BTC
-            Instrument.ETH
-            Instrument.SOL
-            Instrument.OKB
-            Instrument.DOGE
-            Instrument.XRP
-            Instrument.BCH
-            Instrument.LTC
-        |]
+        [| Instrument.BTC
+           Instrument.ETH
+           Instrument.SOL
+           Instrument.OKB
+           Instrument.DOGE
+           Instrument.XRP
+           Instrument.BCH
+           Instrument.LTC |]
 
     override _.ExecuteAsync(ct) =
         task {
@@ -74,10 +70,8 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
             let http = scope.ServiceProvider.GetRequiredService<Http.T>()
             let repo = scope.ServiceProvider.GetRequiredService<CandlestickRepository.T>()
 
-            [|
-                for i in 0..23 do
-                    DateTimeOffset.UtcNow.AddHours(-i).ToUnixTimeMilliseconds().ToString()
-            |]
+            [| for i in 0..23 do
+                   DateTimeOffset.UtcNow.AddHours(-i).ToUnixTimeMilliseconds().ToString() |]
             |> Array.rev
             |> Array.iter (fun after ->
                 for instrument in symbols do

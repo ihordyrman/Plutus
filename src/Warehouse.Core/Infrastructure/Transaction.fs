@@ -21,7 +21,7 @@ module Transaction =
             | Ok value ->
                 transaction.Commit()
                 return Ok value
-            | Result.Error err ->
+            | Error err ->
                 transaction.Rollback()
-                return Result.Error err
+                return Error err
         }

@@ -19,11 +19,11 @@ module DashboardQueries =
             let! markets = repo.GetAll CancellationToken.None
 
             match markets with
-            | Result.Error err ->
+            | Error err ->
                 let log = scope.ServiceProvider.GetService<ILogger>()
                 log.LogError("Error getting markets: {Error}", err)
                 return 0M
-            | Result.Ok markets ->
+            | Ok markets ->
                 let sum =
                     markets
                     |> Seq.map (fun market ->
@@ -33,7 +33,7 @@ module DashboardQueries =
 
                             match result with
                             | Ok value -> return value
-                            | Result.Error err ->
+                            | Error err ->
                                 let log = scope.ServiceProvider.GetService<ILogger>()
                                 log.LogError("Error getting balance for {MarketType}: {Error}", market.Type, err)
                                 return 0M

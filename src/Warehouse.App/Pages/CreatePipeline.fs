@@ -13,13 +13,11 @@ open Warehouse.Core.Repositories
 open Warehouse.Core.Shared
 
 type CreatePipelineInput =
-    {
-        MarketType: MarketType
-        Symbol: string
-        Tags: string list
-        ExecutionInterval: TimeSpan
-        Enabled: bool
-    }
+    { MarketType: MarketType
+      Symbol: string
+      Tags: string list
+      ExecutionInterval: TimeSpan
+      Enabled: bool }
 
 type CreateResult =
     | Success of symbol: string
@@ -27,13 +25,11 @@ type CreateResult =
     | ServerError of message: string
 
 type FormDataInfo =
-    {
-        MarketType: int option
-        Symbol: string option
-        Tags: string option
-        ExecutionInterval: int option
-        Enabled: bool
-    }
+    { MarketType: int option
+      Symbol: string option
+      Tags: string option
+      ExecutionInterval: int option
+      Enabled: bool }
 
     static member Empty = { MarketType = None; Symbol = None; Tags = None; ExecutionInterval = None; Enabled = false }
 
@@ -43,13 +39,11 @@ module Data =
     let getMarketTypes () : MarketType list = marketTypes
 
     let parseFormData (form: FormData) : FormDataInfo =
-        {
-            MarketType = form.TryGetInt "marketType"
-            Symbol = form.TryGetString "symbol"
-            Tags = form.TryGetString "tags"
-            ExecutionInterval = form.TryGetInt "executionInterval"
-            Enabled = form.TryGetString "enabled" |> Option.map (fun _ -> true) |> Option.defaultValue false
-        }
+        { MarketType = form.TryGetInt "marketType"
+          Symbol = form.TryGetString "symbol"
+          Tags = form.TryGetString "tags"
+          ExecutionInterval = form.TryGetInt "executionInterval"
+          Enabled = form.TryGetString "enabled" |> Option.map (fun _ -> true) |> Option.defaultValue false }
 
     let validateAndCreate (formData: FormDataInfo) : Result<CreatePipelineInput, string> =
         match formData.Symbol with
@@ -75,13 +69,11 @@ module Data =
                 |> Option.defaultValue (TimeSpan.FromMinutes 5.0)
 
             Ok
-                {
-                    MarketType = marketType
-                    Symbol = symbol.Trim().ToUpperInvariant()
-                    Tags = tags
-                    ExecutionInterval = interval
-                    Enabled = formData.Enabled
-                }
+                { MarketType = marketType
+                  Symbol = symbol.Trim().ToUpperInvariant()
+                  Tags = tags
+                  ExecutionInterval = interval
+                  Enabled = formData.Enabled }
 
     let createPipeline (scopeFactory: IServiceScopeFactory) (input: CreatePipelineInput) : Task<CreateResult> =
         task {
@@ -90,19 +82,17 @@ module Data =
                 let repo = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
 
                 let pipeline: Pipeline =
-                    {
-                        Id = 0
-                        Name = input.Symbol
-                        Symbol = input.Symbol
-                        MarketType = input.MarketType
-                        Enabled = input.Enabled
-                        ExecutionInterval = input.ExecutionInterval
-                        LastExecutedAt = Nullable()
-                        Status = PipelineStatus.Idle
-                        Tags = input.Tags
-                        CreatedAt = DateTime.UtcNow
-                        UpdatedAt = DateTime.UtcNow
-                    }
+                    { Id = 0
+                      Name = input.Symbol
+                      Symbol = input.Symbol
+                      MarketType = input.MarketType
+                      Enabled = input.Enabled
+                      ExecutionInterval = input.ExecutionInterval
+                      LastExecutedAt = Nullable()
+                      Status = PipelineStatus.Idle
+                      Tags = input.Tags
+                      CreatedAt = DateTime.UtcNow
+                      UpdatedAt = DateTime.UtcNow }
 
                 let! result = repo.Create pipeline CancellationToken.None
 

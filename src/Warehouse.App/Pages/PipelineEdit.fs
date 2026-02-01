@@ -16,84 +16,65 @@ open Warehouse.Core.Repositories
 open Warehouse.Core.Shared
 
 type StepItemViewModel =
-    {
-        Id: int
-        PipelineId: int
-        StepTypeKey: string
-        DisplayName: string
-        Description: string
-        Icon: string
-        Category: string
-        Order: int
-        IsEnabled: bool
-        IsFirst: bool
-        IsLast: bool
-        ParameterSummary: string
-    }
+    { Id: int
+      PipelineId: int
+      StepTypeKey: string
+      DisplayName: string
+      Description: string
+      Icon: string
+      Category: string
+      Order: int
+      IsEnabled: bool
+      IsFirst: bool
+      IsLast: bool
+      ParameterSummary: string }
 
 type StepDefinitionViewModel =
-    {
-        Key: string
-        Name: string
-        Description: string
-        Category: string
-        Icon: string
-        IsAlreadyInPipeline: bool
-    }
+    { Key: string
+      Name: string
+      Description: string
+      Category: string
+      Icon: string
+      IsAlreadyInPipeline: bool }
 
 type ParameterFieldViewModel =
-    {
-        Key: string
-        DisplayName: string
-        Description: string
-        Type: Parameters.ParameterType
-        IsRequired: bool
-        CurrentValue: string option
-        DefaultValue: Parameters.ParamValue option
-    }
+    { Key: string
+      DisplayName: string
+      Description: string
+      Type: Parameters.ParameterType
+      IsRequired: bool
+      CurrentValue: string option
+      DefaultValue: Parameters.ParamValue option }
 
 type StepEditorViewModel =
-    {
-        PipelineId: int
-        StepId: int
-        StepTypeKey: string
-        StepName: string
-        StepDescription: string
-        StepIcon: string
-        Fields: ParameterFieldViewModel list
-        Errors: string list
-    }
+    { PipelineId: int
+      StepId: int
+      StepTypeKey: string
+      StepName: string
+      StepDescription: string
+      StepIcon: string
+      Fields: ParameterFieldViewModel list
+      Errors: string list }
 
 type EditPipelineViewModel =
-    {
-        Id: int
-        Symbol: string
-        MarketType: MarketType
-        Enabled: bool
-        ExecutionInterval: int
-        Tags: string
-        Steps: StepItemViewModel list
-        MarketTypes: MarketType list
-        StepDefinitions: StepDefinitionViewModel list
-    }
+    { Id: int
+      Symbol: string
+      MarketType: MarketType
+      Enabled: bool
+      ExecutionInterval: int
+      Tags: string
+      Steps: StepItemViewModel list
+      MarketTypes: MarketType list
+      StepDefinitions: StepDefinitionViewModel list }
 
 type EditFormData =
-    {
-        MarketType: int option
-        Symbol: string option
-        Tags: string option
-        ExecutionInterval: int option
-        Enabled: bool
-    }
+    { MarketType: int option
+      Symbol: string option
+      Tags: string option
+      ExecutionInterval: int option
+      Enabled: bool }
 
-    static member Empty =
-        {
-            MarketType = Option.None
-            Symbol = Option.None
-            Tags = Option.None
-            ExecutionInterval = Option.None
-            Enabled = false
-        }
+    static member Empty = { MarketType = None; Symbol = None; Tags = None; ExecutionInterval = None; Enabled = false }
 
 type EditResult =
     | Success
@@ -120,20 +101,18 @@ module Data =
             else
                 ""
 
-        {
-            Id = step.Id
-            PipelineId = pipelineId
-            StepTypeKey = step.StepTypeKey
-            DisplayName = stepDef |> Option.map _.Name |> Option.defaultValue step.Name
-            Description = stepDef |> Option.map _.Description |> Option.defaultValue ""
-            Icon = stepDef |> Option.map _.Icon |> Option.defaultValue "fa-puzzle-piece"
-            Category = stepDef |> Option.map (fun d -> d.Category.ToString()) |> Option.defaultValue "Unknown"
-            Order = step.Order
-            IsEnabled = step.IsEnabled
-            IsFirst = isFirst
-            IsLast = isLast
-            ParameterSummary = paramSummary
-        }
+        { Id = step.Id
+          PipelineId = pipelineId
+          StepTypeKey = step.StepTypeKey
+          DisplayName = stepDef |> Option.map _.Name |> Option.defaultValue step.Name
+          Description = stepDef |> Option.map _.Description |> Option.defaultValue ""
+          Icon = stepDef |> Option.map _.Icon |> Option.defaultValue "fa-puzzle-piece"
+          Category = stepDef |> Option.map (fun d -> d.Category.ToString()) |> Option.defaultValue "Unknown"
+          Order = step.Order
+          IsEnabled = step.IsEnabled
+          IsFirst = isFirst
+          IsLast = isLast
+          ParameterSummary = paramSummary }
 
     let getEditViewModel (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<EditPipelineViewModel option> =
         task {
@@ -153,7 +132,7 @@ module Data =
                     Errors.serviceMessage err
                 )
 
-                return Option.None
+                return None
             | Ok pipeline ->
                 let allDefs = Registry.all registry
                 let! pipelineSteps = stepsRepo.GetByPipelineId pipelineId CancellationToken.None
@@ -168,14 +147,12 @@ module Data =
                 let defs =
                     allDefs
                     |> List.map (fun d ->
-                        {
-                            Key = d.Key
-                            Name = d.Name
-                            Description = d.Description
-                            Category = d.Category.ToString()
-                            Icon = d.Icon
-                            IsAlreadyInPipeline = existingKeys.Contains d.Key
-                        }
+                        { Key = d.Key
+                          Name = d.Name
+                          Description = d.Description
+                          Category = d.Category.ToString()
+                          Icon = d.Icon
+                          IsAlreadyInPipeline = existingKeys.Contains d.Key }
                     )
 
                 let sortedSteps = pipelineSteps |> List.sortBy _.Order
@@ -190,17 +167,15 @@ module Data =
 
                 return
                     Option.Some
-                        {
-                            Id = pipeline.Id
-                            Symbol = pipeline.Symbol
-                            MarketType = pipeline.MarketType
-                            Enabled = pipeline.Enabled
-                            ExecutionInterval = int pipeline.ExecutionInterval.TotalMinutes
-                            Tags = pipeline.Tags |> String.concat ", "
-                            Steps = stepVms
-                            MarketTypes = marketTypes
-                            StepDefinitions = defs
-                        }
+                        { Id = pipeline.Id
+                          Symbol = pipeline.Symbol
+                          MarketType = pipeline.MarketType
+                          Enabled = pipeline.Enabled
+                          ExecutionInterval = int pipeline.ExecutionInterval.TotalMinutes
+                          Tags = pipeline.Tags |> String.concat ", "
+                          Steps = stepVms
+                          MarketTypes = marketTypes
+                          StepDefinitions = defs }
         }
 
     let getSteps (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<StepItemViewModel list> =
@@ -241,14 +216,12 @@ module Data =
             return
                 allDefs
                 |> List.map (fun d ->
-                    {
-                        Key = d.Key
-                        Name = d.Name
-                        Description = d.Description
-                        Category = d.Category.ToString()
-                        Icon = d.Icon
-                        IsAlreadyInPipeline = existingKeys.Contains d.Key
-                    }
+                    { Key = d.Key
+                      Name = d.Name
+                      Description = d.Description
+                      Category = d.Category.ToString()
+                      Icon = d.Icon
+                      IsAlreadyInPipeline = existingKeys.Contains d.Key }
                 )
         }
 
@@ -265,49 +238,43 @@ module Data =
             let! result = repo.GetById stepId CancellationToken.None
 
             match result with
-            | Error _ -> return Option.None
-            | Ok step when step.PipelineId <> pipelineId -> return Option.None
+            | Error _ -> return None
+            | Ok step when step.PipelineId <> pipelineId -> return None
             | Ok step ->
                 match Registry.tryFind step.StepTypeKey registry with
-                | Option.None -> return Option.None
+                | None -> return None
                 | Some def ->
                     let fields =
                         def.ParameterSchema.Parameters
                         |> List.map (fun p ->
-                            {
-                                Key = p.Key
-                                DisplayName = p.Name
-                                Description = p.Description
-                                Type = p.Type
-                                IsRequired = p.Required
-                                CurrentValue =
-                                    step.Parameters |> Seq.tryFind (fun kvp -> kvp.Key = p.Key) |> Option.map _.Value
-                                DefaultValue = p.DefaultValue
-                            }
+                            { Key = p.Key
+                              DisplayName = p.Name
+                              Description = p.Description
+                              Type = p.Type
+                              IsRequired = p.Required
+                              CurrentValue =
+                                step.Parameters |> Seq.tryFind (fun kvp -> kvp.Key = p.Key) |> Option.map _.Value
+                              DefaultValue = p.DefaultValue }
                         )
 
                     return
                         Some
-                            {
-                                PipelineId = pipelineId
-                                StepId = stepId
-                                StepTypeKey = step.StepTypeKey
-                                StepName = def.Name
-                                StepDescription = def.Description
-                                StepIcon = def.Icon
-                                Fields = fields
-                                Errors = []
-                            }
+                            { PipelineId = pipelineId
+                              StepId = stepId
+                              StepTypeKey = step.StepTypeKey
+                              StepName = def.Name
+                              StepDescription = def.Description
+                              StepIcon = def.Icon
+                              Fields = fields
+                              Errors = [] }
         }
 
     let parseFormData (form: FormData) : EditFormData =
-        {
-            MarketType = form.TryGetInt "marketType"
-            Symbol = form.TryGetString "symbol"
-            Tags = form.TryGetString "tags"
-            ExecutionInterval = form.TryGetInt "executionInterval"
-            Enabled = form.TryGetString "enabled" |> Option.map (fun _ -> true) |> Option.defaultValue false
-        }
+        { MarketType = form.TryGetInt "marketType"
+          Symbol = form.TryGetString "symbol"
+          Tags = form.TryGetString "tags"
+          ExecutionInterval = form.TryGetInt "executionInterval"
+          Enabled = form.TryGetString "enabled" |> Option.map (fun _ -> true) |> Option.defaultValue false }
 
     let updatePipeline
         (scopeFactory: IServiceScopeFactory)
@@ -317,7 +284,7 @@ module Data =
         =
         task {
             match formData.Symbol with
-            | Option.None -> return ValidationError "Symbol is required"
+            | None -> return ValidationError "Symbol is required"
             | Some symbol when String.IsNullOrWhiteSpace(symbol) -> return ValidationError "Symbol is required"
             | Some symbol ->
                 use scope = scopeFactory.CreateScope()
@@ -352,8 +319,7 @@ module Data =
                             Tags = tags
                             ExecutionInterval = interval
                             Enabled = formData.Enabled
-                            UpdatedAt = DateTime.UtcNow
-                        }
+                            UpdatedAt = DateTime.UtcNow }
 
                     let! updateResult = repo.Update updated CancellationToken.None
 
@@ -373,7 +339,7 @@ module Data =
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
 
             match Registry.tryFind stepTypeKey registry with
-            | Option.None -> return Option.None
+            | None -> return None
             | Some def ->
                 let stepRepo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
                 let! maxOrderResult = stepRepo.GetMaxOrder pipelineId CancellationToken.None
@@ -403,22 +369,20 @@ module Data =
                     |> System.Collections.Generic.Dictionary
 
                 let newStep: PipelineStep =
-                    {
-                        Id = 0
-                        PipelineId = pipelineId
-                        StepTypeKey = stepTypeKey
-                        Name = def.Name
-                        Order = maxOrder + 1
-                        IsEnabled = true
-                        Parameters = defaultParams
-                        CreatedAt = DateTime.UtcNow
-                        UpdatedAt = DateTime.UtcNow
-                    }
+                    { Id = 0
+                      PipelineId = pipelineId
+                      StepTypeKey = stepTypeKey
+                      Name = def.Name
+                      Order = maxOrder + 1
+                      IsEnabled = true
+                      Parameters = defaultParams
+                      CreatedAt = DateTime.UtcNow
+                      UpdatedAt = DateTime.UtcNow }
 
                 let! createResult = stepRepo.Create newStep CancellationToken.None
 
                 match createResult with
-                | Error _ -> return Option.None
+                | Error _ -> return None
                 | Ok created -> return Some(mapStepToViewModel pipelineId (Some def) created (maxOrder < 0) true)
         }
 
@@ -435,18 +399,18 @@ module Data =
             let! result = repo.GetById stepId CancellationToken.None
 
             match result with
-            | Ok step when step.PipelineId <> pipelineId -> return Option.None
+            | Ok step when step.PipelineId <> pipelineId -> return None
             | Ok step ->
                 let! _ = repo.SetEnabled stepId (not step.IsEnabled) CancellationToken.None
                 let! updatedResult = repo.GetById stepId CancellationToken.None
 
                 match updatedResult with
-                | Error _ -> return Option.None
+                | Error _ -> return None
                 | Ok updated ->
                     let def = Registry.tryFind updated.StepTypeKey registry
                     let result = mapStepToViewModel pipelineId def updated false false
                     return Some result
-            | _ -> return Option.None
+            | _ -> return None
         }
 
 
@@ -483,16 +447,16 @@ module Data =
                 let currentIdx = sortedSteps |> List.tryFindIndex (fun s -> s.Id = stepId)
 
                 match currentIdx with
-                | Option.None -> return! getSteps scopeFactory pipelineId
+                | None -> return! getSteps scopeFactory pipelineId
                 | Some idx ->
                     let targetIdx =
                         match direction with
                         | "up" when idx > 0 -> Some(idx - 1)
                         | "down" when idx < sortedSteps.Length - 1 -> Some(idx + 1)
-                        | _ -> Option.None
+                        | _ -> None
 
                     match targetIdx with
-                    | Option.None -> return! getSteps scopeFactory pipelineId
+                    | None -> return! getSteps scopeFactory pipelineId
                     | Some tIdx ->
                         let current = sortedSteps.[idx]
                         let target = sortedSteps.[tIdx]
@@ -519,44 +483,38 @@ module Data =
             | Error _ ->
                 return
                     Error
-                        {
-                            PipelineId = pipelineId
-                            StepId = stepId
-                            StepTypeKey = ""
-                            StepName = ""
-                            StepDescription = ""
-                            StepIcon = ""
-                            Fields = []
-                            Errors = [ "Step not found" ]
-                        }
+                        { PipelineId = pipelineId
+                          StepId = stepId
+                          StepTypeKey = ""
+                          StepName = ""
+                          StepDescription = ""
+                          StepIcon = ""
+                          Fields = []
+                          Errors = [ "Step not found" ] }
             | Ok step when step.PipelineId <> pipelineId ->
                 return
                     Error
-                        {
-                            PipelineId = pipelineId
-                            StepId = stepId
-                            StepTypeKey = ""
-                            StepName = ""
-                            StepDescription = ""
-                            StepIcon = ""
-                            Fields = []
-                            Errors = [ "Step not found" ]
-                        }
+                        { PipelineId = pipelineId
+                          StepId = stepId
+                          StepTypeKey = ""
+                          StepName = ""
+                          StepDescription = ""
+                          StepIcon = ""
+                          Fields = []
+                          Errors = [ "Step not found" ] }
             | Ok step ->
                 match Registry.tryFind step.StepTypeKey registry with
-                | Option.None ->
+                | None ->
                     return
                         Error
-                            {
-                                PipelineId = pipelineId
-                                StepId = stepId
-                                StepTypeKey = step.StepTypeKey
-                                StepName = ""
-                                StepDescription = ""
-                                StepIcon = ""
-                                Fields = []
-                                Errors = [ "Unknown step type" ]
-                            }
+                            { PipelineId = pipelineId
+                              StepId = stepId
+                              StepTypeKey = step.StepTypeKey
+                              StepName = ""
+                              StepDescription = ""
+                              StepIcon = ""
+                              Fields = []
+                              Errors = [ "Unknown step type" ] }
                 | Some def ->
                     let newParams = System.Collections.Generic.Dictionary<string, string>()
 
@@ -566,7 +524,7 @@ module Data =
                             match param.Type with
                             | Parameters.Bool -> newParams.[param.Key] <- if value = "true" then "true" else "false"
                             | _ -> newParams.[param.Key] <- value
-                        | Option.None ->
+                        | None ->
                             if param.Type = Parameters.Bool then
                                 newParams.[param.Key] <- "false"
 
@@ -577,30 +535,26 @@ module Data =
                         let fields =
                             def.ParameterSchema.Parameters
                             |> List.map (fun p ->
-                                {
-                                    Key = p.Key
-                                    DisplayName = p.Name
-                                    Description = p.Description
-                                    Type = p.Type
-                                    IsRequired = p.Required
-                                    CurrentValue =
-                                        newParams |> Seq.tryFind (fun kvp -> kvp.Key = p.Key) |> Option.map _.Value
-                                    DefaultValue = p.DefaultValue
-                                }
+                                { Key = p.Key
+                                  DisplayName = p.Name
+                                  Description = p.Description
+                                  Type = p.Type
+                                  IsRequired = p.Required
+                                  CurrentValue =
+                                    newParams |> Seq.tryFind (fun kvp -> kvp.Key = p.Key) |> Option.map _.Value
+                                  DefaultValue = p.DefaultValue }
                             )
 
                         return
                             Error
-                                {
-                                    PipelineId = pipelineId
-                                    StepId = stepId
-                                    StepTypeKey = step.StepTypeKey
-                                    StepName = def.Name
-                                    StepDescription = def.Description
-                                    StepIcon = def.Icon
-                                    Fields = fields
-                                    Errors = errors |> List.map _.Message
-                                }
+                                { PipelineId = pipelineId
+                                  StepId = stepId
+                                  StepTypeKey = step.StepTypeKey
+                                  StepName = def.Name
+                                  StepDescription = def.Description
+                                  StepIcon = def.Icon
+                                  Fields = fields
+                                  Errors = errors |> List.map _.Message }
                     | Ok _ ->
                         let updatedStep = { step with Parameters = newParams; UpdatedAt = DateTime.UtcNow }
                         let! updateResult = repo.Update updatedStep CancellationToken.None
@@ -609,16 +563,14 @@ module Data =
                         | Error err ->
                             return
                                 Error
-                                    {
-                                        PipelineId = pipelineId
-                                        StepId = stepId
-                                        StepTypeKey = step.StepTypeKey
-                                        StepName = def.Name
-                                        StepDescription = def.Description
-                                        StepIcon = def.Icon
-                                        Fields = []
-                                        Errors = [ Errors.serviceMessage err ]
-                                    }
+                                    { PipelineId = pipelineId
+                                      StepId = stepId
+                                      StepTypeKey = step.StepTypeKey
+                                      StepName = def.Name
+                                      StepDescription = def.Description
+                                      StepIcon = def.Icon
+                                      Fields = []
+                                      Errors = [ Errors.serviceMessage err ] }
                         | Ok updated -> return Ok(mapStepToViewModel pipelineId (Some def) updated false false)
         }
 
@@ -856,10 +808,10 @@ module View =
                         "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     match minVal with
                     | Some m -> Attr.create "min" (string m)
-                    | Option.None -> ()
+                    | None -> ()
                     match maxVal with
                     | Some m -> Attr.create "max" (string m)
-                    | Option.None -> ()
+                    | None -> ()
                 ]
 
             | Parameters.Decimal(minVal, maxVal) ->
@@ -873,10 +825,10 @@ module View =
                         "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     match minVal with
                     | Some m -> Attr.create "min" (string m)
-                    | Option.None -> ()
+                    | None -> ()
                     match maxVal with
                     | Some m -> Attr.create "max" (string m)
-                    | Option.None -> ()
+                    | None -> ()
                 ]
 
             | Parameters.String ->
@@ -1240,7 +1192,7 @@ module Handler =
 
                     match vm with
                     | Some v -> return! Response.ofHtml (View.modal v) ctx
-                    | Option.None -> return! Response.ofHtml View.notFound ctx
+                    | None -> return! Response.ofHtml View.notFound ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("PipelineEdit")
                     logger.LogError(ex, "Error getting pipeline edit view for {PipelineId}", pipelineId)
@@ -1291,7 +1243,7 @@ module Handler =
 
                 match vm with
                 | Some v -> return! Response.ofHtml (View.stepEditor v) ctx
-                | Option.None -> return! Response.ofHtml View.stepEditorEmpty ctx
+                | None -> return! Response.ofHtml View.stepEditorEmpty ctx
             }
 
     let addStep (pipelineId: int) : HttpHandler =
@@ -1311,7 +1263,7 @@ module Handler =
 
                     match step with
                     | Some s -> return! Response.ofHtml (View.stepItem s) ctx
-                    | Option.None -> return! Response.ofEmpty ctx
+                    | None -> return! Response.ofEmpty ctx
             }
 
     let toggleStep (pipelineId: int) (stepId: int) : HttpHandler =
@@ -1322,7 +1274,7 @@ module Handler =
 
                 match step with
                 | Some s -> return! Response.ofHtml (View.stepItem s) ctx
-                | Option.None -> return! Response.ofEmpty ctx
+                | None -> return! Response.ofEmpty ctx
             }
 
     let deleteStep (pipelineId: int) (stepId: int) : HttpHandler =

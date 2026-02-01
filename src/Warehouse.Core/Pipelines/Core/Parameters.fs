@@ -12,15 +12,13 @@ module Parameters =
         | ChoiceValue of string
 
     type ParameterDef =
-        {
-            Key: string
-            Name: string
-            Description: string
-            Type: ParameterType
-            Required: bool
-            DefaultValue: ParamValue option
-            Group: string option
-        }
+        { Key: string
+          Name: string
+          Description: string
+          Type: ParameterType
+          Required: bool
+          DefaultValue: ParamValue option
+          Group: string option }
 
     and ParameterType =
         | String

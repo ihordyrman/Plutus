@@ -82,7 +82,13 @@ let private pipelinesSection =
     ]
 
 let private ordersSection =
-    _div [ _id_ "orders-container"; _class_ "mt-10"; Hx.get "/orders/grid"; Hx.trigger Load; Hx.swapInnerHtml ] [
+    _div [
+        _id_ "orders-container"
+        _class_ "mt-10"
+        Hx.get "/orders/grid"
+        Hx.trigger Load
+        Hx.swapInnerHtml
+    ] [
         _div [ _class_ "flex justify-center py-8" ] [
             _i [ _class_ "fas fa-spinner fa-spin text-gray-400 text-2xl" ] []
         ]
@@ -121,12 +127,7 @@ let get: HttpHandler =
                             "/pipelines/count"
                             "Total Pipelines"
                             "from-green-500 to-emerald-600"
-                        statsCard
-                            "fa-receipt"
-                            "Orders"
-                            "/orders/count"
-                            "Total Orders"
-                            "from-orange-500 to-amber-600"
+                        statsCard "fa-receipt" "Orders" "/orders/count" "Total Orders" "from-orange-500 to-amber-600"
                         statsCard "fa-wallet" "Balance" "/balance/total" "Total Portfolio" "from-purple-500 to-pink-600"
                     ]
 

@@ -11,22 +11,18 @@ open Warehouse.Core.Markets.Stores
 module OkxAdapter =
 
     type private State =
-        {
-            ConnectionState: ConnectionState
-            Subscriptions: Set<string>
-            Uri: Uri option
-            ReconnectAttempts: int
-            LastHeartbeat: DateTime option
-        }
+        { ConnectionState: ConnectionState
+          Subscriptions: Set<string>
+          Uri: Uri option
+          ReconnectAttempts: int
+          LastHeartbeat: DateTime option }
 
         static member Initial =
-            {
-                ConnectionState = ConnectionState.Disconnected
-                Subscriptions = Set.empty
-                Uri = None
-                ReconnectAttempts = 0
-                LastHeartbeat = None
-            }
+            { ConnectionState = ConnectionState.Disconnected
+              Subscriptions = Set.empty
+              Uri = None
+              ReconnectAttempts = 0
+              LastHeartbeat = None }
 
     type private Message =
         | Connect of market: Market option * AsyncReplyChannel<Result<unit, string>>
@@ -41,15 +37,13 @@ module OkxAdapter =
         | ReconnectTick
 
     type T =
-        {
-            Connect: Market option -> CancellationToken -> Task<Result<unit, string>>
-            Disconnect: CancellationToken -> Task<unit>
-            Subscribe: string -> string -> CancellationToken -> Task<Result<unit, string>>
-            Unsubscribe: string -> string -> CancellationToken -> Task<Result<unit, string>>
-            GetConnectionState: unit -> ConnectionState
-            GetSubscriptions: unit -> Set<string>
-            Dispose: unit -> unit
-        }
+        { Connect: Market option -> CancellationToken -> Task<Result<unit, string>>
+          Disconnect: CancellationToken -> Task<unit>
+          Subscribe: string -> string -> CancellationToken -> Task<Result<unit, string>>
+          Unsubscribe: string -> string -> CancellationToken -> Task<Result<unit, string>>
+          GetConnectionState: unit -> ConnectionState
+          GetSubscriptions: unit -> Set<string>
+          Dispose: unit -> unit }
 
     let private heartbeatInterval = TimeSpan.FromSeconds 15.0
     let private reconnectDelay = TimeSpan.FromSeconds 5.0
@@ -114,8 +108,7 @@ module OkxAdapter =
 
                                 match! sendJson request with
                                 | Ok() -> logger.LogDebug("Resubscribed to {Key}", subscription)
-                                | Result.Error ex ->
-                                    logger.LogWarning(ex, "Failed to resubscribe to {Key}", subscription)
+                                | Error ex -> logger.LogWarning(ex, "Failed to resubscribe to {Key}", subscription)
                     }
 
                 let processWebSocketMessage text (state: State) =
@@ -189,12 +182,11 @@ module OkxAdapter =
                                         loop
                                             { newState with
                                                 ConnectionState = ConnectionState.Connected
-                                                ReconnectAttempts = 0
-                                            }
+                                                ReconnectAttempts = 0 }
 
-                                | Result.Error ex ->
+                                | Error ex ->
                                     logger.LogError(ex, "Failed to connect")
-                                    reply.Reply(Result.Error ex.Message)
+                                    reply.Reply(Error ex.Message)
 
                                     return! loop { newState with ConnectionState = ConnectionState.Failed }
 
@@ -213,14 +205,13 @@ module OkxAdapter =
                                 loop
                                     { state with
                                         ConnectionState = ConnectionState.Disconnected
-                                        Subscriptions = Set.empty
-                                    }
+                                        Subscriptions = Set.empty }
 
                         | Subscribe(channel, symbol, reply) ->
                             let key = subscriptionKey channel symbol
 
                             if state.ConnectionState <> ConnectionState.Connected then
-                                reply.Reply(Result.Error $"Cannot subscribe in state: {state.ConnectionState}")
+                                reply.Reply(Error $"Cannot subscribe in state: {state.ConnectionState}")
                                 return! loop state
                             elif state.Subscriptions.Contains key then
                                 logger.LogDebug("Already subscribed to {Key}", key)
@@ -236,9 +227,9 @@ module OkxAdapter =
 
                                     return! loop { state with Subscriptions = Set.add key state.Subscriptions }
 
-                                | Result.Error ex ->
+                                | Error ex ->
                                     logger.LogError(ex, "Failed to subscribe to {Key}", key)
-                                    reply.Reply(Result.Error ex.Message)
+                                    reply.Reply(Error ex.Message)
                                     return! loop state
 
                         | Unsubscribe(channel, symbol, reply) ->
@@ -258,9 +249,9 @@ module OkxAdapter =
 
                                     return! loop { state with Subscriptions = Set.remove key state.Subscriptions }
 
-                                | Result.Error ex ->
+                                | Error ex ->
                                     logger.LogError(ex, "Failed to unsubscribe from {Key}", key)
-                                    reply.Reply(Result.Error ex.Message)
+                                    reply.Reply(Error ex.Message)
                                     return! loop state
 
                         | GetState reply ->
@@ -292,7 +283,7 @@ module OkxAdapter =
 
                                 return! loop { state with ConnectionState = ConnectionState.Disconnected }
 
-                            | WebSocketEvent.Error ex ->
+                            | WebSocketEvent.SocketError ex ->
                                 logger.LogError(ex, "WebSocket error")
                                 return! loop state
 
@@ -302,7 +293,7 @@ module OkxAdapter =
                             if state.ConnectionState = ConnectionState.Connected then
                                 match! webSocket.Send "ping" CancellationToken.None |> Async.AwaitTask with
                                 | Ok() -> logger.LogTrace("Heartbeat ping sent")
-                                | Result.Error ex -> logger.LogWarning(ex, "Failed to send heartbeat")
+                                | Error ex -> logger.LogWarning(ex, "Failed to send heartbeat")
 
                             return! loop state
 
@@ -333,10 +324,9 @@ module OkxAdapter =
                                             loop
                                                 { state with
                                                     ConnectionState = ConnectionState.Connected
-                                                    ReconnectAttempts = 0
-                                                }
+                                                    ReconnectAttempts = 0 }
 
-                                    | Result.Error ex ->
+                                    | Error ex ->
                                         logger.LogWarning(ex, "Reconnect attempt failed")
                                         startReconnect ()
                                         return! loop { state with ReconnectAttempts = state.ReconnectAttempts + 1 }
@@ -352,26 +342,23 @@ module OkxAdapter =
 
         eventSubscription <- Some(webSocket.Events |> Observable.subscribe (WebSocketEvent >> agent.Post))
 
-        {
-            Connect =
-                fun credentials _ ->
-                    agent.PostAndAsyncReply(fun reply -> Connect(credentials, reply)) |> Async.StartAsTask
-            Disconnect = fun _ -> agent.PostAndAsyncReply Disconnect |> Async.StartAsTask
-            Subscribe =
-                fun channel symbol _ ->
-                    agent.PostAndAsyncReply(fun reply -> Subscribe(channel, symbol, reply)) |> Async.StartAsTask
-            Unsubscribe =
-                fun channel symbol _ ->
-                    agent.PostAndAsyncReply(fun reply -> Unsubscribe(channel, symbol, reply)) |> Async.StartAsTask
-            GetConnectionState = fun () -> currentState.ConnectionState
-            GetSubscriptions = fun () -> currentState.Subscriptions
-            Dispose =
-                fun () ->
-                    heartbeatTimer |> Option.iter _.Dispose()
-                    reconnectTimer |> Option.iter _.Dispose()
-                    eventSubscription |> Option.iter _.Dispose()
-                    webSocket.Dispose()
-        }
+        { Connect =
+            fun credentials _ -> agent.PostAndAsyncReply(fun reply -> Connect(credentials, reply)) |> Async.StartAsTask
+          Disconnect = fun _ -> agent.PostAndAsyncReply Disconnect |> Async.StartAsTask
+          Subscribe =
+            fun channel symbol _ ->
+                agent.PostAndAsyncReply(fun reply -> Subscribe(channel, symbol, reply)) |> Async.StartAsTask
+          Unsubscribe =
+            fun channel symbol _ ->
+                agent.PostAndAsyncReply(fun reply -> Unsubscribe(channel, symbol, reply)) |> Async.StartAsTask
+          GetConnectionState = fun () -> currentState.ConnectionState
+          GetSubscriptions = fun () -> currentState.Subscriptions
+          Dispose =
+            fun () ->
+                heartbeatTimer |> Option.iter _.Dispose()
+                reconnectTimer |> Option.iter _.Dispose()
+                eventSubscription |> Option.iter _.Dispose()
+                webSocket.Dispose() }
 
     let subscribeBooks (adapter: T) (symbol: string) (ct: CancellationToken) = adapter.Subscribe "books" symbol ct
     let unsubscribeBooks (adapter: T) (symbol: string) (ct: CancellationToken) = adapter.Unsubscribe "books" symbol ct

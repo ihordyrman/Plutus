@@ -16,37 +16,31 @@ module BalanceProvider =
         | false, _ -> 0m
 
     let private mapFundingBalance (funding: OkxFundingBalance) : Balance =
-        {
-            Currency = funding.Ccy
-            Available = parseDecimal funding.AvailBal
-            Total = parseDecimal funding.Bal
-            Frozen = parseDecimal funding.FrozenBal
-            InOrder = 0m
-            MarketType = MarketType.Okx
-            UpdatedAt = DateTime.UtcNow
-        }
+        { Currency = funding.Ccy
+          Available = parseDecimal funding.AvailBal
+          Total = parseDecimal funding.Bal
+          Frozen = parseDecimal funding.FrozenBal
+          InOrder = 0m
+          MarketType = MarketType.Okx
+          UpdatedAt = DateTime.UtcNow }
 
     let private mapBalanceDetail (detail: OkxBalanceDetail) : Balance =
-        {
-            Currency = detail.Ccy
-            Available = parseDecimal detail.AvailBal
-            Total = parseDecimal detail.CashBal
-            Frozen = parseDecimal detail.FrozenBal
-            InOrder = parseDecimal detail.OrdFrozen
-            MarketType = MarketType.Okx
-            UpdatedAt = DateTime.UtcNow
-        }
+        { Currency = detail.Ccy
+          Available = parseDecimal detail.AvailBal
+          Total = parseDecimal detail.CashBal
+          Frozen = parseDecimal detail.FrozenBal
+          InOrder = parseDecimal detail.OrdFrozen
+          MarketType = MarketType.Okx
+          UpdatedAt = DateTime.UtcNow }
 
     let private mapAccountBalance (okxAccount: OkxAccountBalance) : AccountBalance =
-        {
-            MarketType = MarketType.Okx
-            TotalEquity = parseDecimal okxAccount.TotalEq
-            AvailableBalance = parseDecimal okxAccount.AvailEq
-            UsedMargin = parseDecimal okxAccount.Imr
-            UnrealizedPnl = parseDecimal okxAccount.Upl
-            Balances = okxAccount.Details |> List.map mapBalanceDetail
-            UpdatedAt = DateTime.UtcNow
-        }
+        { MarketType = MarketType.Okx
+          TotalEquity = parseDecimal okxAccount.TotalEq
+          AvailableBalance = parseDecimal okxAccount.AvailEq
+          UsedMargin = parseDecimal okxAccount.Imr
+          UnrealizedPnl = parseDecimal okxAccount.Upl
+          Balances = okxAccount.Details |> List.map mapBalanceDetail
+          UpdatedAt = DateTime.UtcNow }
 
     let create (http: Http.T) (logger: ILogger) : BalanceProvider.T =
 
@@ -54,13 +48,11 @@ module BalanceProvider =
             task {
                 try
                     let mutable snapshot =
-                        {
-                            MarketType = MarketType.Okx
-                            Timestamp = DateTime.UtcNow
-                            Spot = Map.empty
-                            Funding = Map.empty
-                            AccountSummary = None
-                        }
+                        { MarketType = MarketType.Okx
+                          Timestamp = DateTime.UtcNow
+                          Spot = Map.empty
+                          Funding = Map.empty
+                          AccountSummary = None }
 
                     let! fundingResult = http.getFundingBalance None
 
@@ -126,9 +118,7 @@ module BalanceProvider =
                     return Error(Unexpected ex)
             }
 
-        {
-            MarketType = MarketType.Okx
-            GetBalances = getBalances
-            GetBalance = getBalance
-            GetTotalUsdtValue = getTotalUsdtValue
-        }
+        { MarketType = MarketType.Okx
+          GetBalances = getBalances
+          GetBalance = getBalance
+          GetTotalUsdtValue = getTotalUsdtValue }

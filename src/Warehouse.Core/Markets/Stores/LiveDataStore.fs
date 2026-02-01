@@ -13,26 +13,20 @@ module LiveDataStore =
     type private DataKey = { Symbol: string; MarketType: MarketType }
 
     type private DataSnapshot =
-        {
-            Asks: ConcurrentDictionary<decimal, struct (decimal * int)>
-            Bids: ConcurrentDictionary<decimal, struct (decimal * int)>
-        }
+        { Asks: ConcurrentDictionary<decimal, struct (decimal * int)>
+          Bids: ConcurrentDictionary<decimal, struct (decimal * int)> }
 
         static member Create() =
-            {
-                Asks = ConcurrentDictionary<decimal, struct (decimal * int)>()
-                Bids = ConcurrentDictionary<decimal, struct (decimal * int)>()
-            }
+            { Asks = ConcurrentDictionary<decimal, struct (decimal * int)>()
+              Bids = ConcurrentDictionary<decimal, struct (decimal * int)>() }
 
         static member ToMarketData(snapshot: DataSnapshot) : MarketData =
             { Asks = snapshot.Asks.ToFrozenDictionary(); Bids = snapshot.Bids.ToFrozenDictionary() }
 
     type T =
-        {
-            Get: string -> MarketType -> MarketData option
-            Update: MarketDataEvent -> unit
-            Clean: MarketType -> unit
-        }
+        { Get: string -> MarketType -> MarketData option
+          Update: MarketDataEvent -> unit
+          Clean: MarketType -> unit }
 
     let create () : T =
         let cache = ConcurrentDictionary<DataKey, DataSnapshot>()
@@ -56,25 +50,23 @@ module LiveDataStore =
                     if size = 0m then side.TryRemove(price) |> ignore else side[price] <- struct (size, orderCount)
                 | ValueNone -> ()
 
-        {
-            Get =
-                fun symbol marketType ->
-                    let key = { Symbol = symbol; MarketType = marketType }
+        { Get =
+            fun symbol marketType ->
+                let key = { Symbol = symbol; MarketType = marketType }
 
-                    match cache.TryGetValue(key) with
-                    | true, snapshot -> Some(DataSnapshot.ToMarketData snapshot)
-                    | false, _ -> None
+                match cache.TryGetValue(key) with
+                | true, snapshot -> Some(DataSnapshot.ToMarketData snapshot)
+                | false, _ -> None
 
-            Update =
-                fun marketDataEvent ->
-                    let key = { Symbol = marketDataEvent.Symbol; MarketType = marketDataEvent.Source }
-                    let snapshot = cache.GetOrAdd(key, fun _ -> DataSnapshot.Create())
-                    updateSide snapshot.Asks marketDataEvent.Asks
-                    updateSide snapshot.Bids marketDataEvent.Bids
+          Update =
+            fun marketDataEvent ->
+                let key = { Symbol = marketDataEvent.Symbol; MarketType = marketDataEvent.Source }
+                let snapshot = cache.GetOrAdd(key, fun _ -> DataSnapshot.Create())
+                updateSide snapshot.Asks marketDataEvent.Asks
+                updateSide snapshot.Bids marketDataEvent.Bids
 
-            Clean =
-                fun marketType ->
-                    cache.Keys
-                    |> Seq.filter (fun x -> x.MarketType = marketType)
-                    |> Seq.iter (fun x -> cache.TryRemove x |> ignore)
-        }
+          Clean =
+            fun marketType ->
+                cache.Keys
+                |> Seq.filter (fun x -> x.MarketType = marketType)
+                |> Seq.iter (fun x -> cache.TryRemove x |> ignore) }

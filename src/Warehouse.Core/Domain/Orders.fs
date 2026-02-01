@@ -16,23 +16,21 @@ type OrderStatus =
 
 [<CLIMutable>]
 type Order =
-    {
-        Id: int
-        PipelineId: Nullable<int>
-        MarketType: MarketType
-        ExchangeOrderId: string
-        Symbol: string
-        Side: OrderSide
-        Status: OrderStatus
-        Quantity: decimal
-        Price: Nullable<decimal>
-        StopPrice: Nullable<decimal>
-        Fee: Nullable<decimal>
-        PlacedAt: Nullable<DateTime>
-        ExecutedAt: Nullable<DateTime>
-        CancelledAt: Nullable<DateTime>
-        TakeProfit: Nullable<decimal>
-        StopLoss: Nullable<decimal>
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      PipelineId: Nullable<int>
+      MarketType: MarketType
+      ExchangeOrderId: string
+      Symbol: string
+      Side: OrderSide
+      Status: OrderStatus
+      Quantity: decimal
+      Price: Nullable<decimal>
+      StopPrice: Nullable<decimal>
+      Fee: Nullable<decimal>
+      PlacedAt: Nullable<DateTime>
+      ExecutedAt: Nullable<DateTime>
+      CancelledAt: Nullable<DateTime>
+      TakeProfit: Nullable<decimal>
+      StopLoss: Nullable<decimal>
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }

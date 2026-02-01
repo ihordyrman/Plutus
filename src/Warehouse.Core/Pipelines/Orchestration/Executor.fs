@@ -19,27 +19,24 @@ module Executor =
         { mutable Cts: CancellationTokenSource option; mutable Task: Task option; mutable IsRunning: bool }
 
     type T =
-        {
-            PipelineId: int
-            Start: CancellationToken -> Task<unit>
-            Stop: unit -> Task<unit>
-            IsRunning: unit -> bool
-        }
+        { PipelineId: int
+          Start: CancellationToken -> Task<unit>
+          Stop: unit -> Task<unit>
+          IsRunning: unit -> bool }
 
     let private loadPipeline (repo: PipelineRepository.T) (pipelineId: int) (ct: CancellationToken) =
         task {
             let! pipeline = repo.GetById pipelineId ct
 
             match pipeline with
-            | Error _ -> return Option.None
+            | Error _ -> return None
             | Ok pipeline -> return Some pipeline
         }
 
     let private createContext (pipeline: Pipeline) (currentPrice: decimal) (marketData: MarketData option) =
         { TradingContext.empty pipeline.Id pipeline.Symbol pipeline.MarketType with
             CurrentPrice = currentPrice
-            CurrentMarketData = marketData
-        }
+            CurrentMarketData = marketData }
 
     let private executeLoop
         (services: IServiceProvider)
@@ -56,7 +53,7 @@ module Executor =
                     let stepsRepository = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
 
                     match! loadPipeline pipelineRepository pipelineId ct with
-                    | Option.None ->
+                    | None ->
                         logger.LogWarning("Pipeline {PipelineId} not found, stopping executor", pipelineId)
                         return ()
 
@@ -76,13 +73,11 @@ module Executor =
                             let stepConfigs =
                                 steps
                                 |> List.map (fun step ->
-                                    {
-                                        Builder.StepTypeKey = step.StepTypeKey
-                                        Builder.Order = step.Order
-                                        Builder.IsEnabled = step.IsEnabled
-                                        Builder.Parameters =
-                                            step.Parameters |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq
-                                    }
+                                    { Builder.StepTypeKey = step.StepTypeKey
+                                      Builder.Order = step.Order
+                                      Builder.IsEnabled = step.IsEnabled
+                                      Builder.Parameters =
+                                        step.Parameters |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq }
                                 )
 
                             match Builder.buildSteps registry scope.ServiceProvider stepConfigs with
@@ -116,7 +111,7 @@ module Executor =
                                     do! Task.Delay(pipeline.ExecutionInterval, ct)
                                 | Ok latestCandle ->
                                     match latestCandle with
-                                    | Option.None ->
+                                    | None ->
                                         logger.LogWarning(
                                             "No candlestick data for {Symbol}, skipping execution",
                                             pipeline.Symbol
@@ -165,7 +160,7 @@ module Executor =
         : T
         =
 
-        let state = { Cts = Option.None; Task = Option.None; IsRunning = false }
+        let state = { Cts = None; Task = None; IsRunning = false }
 
         let start (ct: CancellationToken) =
             task {
@@ -191,8 +186,8 @@ module Executor =
                         ()
 
                     cts.Dispose()
-                    state.Cts <- Option.None
-                    state.Task <- Option.None
+                    state.Cts <- None
+                    state.Task <- None
                     state.IsRunning <- false
                     logger.LogInformation("Stopped executor for pipeline {PipelineId}", pipelineId)
                 | _ -> ()

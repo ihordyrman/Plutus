@@ -14,18 +14,16 @@ module PipelineStepRepository =
     open Errors
 
     type T =
-        {
-            GetById: int -> CancellationToken -> Task<Result<PipelineStep, ServiceError>>
-            GetByPipelineId: int -> CancellationToken -> Task<Result<PipelineStep list, ServiceError>>
-            Create: PipelineStep -> CancellationToken -> Task<Result<PipelineStep, ServiceError>>
-            Update: PipelineStep -> CancellationToken -> Task<Result<PipelineStep, ServiceError>>
-            Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
-            DeleteByPipelineId: int -> CancellationToken -> Task<Result<int, ServiceError>>
-            SetEnabled: int -> bool -> CancellationToken -> Task<Result<unit, ServiceError>>
-            SwapOrders: PipelineStep -> PipelineStep -> CancellationToken -> Task<Result<unit, ServiceError>>
-            ReorderSteps: int -> int list -> CancellationToken -> Task<Result<unit, ServiceError>>
-            GetMaxOrder: int -> CancellationToken -> Task<Result<int, ServiceError>>
-        }
+        { GetById: int -> CancellationToken -> Task<Result<PipelineStep, ServiceError>>
+          GetByPipelineId: int -> CancellationToken -> Task<Result<PipelineStep list, ServiceError>>
+          Create: PipelineStep -> CancellationToken -> Task<Result<PipelineStep, ServiceError>>
+          Update: PipelineStep -> CancellationToken -> Task<Result<PipelineStep, ServiceError>>
+          Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
+          DeleteByPipelineId: int -> CancellationToken -> Task<Result<int, ServiceError>>
+          SetEnabled: int -> bool -> CancellationToken -> Task<Result<unit, ServiceError>>
+          SwapOrders: PipelineStep -> PipelineStep -> CancellationToken -> Task<Result<unit, ServiceError>>
+          ReorderSteps: int -> int list -> CancellationToken -> Task<Result<unit, ServiceError>>
+          GetMaxOrder: int -> CancellationToken -> Task<Result<int, ServiceError>> }
 
     let private getById (scopeFactory: IServiceScopeFactory) (logger: ILogger) (id: int) (_: CancellationToken) =
         task {
@@ -42,10 +40,10 @@ module PipelineStepRepository =
                     return Ok(entity)
                 | None ->
                     logger.LogWarning("Step {Id} not found", id)
-                    return Result.Error(NotFound $"Step with id {id}")
+                    return Error(NotFound $"Step with id {id}")
             with ex ->
                 logger.LogError(ex, "Failed to get step {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getByPipelineId
@@ -70,7 +68,7 @@ module PipelineStepRepository =
                 return Ok steps
             with ex ->
                 logger.LogError(ex, "Failed to get steps for pipeline {PipelineId}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private createStep
@@ -102,7 +100,7 @@ module PipelineStepRepository =
                 return Ok { step with Id = result; CreatedAt = now; UpdatedAt = now }
             with ex ->
                 logger.LogError(ex, "Failed to create step for pipeline {PipelineId}", step.PipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private updateStep
@@ -142,10 +140,10 @@ module PipelineStepRepository =
                     return Ok step
                 else
                     logger.LogWarning("Step {Id} not found for update", step.Id)
-                    return Result.Error(NotFound $"Step with id {step.Id}")
+                    return Error(NotFound $"Step with id {step.Id}")
             with ex ->
                 logger.LogError(ex, "Failed to update step {Id}", step.Id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private deleteStep
@@ -173,10 +171,10 @@ module PipelineStepRepository =
                     return Ok()
                 else
                     logger.LogWarning("Step {Id} not found for deletion", id)
-                    return Result.Error(NotFound $"Step with id {id}")
+                    return Error(NotFound $"Step with id {id}")
             with ex ->
                 logger.LogError(ex, "Failed to delete step {Id}", id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private deleteByPipelineId
@@ -203,7 +201,7 @@ module PipelineStepRepository =
                 return Ok rowsAffected
             with ex ->
                 logger.LogError(ex, "Failed to delete steps for pipeline {PipelineId}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private setEnabled
@@ -234,10 +232,10 @@ module PipelineStepRepository =
                     return Ok()
                 else
                     logger.LogWarning("Step {Id} not found for enable/disable", stepId)
-                    return Result.Error(NotFound $"Step with id {stepId}")
+                    return Error(NotFound $"Step with id {stepId}")
             with ex ->
                 logger.LogError(ex, "Failed to set enabled for step {Id}", stepId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private swapOrders
@@ -264,13 +262,11 @@ module PipelineStepRepository =
                                END,
                                updated_at = @UpdatedAt
                                WHERE id IN (@Id1, @Id2)""",
-                            {|
-                                Id1 = step1.Id
-                                Order1 = step1.Order
-                                Id2 = step2.Id
-                                Order2 = step2.Order
-                                UpdatedAt = now
-                            |},
+                            {| Id1 = step1.Id
+                               Order1 = step1.Order
+                               Id2 = step2.Id
+                               Order2 = step2.Order
+                               UpdatedAt = now |},
                             cancellationToken = cancellation
                         )
                     )
@@ -280,10 +276,10 @@ module PipelineStepRepository =
                     return Ok()
                 else
                     logger.LogWarning("Steps {Id1} or {Id2} not found for order swap", step1.Id, step2.Id)
-                    return Result.Error(NotFound $"Steps with ids {step1.Id} or {step2.Id} not found")
+                    return Error(NotFound $"Steps with ids {step1.Id} or {step2.Id} not found")
             with ex ->
                 logger.LogError(ex, "Failed to update order for steps {Id1} and {Id2}", step1.Id, step2.Id)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private reorderSteps
@@ -327,7 +323,7 @@ module PipelineStepRepository =
                 return Ok()
             with ex ->
                 logger.LogError(ex, "Failed to reorder steps for pipeline {PipelineId}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let private getMaxOrder
@@ -355,22 +351,20 @@ module PipelineStepRepository =
                 return Ok maxOrder
             with ex ->
                 logger.LogError(ex, "Failed to get max order for pipeline {PipelineId}", pipelineId)
-                return Result.Error(Unexpected ex)
+                return Error(Unexpected ex)
         }
 
     let create (scopeFactory: IServiceScopeFactory) : T =
         let loggerFactory = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILoggerFactory>()
         let logger = loggerFactory.CreateLogger("PipelineStepRepository")
 
-        {
-            GetById = getById scopeFactory logger
-            GetByPipelineId = getByPipelineId scopeFactory logger
-            Create = createStep scopeFactory logger
-            Update = updateStep scopeFactory logger
-            Delete = deleteStep scopeFactory logger
-            DeleteByPipelineId = deleteByPipelineId scopeFactory logger
-            SetEnabled = setEnabled scopeFactory logger
-            SwapOrders = swapOrders scopeFactory logger
-            ReorderSteps = reorderSteps scopeFactory logger
-            GetMaxOrder = getMaxOrder scopeFactory logger
-        }
+        { GetById = getById scopeFactory logger
+          GetByPipelineId = getByPipelineId scopeFactory logger
+          Create = createStep scopeFactory logger
+          Update = updateStep scopeFactory logger
+          Delete = deleteStep scopeFactory logger
+          DeleteByPipelineId = deleteByPipelineId scopeFactory logger
+          SetEnabled = setEnabled scopeFactory logger
+          SwapOrders = swapOrders scopeFactory logger
+          ReorderSteps = reorderSteps scopeFactory logger
+          GetMaxOrder = getMaxOrder scopeFactory logger }

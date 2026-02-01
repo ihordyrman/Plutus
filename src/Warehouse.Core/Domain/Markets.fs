@@ -15,13 +15,11 @@ type ConnectionState =
 
 [<CLIMutable>]
 type Market =
-    {
-        Id: int
-        Type: MarketType
-        ApiKey: string
-        Passphrase: string option
-        SecretKey: string
-        IsSandbox: bool
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      Type: MarketType
+      ApiKey: string
+      Passphrase: string option
+      SecretKey: string
+      IsSandbox: bool
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }

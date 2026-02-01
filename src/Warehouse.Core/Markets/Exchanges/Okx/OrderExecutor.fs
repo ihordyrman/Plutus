@@ -18,18 +18,16 @@ module OrderExecutor =
     let mapToRequest (order: Order) =
         let isLimitOrder = order.Price.HasValue && order.Price.Value > 0m
 
-        {
-            InstrumentId = order.Symbol
-            TradeMode = "cash"
-            Side = toOkxSide order.Side
-            OrderType = if isLimitOrder then "limit" else "market"
-            Size = order.Quantity.ToString(CultureInfo.InvariantCulture)
-            Price = if isLimitOrder then Some(order.Price.Value.ToString(CultureInfo.InvariantCulture)) else None
-            ClientOrderId = Some(order.Id.ToString(CultureInfo.InvariantCulture))
-            Tag = Some(order.Id.ToString())
-            ReduceOnly = None
-            TargetCurrency = None
-        }
+        { InstrumentId = order.Symbol
+          TradeMode = "cash"
+          Side = toOkxSide order.Side
+          OrderType = if isLimitOrder then "limit" else "market"
+          Size = order.Quantity.ToString(CultureInfo.InvariantCulture)
+          Price = if isLimitOrder then Some(order.Price.Value.ToString(CultureInfo.InvariantCulture)) else None
+          ClientOrderId = Some(order.Id.ToString(CultureInfo.InvariantCulture))
+          Tag = Some(order.Id.ToString())
+          ReduceOnly = None
+          TargetCurrency = None }
 
     let create (http: Http.T) (logger: ILogger) : OrderExecutor.T =
         let executeOrder (order: Order) _ =

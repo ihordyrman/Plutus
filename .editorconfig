@@ -11,7 +11,7 @@ max_line_length = 120
 tab_width = 4
 
 [*.{fs,fsi,fsx}]
-fsharp_multiline_bracket_style = aligned
+fsharp_multiline_bracket_style = cramped
 fsharp_multi_line_lambda_closing_newline = true
 
 [*/Warehouse.App/Pages/*.fs]

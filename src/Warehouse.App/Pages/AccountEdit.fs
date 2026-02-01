@@ -16,12 +16,10 @@ type EditAccountViewModel =
     { Id: int; MarketType: MarketType; ApiKeyMasked: string; HasPassphrase: bool; IsSandbox: bool }
 
 type EditFormData =
-    {
-        ApiKey: string option
-        SecretKey: string option
-        Passphrase: string option
-        IsSandbox: bool
-    }
+    { ApiKey: string option
+      SecretKey: string option
+      Passphrase: string option
+      IsSandbox: bool }
 
     static member Empty = { ApiKey = None; SecretKey = None; Passphrase = None; IsSandbox = true }
 
@@ -45,31 +43,27 @@ module Data =
                 let! result = repository.GetById marketId CancellationToken.None
 
                 match result with
-                | Result.Error _ -> return None
-                | Result.Ok market ->
+                | Error _ -> return None
+                | Ok market ->
                     return
                         Some
-                            {
-                                Id = market.Id
-                                MarketType = market.Type
-                                ApiKeyMasked = maskApiKey market.ApiKey
-                                HasPassphrase =
-                                    market.Passphrase
-                                    |> Option.map (fun c -> not (String.IsNullOrEmpty c))
-                                    |> Option.defaultValue false
-                                IsSandbox = market.IsSandbox
-                            }
+                            { Id = market.Id
+                              MarketType = market.Type
+                              ApiKeyMasked = maskApiKey market.ApiKey
+                              HasPassphrase =
+                                market.Passphrase
+                                |> Option.map (fun c -> not (String.IsNullOrEmpty c))
+                                |> Option.defaultValue false
+                              IsSandbox = market.IsSandbox }
             with _ ->
                 return None
         }
 
     let parseFormData (form: FormData) : EditFormData =
-        {
-            ApiKey = form.TryGetString "apiKey"
-            SecretKey = form.TryGetString "secretKey"
-            Passphrase = form.TryGetString "passphrase"
-            IsSandbox = form.TryGetString "isSandbox" |> Option.map (fun _ -> true) |> Option.defaultValue false
-        }
+        { ApiKey = form.TryGetString "apiKey"
+          SecretKey = form.TryGetString "secretKey"
+          Passphrase = form.TryGetString "passphrase"
+          IsSandbox = form.TryGetString "isSandbox" |> Option.map (fun _ -> true) |> Option.defaultValue false }
 
     let updateAccount (scopeFactory: IServiceScopeFactory) (marketId: int) (formData: EditFormData) : Task<EditResult> =
         task {
@@ -80,22 +74,20 @@ module Data =
                 let! existingMarket = repository.GetById marketId CancellationToken.None
 
                 match existingMarket with
-                | Result.Error(Errors.NotFound _) -> return NotFoundError
-                | Result.Error err -> return ServerError(Errors.serviceMessage err)
-                | Result.Ok _ ->
+                | Error(Errors.NotFound _) -> return NotFoundError
+                | Error err -> return ServerError(Errors.serviceMessage err)
+                | Ok _ ->
                     let updateRequest: MarketRepository.UpdateMarketRequest =
-                        {
-                            ApiKey = formData.ApiKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
-                            SecretKey = formData.SecretKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
-                            Passphrase = formData.Passphrase
-                            IsSandbox = Some formData.IsSandbox
-                        }
+                        { ApiKey = formData.ApiKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                          SecretKey = formData.SecretKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
+                          Passphrase = formData.Passphrase
+                          IsSandbox = Some formData.IsSandbox }
 
                     let! updateResult = repository.Update marketId updateRequest CancellationToken.None
 
                     match updateResult with
-                    | Result.Ok _ -> return Success
-                    | Result.Error err -> return ServerError(Errors.serviceMessage err)
+                    | Ok _ -> return Success
+                    | Error err -> return ServerError(Errors.serviceMessage err)
             with ex ->
                 return ServerError $"Failed to update account: {ex.Message}"
         }
@@ -108,8 +100,8 @@ module Data =
                 let! result = repository.Delete marketId CancellationToken.None
 
                 match result with
-                | Result.Ok() -> return true
-                | Result.Error _ -> return false
+                | Ok() -> return true
+                | Error _ -> return false
             with _ ->
                 return false
         }

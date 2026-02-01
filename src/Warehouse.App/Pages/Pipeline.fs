@@ -6,72 +6,54 @@ open System.Threading.Tasks
 open Falco
 open Falco.Htmx
 open Falco.Markup
-open Falco.Markup.Elem
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Warehouse.Core.Domain
-open Warehouse.Core.Queries
 open Warehouse.Core.Repositories
 open Warehouse.Core.Repositories.PipelineRepository
 open Warehouse.Core.Shared
 
 type PipelineListItem =
-    {
-        Id: int
-        Symbol: string
-        MarketType: MarketType
-        Enabled: bool
-        Tags: string list
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      Symbol: string
+      MarketType: MarketType
+      Enabled: bool
+      Tags: string list
+      UpdatedAt: DateTime }
 
 type PipelinesGridData =
-    {
-        Tags: string list
-        MarketTypes: string list
-        Pipelines: PipelineListItem list
-    }
+    { Tags: string list
+      MarketTypes: string list
+      Pipelines: PipelineListItem list }
 
     static member Empty = { Tags = []; MarketTypes = []; Pipelines = [] }
 
 type PipelineFilters =
-    {
-        SearchTerm: string option
-        Tag: string option
-        MarketType: string option
-        Status: string option
-        SortBy: string
-        Page: int
-        PageSize: int
-    }
+    { SearchTerm: string option
+      Tag: string option
+      MarketType: string option
+      Status: string option
+      SortBy: string
+      Page: int
+      PageSize: int }
 
     static member Empty =
-        {
-            SearchTerm = None
-            Tag = None
-            MarketType = None
-            Status = None
-            SortBy = "symbol"
-            Page = 1
-            PageSize = 20
-        }
+        { SearchTerm = None
+          Tag = None
+          MarketType = None
+          Status = None
+          SortBy = "symbol"
+          Page = 1
+          PageSize = 20 }
 
 type PipelinesTableData =
-    {
-        Pipelines: PipelineListItem list
-        TotalCount: int
-        Page: int
-        PageSize: int
-    }
+    { Pipelines: PipelineListItem list
+      TotalCount: int
+      Page: int
+      PageSize: int }
 
-    static member Empty =
-        {
-            Pipelines = []
-            TotalCount = 0
-            Page = 1
-            PageSize = 20
-        }
+    static member Empty = { Pipelines = []; TotalCount = 0; Page = 1; PageSize = 20 }
 
 module Data =
     let getTags (scopeFactory: IServiceScopeFactory) : Task<string list> =
@@ -134,14 +116,12 @@ module Data =
                 let pipelineItems =
                     pipelines
                     |> List.map (fun p ->
-                        {
-                            Id = p.Id
-                            Symbol = p.Symbol
-                            MarketType = p.MarketType
-                            Enabled = p.Enabled
-                            Tags = p.Tags
-                            UpdatedAt = p.UpdatedAt
-                        }
+                        { Id = p.Id
+                          Symbol = p.Symbol
+                          MarketType = p.MarketType
+                          Enabled = p.Enabled
+                          Tags = p.Tags
+                          UpdatedAt = p.UpdatedAt }
                     )
 
                 return { Tags = tags; MarketTypes = marketTypes; Pipelines = pipelineItems }
@@ -163,13 +143,11 @@ module Data =
                 | _ -> None
 
             let searchFilters: SearchFilters =
-                {
-                    SearchTerm = filters.SearchTerm
-                    Tag = filters.Tag
-                    MarketType = filters.MarketType
-                    Status = status
-                    SortBy = filters.SortBy
-                }
+                { SearchTerm = filters.SearchTerm
+                  Tag = filters.Tag
+                  MarketType = filters.MarketType
+                  Status = status
+                  SortBy = filters.SortBy }
 
             let skip = (filters.Page - 1) * filters.PageSize
             let! result = repository.Search searchFilters skip filters.PageSize CancellationToken.None
@@ -180,23 +158,19 @@ module Data =
                 let pipelineItems =
                     result.Pipelines
                     |> List.map (fun p ->
-                        {
-                            Id = p.Id
-                            Symbol = p.Symbol
-                            MarketType = p.MarketType
-                            Enabled = p.Enabled
-                            Tags = p.Tags
-                            UpdatedAt = p.UpdatedAt
-                        }
+                        { Id = p.Id
+                          Symbol = p.Symbol
+                          MarketType = p.MarketType
+                          Enabled = p.Enabled
+                          Tags = p.Tags
+                          UpdatedAt = p.UpdatedAt }
                     )
 
                 return
-                    {
-                        Pipelines = pipelineItems
-                        TotalCount = result.TotalCount
-                        Page = filters.Page
-                        PageSize = filters.PageSize
-                    }
+                    { Pipelines = pipelineItems
+                      TotalCount = result.TotalCount
+                      Page = filters.Page
+                      PageSize = filters.PageSize }
         }
 
 module View =
@@ -268,19 +242,16 @@ module View =
                     filterSelect "filterTag" "Tag" data.Tags
                     filterSelect "filterAccount" "Account" data.MarketTypes
                     filterSelectLabeled "filterStatus" "Status" [ ("enabled", "Enabled"); ("disabled", "Disabled") ]
-                    filterSelectLabeled
-                        "sortBy"
-                        "Sort By"
-                        [
-                            ("symbol", "Symbol A-Z")
-                            ("symbol-desc", "Symbol Z-A")
-                            ("account", "Account A-Z")
-                            ("account-desc", "Account Z-A")
-                            ("status", "Status Asc")
-                            ("status-desc", "Status Desc")
-                            ("updated", "Oldest First")
-                            ("updated-desc", "Newest First")
-                        ]
+                    filterSelectLabeled "sortBy" "Sort By" [
+                        ("symbol", "Symbol A-Z")
+                        ("symbol-desc", "Symbol Z-A")
+                        ("account", "Account A-Z")
+                        ("account-desc", "Account Z-A")
+                        ("status", "Status Asc")
+                        ("status-desc", "Status Desc")
+                        ("updated", "Oldest First")
+                        ("updated-desc", "Newest First")
+                    ]
                 ]
             ]
         ]
@@ -289,14 +260,12 @@ module View =
         _thead [ _class_ "bg-gray-50" ] [
             _tr [] [
                 for (text, align) in
-                    [
-                        "Symbol", "left"
-                        "Account", "left"
-                        "Status", "left"
-                        "Tags", "left"
-                        "Last Updated", "left"
-                        "Actions", "right"
-                    ] do
+                    [ "Symbol", "left"
+                      "Account", "left"
+                      "Status", "left"
+                      "Tags", "left"
+                      "Last Updated", "left"
+                      "Actions", "right" ] do
                     _th [ _class_ $"px-6 py-3 text-{align} text-xs font-medium text-gray-500 uppercase tracking-wider" ] [
                         Text.raw text
                     ]
@@ -401,9 +370,7 @@ module View =
                     else
                         Attr.create "disabled" "disabled"
                 ] [ Text.raw "Previous" ]
-                _span [ _class_ "px-3 py-1 text-sm text-gray-700" ] [
-                    Text.raw $"Page {data.Page} of {totalPages}"
-                ]
+                _span [ _class_ "px-3 py-1 text-sm text-gray-700" ] [ Text.raw $"Page {data.Page} of {totalPages}" ]
                 _button [
                     _type_ "button"
                     _class_ $"px-3 py-1 text-sm font-medium rounded-md {nextBtnClass}"
@@ -436,12 +403,7 @@ module View =
 
     let private pipelinesTable =
         _div [ _class_ "card overflow-hidden" ] [
-            _div [
-                _id_ "pipelines-table-container"
-                Hx.get "/pipelines/table"
-                Hx.trigger "load"
-                Hx.swapOuterHtml
-            ] [
+            _div [ _id_ "pipelines-table-container"; Hx.get "/pipelines/table"; Hx.trigger "load"; Hx.swapOuterHtml ] [
                 _div [ _class_ "overflow-x-auto" ] [
                     _table [ _class_ "min-w-full divide-y divide-gray-200" ] [
                         tableHeader
@@ -502,15 +464,13 @@ module Handler =
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
 
                     let filters: PipelineFilters =
-                        {
-                            SearchTerm = tryGetQueryStringValue ctx.Request.Query "searchTerm"
-                            Tag = tryGetQueryStringValue ctx.Request.Query "filterTag"
-                            MarketType = tryGetQueryStringValue ctx.Request.Query "filterAccount"
-                            Status = tryGetQueryStringValue ctx.Request.Query "filterStatus"
-                            SortBy = tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "symbol"
-                            Page = tryGetQueryStringInt ctx.Request.Query "page" 1
-                            PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20
-                        }
+                        { SearchTerm = tryGetQueryStringValue ctx.Request.Query "searchTerm"
+                          Tag = tryGetQueryStringValue ctx.Request.Query "filterTag"
+                          MarketType = tryGetQueryStringValue ctx.Request.Query "filterAccount"
+                          Status = tryGetQueryStringValue ctx.Request.Query "filterStatus"
+                          SortBy = tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "symbol"
+                          Page = tryGetQueryStringInt ctx.Request.Query "page" 1
+                          PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20 }
 
                     let! data = Data.getFilteredPipelines scopeFactory filters
                     return! Response.ofHtml (View.tableBody data) ctx

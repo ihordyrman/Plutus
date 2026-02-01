@@ -21,12 +21,10 @@ module Steps =
         | Execution = 3
 
     type StepDefinition<'ctx> =
-        {
-            Key: string
-            Name: string
-            Description: string
-            Category: StepCategory
-            Icon: string
-            ParameterSchema: ParameterSchema
-            Create: ValidatedParams -> IServiceProvider -> Step<'ctx>
-        }
+        { Key: string
+          Name: string
+          Description: string
+          Category: StepCategory
+          Icon: string
+          ParameterSchema: ParameterSchema
+          Create: ValidatedParams -> IServiceProvider -> Step<'ctx> }

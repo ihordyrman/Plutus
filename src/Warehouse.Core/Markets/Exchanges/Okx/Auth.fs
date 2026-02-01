@@ -23,10 +23,5 @@ module Auth =
 
         let sign = generateSignature timestamp, config.SecretKey, "GET", "/users/self/verify", ""
 
-        {|
-            op = "login"
-            args =
-                [|
-                    {| apiKey = config.ApiKey; passphrase = config.Passphrase; timestamp = timestamp; sign = sign |}
-                |]
-        |}
+        {| op = "login"
+           args = [| {| apiKey = config.ApiKey; passphrase = config.Passphrase; timestamp = timestamp; sign = sign |} |] |}

@@ -11,30 +11,26 @@ type PipelineStatus =
 
 [<CLIMutable>]
 type Pipeline =
-    {
-        Id: int
-        Name: string
-        Symbol: string
-        MarketType: MarketType
-        Enabled: bool
-        ExecutionInterval: TimeSpan
-        LastExecutedAt: Nullable<DateTime>
-        Status: PipelineStatus
-        Tags: string list
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      Name: string
+      Symbol: string
+      MarketType: MarketType
+      Enabled: bool
+      ExecutionInterval: TimeSpan
+      LastExecutedAt: Nullable<DateTime>
+      Status: PipelineStatus
+      Tags: string list
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }
 
 [<CLIMutable>]
 type PipelineStep =
-    {
-        Id: int
-        PipelineId: int
-        StepTypeKey: string
-        Name: string
-        Order: int
-        IsEnabled: bool
-        Parameters: Dictionary<string, string>
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      PipelineId: int
+      StepTypeKey: string
+      Name: string
+      Order: int
+      IsEnabled: bool
+      Parameters: Dictionary<string, string>
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }

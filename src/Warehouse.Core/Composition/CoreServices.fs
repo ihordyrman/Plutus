@@ -84,14 +84,6 @@ module CoreServices =
         )
         |> ignore
 
-    let private positionRepository (services: IServiceCollection) =
-        services.AddScoped<PositionRepository.T>(fun provider ->
-            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
-            PositionRepository.create scopeFactory loggerFactory
-        )
-        |> ignore
-
     let private okxAdapter (services: IServiceCollection) =
         services.AddSingleton<OkxAdapter.T>(fun provider ->
             let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
@@ -218,41 +210,35 @@ module CoreServices =
     let register (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [
-            pipelineRepository
-            pipelineStepRepository
-            candlestickRepository
-            marketRepository
-            positionRepository
-            liveDataStore
-            balanceManager
-            credentialsStore
-            heartbeat
-            httpClientFactory
-            httpClient
-            marketConnectionService
-            okxAdapter
-            okxWorker
-            orderExecutor
-            pipelineOrchestrator
-            webSocketClient
-        ]
+        [ pipelineRepository
+          pipelineStepRepository
+          candlestickRepository
+          marketRepository
+          liveDataStore
+          balanceManager
+          credentialsStore
+          heartbeat
+          httpClientFactory
+          httpClient
+          marketConnectionService
+          okxAdapter
+          okxWorker
+          orderExecutor
+          pipelineOrchestrator
+          webSocketClient ]
         |> List.iter (fun addService -> addService services)
 
     let registerSlim (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [
-            pipelineRepository
-            pipelineStepRepository
-            candlestickRepository
-            marketRepository
-            positionRepository
-            liveDataStore
-            credentialsStore
-            httpClientFactory
-            httpClient
-            okxAdapter
-            orderExecutor
-        ]
+        [ pipelineRepository
+          pipelineStepRepository
+          candlestickRepository
+          marketRepository
+          liveDataStore
+          credentialsStore
+          httpClientFactory
+          httpClient
+          okxAdapter
+          orderExecutor ]
         |> List.iter (fun addService -> addService services)

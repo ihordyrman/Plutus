@@ -65,8 +65,7 @@ module Orchestrator =
                 let! result = repository.GetAll ct
 
                 match result with
-                | Error err ->
-                    logger.LogError("Failed to load pipelines: {Error}", err)
+                | Error err -> logger.LogError("Failed to load pipelines: {Error}", err)
                 | Ok pipelines ->
                     logger.LogDebug("Synchronizing {Count} pipelines", pipelines.Length)
 
@@ -135,8 +134,7 @@ module Orchestrator =
                     | Error _ ->
                         logger.LogWarning("Pipeline {PipelineId} not found", pipelineId)
                         return false
-                    | Ok pipeline ->
-                        return! startExecutor scope.ServiceProvider pipeline ct
+                    | Ok pipeline -> return! startExecutor scope.ServiceProvider pipeline ct
             }
 
         member _.StopPipelineAsync(pipelineId: int) = stopExecutor pipelineId

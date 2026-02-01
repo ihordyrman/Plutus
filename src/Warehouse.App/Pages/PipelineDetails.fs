@@ -12,18 +12,16 @@ open Warehouse.Core.Domain
 open Warehouse.Core.Repositories
 
 type PipelineDetailsInfo =
-    {
-        Id: int
-        Symbol: string
-        MarketType: MarketType
-        Enabled: bool
-        ExecutionInterval: TimeSpan
-        Status: PipelineStatus
-        Tags: string list
-        StepsCount: int
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      Symbol: string
+      MarketType: MarketType
+      Enabled: bool
+      ExecutionInterval: TimeSpan
+      Status: PipelineStatus
+      Tags: string list
+      StepsCount: int
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }
 
 module Data =
     let getPipelineDetails (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<PipelineDetailsInfo option> =
@@ -44,18 +42,16 @@ module Data =
 
                 return
                     Some
-                        {
-                            Id = pipeline.Id
-                            Symbol = pipeline.Symbol
-                            MarketType = pipeline.MarketType
-                            Enabled = pipeline.Enabled
-                            ExecutionInterval = pipeline.ExecutionInterval
-                            Status = pipeline.Status
-                            Tags = pipeline.Tags
-                            StepsCount = count
-                            CreatedAt = pipeline.CreatedAt
-                            UpdatedAt = pipeline.UpdatedAt
-                        }
+                        { Id = pipeline.Id
+                          Symbol = pipeline.Symbol
+                          MarketType = pipeline.MarketType
+                          Enabled = pipeline.Enabled
+                          ExecutionInterval = pipeline.ExecutionInterval
+                          Status = pipeline.Status
+                          Tags = pipeline.Tags
+                          StepsCount = count
+                          CreatedAt = pipeline.CreatedAt
+                          UpdatedAt = pipeline.UpdatedAt }
             | Error _ -> return None
         }
 

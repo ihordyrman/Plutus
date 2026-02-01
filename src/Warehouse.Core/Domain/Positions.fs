@@ -9,17 +9,15 @@ type PositionStatus =
 
 [<CLIMutable>]
 type Position =
-    {
-        Id: int
-        PipelineId: int
-        Symbol: string
-        EntryPrice: decimal
-        Quantity: decimal
-        BuyOrderId: int
-        SellOrderId: int
-        Status: PositionStatus
-        ExitPrice: Nullable<decimal>
-        ClosedAt: Nullable<DateTime>
-        CreatedAt: DateTime
-        UpdatedAt: DateTime
-    }
+    { Id: int
+      PipelineId: int
+      Symbol: string
+      EntryPrice: decimal
+      Quantity: decimal
+      BuyOrderId: int
+      SellOrderId: int
+      Status: PositionStatus
+      ExitPrice: Nullable<decimal>
+      ClosedAt: Nullable<DateTime>
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }
