@@ -40,13 +40,11 @@ module Seeding =
                                 connection.QuerySingleAsync<int>(
                                     "INSERT INTO markets (type, api_key, passphrase, secret_key, is_sandbox, created_at, updated_at)
                                      VALUES (@Type, @ApiKey, @Passphrase, @SecretKey, @IsSandbox, now(), now()) RETURNING id",
-                                    {|
-                                        Type = 0
-                                        ApiKey = apiKey
-                                        Passphrase = passPhrase
-                                        SecretKey = secretKey
-                                        IsSandbox = true
-                                    |}
+                                    {| Type = 0
+                                       ApiKey = apiKey
+                                       Passphrase = passPhrase
+                                       SecretKey = secretKey
+                                       IsSandbox = true |}
                                 )
                     }
 
