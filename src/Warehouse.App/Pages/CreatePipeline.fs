@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.CreatePipeline
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -79,7 +80,7 @@ module Data =
         task {
             try
                 use scope = scopeFactory.CreateScope()
-                let repo = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
                 let pipeline: Pipeline =
                     { Id = 0
@@ -94,7 +95,7 @@ module Data =
                       CreatedAt = DateTime.UtcNow
                       UpdatedAt = DateTime.UtcNow }
 
-                let! result = repo.Create pipeline CancellationToken.None
+                let! result = PipelineRepository.create db pipeline CancellationToken.None
 
                 match result with
                 | Ok created -> return Success created.Symbol

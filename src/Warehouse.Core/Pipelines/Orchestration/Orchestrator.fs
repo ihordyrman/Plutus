@@ -2,6 +2,7 @@ namespace Warehouse.Core.Pipelines.Orchestration
 
 open System
 open System.Collections.Concurrent
+open System.Data
 open System.Threading
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
@@ -61,8 +62,8 @@ module Orchestrator =
         let synchronize (services: IServiceProvider) (ct: CancellationToken) =
             task {
                 use scope = scopeFactory.CreateScope()
-                let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-                let! result = repository.GetAll ct
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let! result = PipelineRepository.getAll db ct
 
                 match result with
                 | Error err -> logger.LogError("Failed to load pipelines: {Error}", err)
@@ -127,8 +128,8 @@ module Orchestrator =
                     return false
                 else
                     use scope = scopeFactory.CreateScope()
-                    let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-                    let! result = repository.GetById pipelineId ct
+                    use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                    let! result = PipelineRepository.getById db pipelineId ct
 
                     match result with
                     | Error _ ->

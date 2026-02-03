@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.PipelineEdit
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -117,10 +118,9 @@ module Data =
     let getEditViewModel (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<EditPipelineViewModel option> =
         task {
             use scope = scopeFactory.CreateScope()
-            let pipelinesRepo = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-            let stepsRepo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
-            let! result = pipelinesRepo.GetById pipelineId CancellationToken.None
+            let! result = PipelineRepository.getById db pipelineId CancellationToken.None
 
             match result with
             | Error err ->
@@ -135,7 +135,7 @@ module Data =
                 return None
             | Ok pipeline ->
                 let allDefs = Registry.all registry
-                let! pipelineSteps = stepsRepo.GetByPipelineId pipelineId CancellationToken.None
+                let! pipelineSteps = PipelineStepRepository.getByPipelineId db pipelineId CancellationToken.None
 
                 let pipelineSteps =
                     match pipelineSteps with
@@ -181,9 +181,9 @@ module Data =
     let getSteps (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<StepItemViewModel list> =
         task {
             use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
-            let repo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! result = repo.GetByPipelineId pipelineId CancellationToken.None
+            let! result = PipelineStepRepository.getByPipelineId db pipelineId CancellationToken.None
 
             match result with
             | Error _ -> return []
@@ -202,9 +202,9 @@ module Data =
     let getStepDefinitions (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<StepDefinitionViewModel list> =
         task {
             use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
-            let repo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! steps = repo.GetByPipelineId pipelineId CancellationToken.None
+            let! steps = PipelineStepRepository.getByPipelineId db pipelineId CancellationToken.None
 
             let existingKeys =
                 match steps with
@@ -233,9 +233,9 @@ module Data =
         =
         task {
             use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
-            let repo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! result = repo.GetById stepId CancellationToken.None
+            let! result = PipelineStepRepository.getById db stepId CancellationToken.None
 
             match result with
             | Error _ -> return None
@@ -288,8 +288,8 @@ module Data =
             | Some symbol when String.IsNullOrWhiteSpace(symbol) -> return ValidationError "Symbol is required"
             | Some symbol ->
                 use scope = scopeFactory.CreateScope()
-                let repo = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-                let! result = repo.GetById pipelineId CancellationToken.None
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let! result = PipelineRepository.getById db pipelineId CancellationToken.None
 
                 match result with
                 | Error _ -> return NotFoundError
@@ -321,7 +321,7 @@ module Data =
                             Enabled = formData.Enabled
                             UpdatedAt = DateTime.UtcNow }
 
-                    let! updateResult = repo.Update updated CancellationToken.None
+                    let! updateResult = PipelineRepository.update db updated CancellationToken.None
 
                     match updateResult with
                     | Ok _ -> return Success
@@ -336,13 +336,13 @@ module Data =
         =
         task {
             use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
 
             match Registry.tryFind stepTypeKey registry with
             | None -> return None
             | Some def ->
-                let stepRepo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-                let! maxOrderResult = stepRepo.GetMaxOrder pipelineId CancellationToken.None
+                let! maxOrderResult = PipelineStepRepository.getMaxOrder db pipelineId CancellationToken.None
 
                 let maxOrder =
                     match maxOrderResult with
@@ -379,7 +379,7 @@ module Data =
                       CreatedAt = DateTime.UtcNow
                       UpdatedAt = DateTime.UtcNow }
 
-                let! createResult = stepRepo.Create newStep CancellationToken.None
+                let! createResult = PipelineStepRepository.create db newStep CancellationToken.None
 
                 match createResult with
                 | Error _ -> return None
@@ -394,15 +394,15 @@ module Data =
         =
         task {
             use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
-            let repo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! result = repo.GetById stepId CancellationToken.None
+            let! result = PipelineStepRepository.getById db stepId CancellationToken.None
 
             match result with
             | Ok step when step.PipelineId <> pipelineId -> return None
             | Ok step ->
-                let! _ = repo.SetEnabled stepId (not step.IsEnabled) CancellationToken.None
-                let! updatedResult = repo.GetById stepId CancellationToken.None
+                let! _ = PipelineStepRepository.setEnabled db stepId (not step.IsEnabled) CancellationToken.None
+                let! updatedResult = PipelineStepRepository.getById db stepId CancellationToken.None
 
                 match updatedResult with
                 | Error _ -> return None
@@ -417,14 +417,14 @@ module Data =
     let deleteStep (scopeFactory: IServiceScopeFactory) (pipelineId: int) (stepId: int) : Task<bool> =
         task {
             use scope = scopeFactory.CreateScope()
-            let stepRepo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! stepResult = stepRepo.GetById stepId CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! stepResult = PipelineStepRepository.getById db stepId CancellationToken.None
 
             match stepResult with
             | Error _ -> return false
             | Ok step when step.PipelineId <> pipelineId -> return false
             | Ok _ ->
-                let! deleteResult = stepRepo.Delete stepId CancellationToken.None
+                let! deleteResult = PipelineStepRepository.delete db stepId CancellationToken.None
                 return Result.isOk deleteResult
         }
 
@@ -437,8 +437,8 @@ module Data =
         =
         task {
             use scope = scopeFactory.CreateScope()
-            let repo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! result = repo.GetByPipelineId pipelineId CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! result = PipelineStepRepository.getByPipelineId db pipelineId CancellationToken.None
 
             match result with
             | Error _ -> return []
@@ -461,7 +461,7 @@ module Data =
                         let current = sortedSteps.[idx]
                         let target = sortedSteps.[tIdx]
 
-                        let! _ = repo.SwapOrders target current CancellationToken.None
+                        let! _ = PipelineStepRepository.swapOrders db target current CancellationToken.None
 
                         return! getSteps scopeFactory pipelineId
         }
@@ -475,9 +475,9 @@ module Data =
         =
         task {
             use scope = scopeFactory.CreateScope()
-            let repo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let registry = scope.ServiceProvider.GetRequiredService<Registry.T<TradingContext>>()
-            let! result = repo.GetById stepId CancellationToken.None
+            let! result = PipelineStepRepository.getById db stepId CancellationToken.None
 
             match result with
             | Error _ ->
@@ -557,7 +557,7 @@ module Data =
                                   Errors = errors |> List.map _.Message }
                     | Ok _ ->
                         let updatedStep = { step with Parameters = newParams; UpdatedAt = DateTime.UtcNow }
-                        let! updateResult = repo.Update updatedStep CancellationToken.None
+                        let! updateResult = PipelineStepRepository.update db updatedStep CancellationToken.None
 
                         match updateResult with
                         | Error err ->

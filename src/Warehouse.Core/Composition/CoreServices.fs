@@ -21,7 +21,6 @@ open Warehouse.Core.Markets.Stores
 open Warehouse.Core.Pipelines.Core
 open Warehouse.Core.Pipelines.Orchestration
 open Warehouse.Core.Pipelines.Trading
-open Warehouse.Core.Repositories
 open Warehouse.Core.Workers
 
 module CoreServices =
@@ -52,35 +51,6 @@ module CoreServices =
             let webSocket = provider.GetRequiredService<WebSocketClient.T>()
             let logger = provider.GetRequiredService<ILogger<Heartbeat.T>>()
             Heartbeat.create logger webSocket
-        )
-        |> ignore
-
-    let private pipelineRepository (services: IServiceCollection) =
-        services.AddScoped<PipelineRepository.T>(fun provider ->
-            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            PipelineRepository.create scopeFactory
-        )
-        |> ignore
-
-    let private pipelineStepRepository (services: IServiceCollection) =
-        services.AddScoped<PipelineStepRepository.T>(fun provider ->
-            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            PipelineStepRepository.create scopeFactory
-        )
-        |> ignore
-
-    let private candlestickRepository (services: IServiceCollection) =
-        services.AddScoped<CandlestickRepository.T>(fun provider ->
-            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            CandlestickRepository.create scopeFactory
-        )
-        |> ignore
-
-    let private marketRepository (services: IServiceCollection) =
-        services.AddScoped<MarketRepository.T>(fun provider ->
-            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
-            MarketRepository.create scopeFactory loggerFactory
         )
         |> ignore
 
@@ -210,11 +180,7 @@ module CoreServices =
     let register (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [ pipelineRepository
-          pipelineStepRepository
-          candlestickRepository
-          marketRepository
-          liveDataStore
+        [ liveDataStore
           balanceManager
           credentialsStore
           heartbeat
@@ -231,14 +197,5 @@ module CoreServices =
     let registerSlim (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [ pipelineRepository
-          pipelineStepRepository
-          candlestickRepository
-          marketRepository
-          liveDataStore
-          credentialsStore
-          httpClientFactory
-          httpClient
-          okxAdapter
-          orderExecutor ]
+        [ liveDataStore; credentialsStore; httpClientFactory; httpClient; okxAdapter; orderExecutor ]
         |> List.iter (fun addService -> addService services)

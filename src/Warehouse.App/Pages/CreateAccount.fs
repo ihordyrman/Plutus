@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.CreateAccount
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -64,8 +65,8 @@ module Data =
         task {
             try
                 use scope = scopeFactory.CreateScope()
-                let repository = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
-                let! existingMarket = repository.Exists input.MarketType CancellationToken.None
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let! existingMarket = MarketRepository.exists db input.MarketType CancellationToken.None
 
                 match existingMarket with
                 | Error err -> return ServerError $"Failed to check existing accounts: {err}"
@@ -74,7 +75,8 @@ module Data =
                         return AlreadyExists(input.MarketType.ToString())
                     else
                         let! market =
-                            repository.Create
+                            MarketRepository.create
+                                db
                                 { Type = input.MarketType
                                   ApiKey = input.ApiKey
                                   SecretKey = input.SecretKey

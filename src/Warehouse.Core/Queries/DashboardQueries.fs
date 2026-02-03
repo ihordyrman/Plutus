@@ -1,10 +1,10 @@
 namespace Warehouse.Core.Queries
 
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
-open Warehouse.Core.Domain
 open Warehouse.Core.Markets.Services
 open Warehouse.Core.Repositories
 
@@ -14,9 +14,9 @@ module DashboardQueries =
     let private getTotalBalanceUsdt (scopeFactory: IServiceScopeFactory) =
         task {
             use scope = scopeFactory.CreateScope()
-            let repo = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let balanceManager = scope.ServiceProvider.GetRequiredService<BalanceManager.T>()
-            let! markets = repo.GetAll CancellationToken.None
+            let! markets = MarketRepository.getAll db CancellationToken.None
 
             match markets with
             | Error err ->

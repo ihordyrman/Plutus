@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.AccountEdit
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -39,8 +40,8 @@ module Data =
         task {
             try
                 use scope = scopeFactory.CreateScope()
-                let repository = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
-                let! result = repository.GetById marketId CancellationToken.None
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let! result = MarketRepository.getById db marketId CancellationToken.None
 
                 match result with
                 | Error _ -> return None
@@ -69,21 +70,21 @@ module Data =
         task {
             try
                 use scope = scopeFactory.CreateScope()
-                let repository = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                let! existingMarket = repository.GetById marketId CancellationToken.None
+                let! existingMarket = MarketRepository.getById db marketId CancellationToken.None
 
                 match existingMarket with
                 | Error(Errors.NotFound _) -> return NotFoundError
                 | Error err -> return ServerError(Errors.serviceMessage err)
                 | Ok _ ->
-                    let updateRequest: MarketRepository.UpdateMarketRequest =
+                    let updateRequest: UpdateMarketRequest =
                         { ApiKey = formData.ApiKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
                           SecretKey = formData.SecretKey |> Option.filter (String.IsNullOrWhiteSpace >> not)
                           Passphrase = formData.Passphrase
                           IsSandbox = Some formData.IsSandbox }
 
-                    let! updateResult = repository.Update marketId updateRequest CancellationToken.None
+                    let! updateResult = MarketRepository.update db marketId updateRequest CancellationToken.None
 
                     match updateResult with
                     | Ok _ -> return Success
@@ -96,8 +97,8 @@ module Data =
         task {
             try
                 use scope = scopeFactory.CreateScope()
-                let repository = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
-                let! result = repository.Delete marketId CancellationToken.None
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let! result = MarketRepository.delete db marketId CancellationToken.None
 
                 match result with
                 | Ok() -> return true

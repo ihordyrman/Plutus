@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.AccountDetails
 
 open System
+open System.Data
 open System.Threading.Tasks
 open Falco
 open Falco.Htmx
@@ -32,8 +33,8 @@ module Data =
     let getAccountDetails (scopeFactory: IServiceScopeFactory) (marketId: int) : Task<AccountDetailsInfo option> =
         task {
             use scope = scopeFactory.CreateScope()
-            let repo = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
-            let! result = repo.GetById marketId CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! result = MarketRepository.getById db marketId CancellationToken.None
 
             match result with
             | Error _ -> return None

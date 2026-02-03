@@ -1,5 +1,6 @@
 namespace Warehouse.App.Pages.SystemStatus
 
+open System.Data
 open System.Threading
 open Falco
 open Microsoft.Extensions.DependencyInjection
@@ -19,9 +20,9 @@ module Data =
         task {
             try
                 use scope = scopeFactory.CreateScope()
-                let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
+                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                let! enabledCount = repository.CountEnabled CancellationToken.None
+                let! enabledCount = PipelineRepository.countEnabled db CancellationToken.None
 
                 match enabledCount with
                 | Result.Error err ->

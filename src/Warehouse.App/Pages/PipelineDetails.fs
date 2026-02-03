@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.PipelineDetails
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -27,13 +28,12 @@ module Data =
     let getPipelineDetails (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<PipelineDetailsInfo option> =
         task {
             use scope = scopeFactory.CreateScope()
-            let pipelineRepo = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-            let stepsRepo = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
-            let! pipeline = pipelineRepo.GetById pipelineId CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! pipeline = PipelineRepository.getById db pipelineId CancellationToken.None
 
             match pipeline with
             | Ok pipeline ->
-                let! steps = stepsRepo.GetByPipelineId pipelineId CancellationToken.None
+                let! steps = PipelineStepRepository.getByPipelineId db pipelineId CancellationToken.None
 
                 let count =
                     match steps with

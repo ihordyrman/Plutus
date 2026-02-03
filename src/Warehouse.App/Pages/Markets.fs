@@ -1,5 +1,6 @@
 namespace Warehouse.App.Pages.Markets
 
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -16,8 +17,8 @@ module Data =
     let getCount (scopeFactory: IServiceScopeFactory) : Task<int> =
         task {
             use scope = scopeFactory.CreateScope()
-            let repository = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
-            let! count = repository.Count CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! count = MarketRepository.count db CancellationToken.None
 
             match count with
             | Ok count -> return count
@@ -28,8 +29,8 @@ module Data =
     let getActiveMarkets (scopeFactory: IServiceScopeFactory) : Task<MarketInfo list> =
         task {
             use scope = scopeFactory.CreateScope()
-            let repo = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
-            let! markets = repo.GetAll CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! markets = MarketRepository.getAll db CancellationToken.None
 
             match markets with
             | Error _ -> return []

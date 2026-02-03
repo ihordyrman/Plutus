@@ -1,6 +1,7 @@
 namespace Warehouse.Core.Workers
 
 open System
+open System.Data
 open System.Threading
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
@@ -28,15 +29,7 @@ module CandlestickSync =
           IsCompleted = c.IsCompleted
           Timeframe = timeframe }
 
-    let sync
-        (http: Http.T)
-        (repo: CandlestickRepository.T)
-        (logger: ILogger)
-        (symbol: string)
-        (afterMs: string)
-        (limit: int)
-        ct
-        =
+    let sync (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (afterMs: string) (limit: int) ct =
         task {
             let! result =
                 http.getCandlesticks symbol { Bar = Some "1m"; Before = None; After = Some afterMs; Limit = Some limit }
@@ -44,7 +37,7 @@ module CandlestickSync =
             match result with
             | Ok candles when candles.Length > 0 ->
                 let mapped = candles |> Array.map (toCandlestick symbol "1m") |> Array.toList
-                let! _ = repo.Save mapped ct
+                let! _ = CandlestickRepository.save db mapped ct
                 ()
             | Ok _ -> ()
             | Error err -> logger.LogError("Sync failed for {Symbol}: {Error}", symbol, serviceMessage err)
@@ -68,14 +61,14 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
         task {
             use scope = scopeFactory.CreateScope()
             let http = scope.ServiceProvider.GetRequiredService<Http.T>()
-            let repo = scope.ServiceProvider.GetRequiredService<CandlestickRepository.T>()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
             [| for i in 0..23 do
                    DateTimeOffset.UtcNow.AddHours(-i).ToUnixTimeMilliseconds().ToString() |]
             |> Array.rev
             |> Array.iter (fun after ->
                 for instrument in symbols do
-                    CandlestickSync.sync http repo logger (CandlestickSync.toPairSymbol instrument) after 60 ct
+                    CandlestickSync.sync http db logger (CandlestickSync.toPairSymbol instrument) after 60 ct
                     |> Async.AwaitTask
                     |> Async.RunSynchronously
             )
@@ -91,7 +84,7 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
                     |> Array.iter (fun instrument ->
                         CandlestickSync.sync
                             http
-                            repo
+                            db
                             logger
                             (CandlestickSync.toPairSymbol instrument)
                             (DateTimeOffset.UtcNow.AddMinutes(-1.0).ToUnixTimeMilliseconds().ToString())

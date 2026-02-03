@@ -1,6 +1,7 @@
 namespace Warehouse.App.Pages.Pipeline
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Falco
@@ -11,7 +12,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Warehouse.Core.Domain
 open Warehouse.Core.Repositories
-open Warehouse.Core.Repositories.PipelineRepository
 open Warehouse.Core.Shared
 
 type PipelineListItem =
@@ -59,8 +59,8 @@ module Data =
     let getTags (scopeFactory: IServiceScopeFactory) : Task<string list> =
         task {
             use scope = scopeFactory.CreateScope()
-            let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-            let! tags = repository.GetAllTags CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! tags = PipelineRepository.getAllTags db CancellationToken.None
 
             match tags with
             | Ok tags -> return tags
@@ -72,8 +72,9 @@ module Data =
 
     let getMarketTypes (scopeFactory: IServiceScopeFactory) : Task<string list> =
         task {
-            let repo = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<MarketRepository.T>()
-            let! markets = repo.GetAll CancellationToken.None
+            use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! markets = MarketRepository.getAll db CancellationToken.None
 
             match markets with
             | Error err ->
@@ -91,8 +92,8 @@ module Data =
     let getCount (scopeFactory: IServiceScopeFactory) : Task<int> =
         task {
             use scope = scopeFactory.CreateScope()
-            let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-            let! count = repository.Count CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! count = PipelineRepository.count db CancellationToken.None
 
             match count with
             | Ok count -> return count
@@ -107,8 +108,8 @@ module Data =
             let! tags = getTags scopeFactory
             let! marketTypes = getMarketTypes scopeFactory
             use scope = scopeFactory.CreateScope()
-            let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-            let! pipelines = repository.GetAll CancellationToken.None
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let! pipelines = PipelineRepository.getAll db CancellationToken.None
 
             match pipelines with
             | Error _ -> return PipelinesGridData.Empty
@@ -134,7 +135,7 @@ module Data =
         =
         task {
             use scope = scopeFactory.CreateScope()
-            let repository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
             let status =
                 match filters.Status with
@@ -142,7 +143,7 @@ module Data =
                 | Some "disabled" -> Some PipelineStatus.Paused
                 | _ -> None
 
-            let searchFilters: SearchFilters =
+            let searchFilters: PipelineSearchFilters =
                 { SearchTerm = filters.SearchTerm
                   Tag = filters.Tag
                   MarketType = filters.MarketType
@@ -150,7 +151,7 @@ module Data =
                   SortBy = filters.SortBy }
 
             let skip = (filters.Page - 1) * filters.PageSize
-            let! result = repository.Search searchFilters skip filters.PageSize CancellationToken.None
+            let! result = PipelineRepository.search db searchFilters skip filters.PageSize CancellationToken.None
 
             match result with
             | Error _ -> return PipelinesTableData.Empty
@@ -485,8 +486,8 @@ module Handler =
             task {
                 try
                     use scope = ctx.Plug<IServiceScopeFactory>().CreateScope()
-                    let repo = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-                    let! _ = repo.Delete pipelineId CancellationToken.None
+                    use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                    let! _ = PipelineRepository.delete db pipelineId CancellationToken.None
                     return! Response.ofEmpty ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Pipelines")

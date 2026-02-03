@@ -1,5 +1,6 @@
 namespace Warehouse.Core.Markets.Stores
 
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Microsoft.Extensions.DependencyInjection
@@ -25,9 +26,9 @@ module CredentialsStore =
                 task {
                     try
                         use scope = scope.ServiceProvider.CreateScope()
-                        let repo = scope.ServiceProvider.GetRequiredService<MarketRepository.T>()
+                        use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                        let! results = repo.GetByType marketType CancellationToken.None
+                        let! results = MarketRepository.getByType db marketType CancellationToken.None
 
                         match results with
                         | Error err ->

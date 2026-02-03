@@ -3,46 +3,25 @@ namespace Warehouse.Core.Repositories
 open System
 open System.Data
 open System.Threading
-open System.Threading.Tasks
 open Dapper
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Logging
 open Warehouse.Core.Domain
-open Warehouse.Core.Shared
+open Warehouse.Core.Shared.Errors
 
+type PipelineSearchFilters =
+    { SearchTerm: string option
+      Tag: string option
+      MarketType: string option
+      Status: PipelineStatus option
+      SortBy: string }
+
+type PipelineSearchResult = { Pipelines: Pipeline list; TotalCount: int }
+
+[<RequireQualifiedAccess>]
 module PipelineRepository =
-    open Errors
 
-    type SearchFilters =
-        { SearchTerm: string option
-          Tag: string option
-          MarketType: string option
-          Status: PipelineStatus option
-          SortBy: string }
-
-    type SearchResult = { Pipelines: Pipeline list; TotalCount: int }
-
-    type T =
-        { GetById: int -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
-          GetAll: CancellationToken -> Task<Result<Pipeline list, ServiceError>>
-          GetEnabled: CancellationToken -> Task<Result<Pipeline list, ServiceError>>
-          Create: Pipeline -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
-          Update: Pipeline -> CancellationToken -> Task<Result<Pipeline, ServiceError>>
-          Delete: int -> CancellationToken -> Task<Result<unit, ServiceError>>
-          SetEnabled: int -> bool -> CancellationToken -> Task<Result<unit, ServiceError>>
-          UpdateLastExecuted: int -> DateTime -> CancellationToken -> Task<Result<unit, ServiceError>>
-          UpdateStatus: int -> PipelineStatus -> CancellationToken -> Task<Result<unit, ServiceError>>
-          Count: CancellationToken -> Task<Result<int, ServiceError>>
-          CountEnabled: CancellationToken -> Task<Result<int, ServiceError>>
-          GetAllTags: CancellationToken -> Task<Result<string list, ServiceError>>
-          Search: SearchFilters -> int -> int -> CancellationToken -> Task<Result<SearchResult, ServiceError>> }
-
-    let private getById (scopeFactory: IServiceScopeFactory) (logger: ILogger) (id: int) (token: CancellationToken) =
+    let getById (db: IDbConnection) (id: int) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! pipeline =
                     db.QueryFirstOrDefaultAsync<Pipeline>(
                         CommandDefinition(
@@ -53,43 +32,28 @@ module PipelineRepository =
                     )
 
                 match box pipeline with
-                | null ->
-                    logger.LogWarning("Pipeline {Id} not found", id)
-                    return Error(NotFound $"Pipeline with id {id}")
-                | _ ->
-                    logger.LogDebug("Retrieved pipeline {Id}", id)
-                    return Ok pipeline
-
+                | null -> return Error(NotFound $"Pipeline with id {id}")
+                | _ -> return Ok pipeline
             with ex ->
-                logger.LogError(ex, "Failed to get pipeline {Id}", id)
                 return Error(Unexpected ex)
         }
 
-    let private getAll (scopeFactory: IServiceScopeFactory) (logger: ILogger) (token: CancellationToken) =
+    let getAll (db: IDbConnection) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! pipelines =
                     db.QueryAsync<Pipeline>(
                         CommandDefinition("SELECT * FROM pipelines ORDER BY id", cancellationToken = token)
                     )
 
-                let pipelines = pipelines |> Seq.toList
-                logger.LogDebug("Retrieved {Count} pipelines", pipelines.Length)
-                return Ok pipelines
+                return Ok(pipelines |> Seq.toList)
             with ex ->
-                logger.LogError(ex, "Failed to get all pipelines")
                 return Error(Unexpected ex)
         }
 
-    let private getEnabled (scopeFactory: IServiceScopeFactory) (logger: ILogger) (token: CancellationToken) =
+    let getEnabled (db: IDbConnection) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! pipelines =
                     db.QueryAsync<Pipeline>(
                         CommandDefinition(
@@ -98,25 +62,14 @@ module PipelineRepository =
                         )
                     )
 
-                let pipelines = pipelines |> Seq.toList
-                logger.LogDebug("Retrieved {Count} enabled pipelines", pipelines.Length)
-                return Ok pipelines
+                return Ok(pipelines |> Seq.toList)
             with ex ->
-                logger.LogError(ex, "Failed to get enabled pipelines")
                 return Error(Unexpected ex)
         }
 
-    let private createPipeline
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (pipeline: Pipeline)
-        (token: CancellationToken)
-        =
+    let create (db: IDbConnection) (pipeline: Pipeline) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! result =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
@@ -129,8 +82,6 @@ module PipelineRepository =
                         )
                     )
 
-                logger.LogInformation("Created pipeline {Id} for symbol {Symbol}", result, pipeline.Symbol)
-
                 let! pipeline =
                     db.QuerySingleAsync<Pipeline>(
                         CommandDefinition(
@@ -142,21 +93,12 @@ module PipelineRepository =
 
                 return Ok pipeline
             with ex ->
-                logger.LogError(ex, "Failed to create pipeline for symbol {Symbol}", pipeline.Symbol)
                 return Error(Unexpected ex)
         }
 
-    let private updatePipeline
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (pipeline: Pipeline)
-        (cancellation: CancellationToken)
-        =
+    let update (db: IDbConnection) (pipeline: Pipeline) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! rowsAffected =
                     db.ExecuteAsync(
                         CommandDefinition(
@@ -167,7 +109,7 @@ module PipelineRepository =
                                updated_at = now()
                            WHERE id = @Id""",
                             pipeline,
-                            cancellationToken = cancellation
+                            cancellationToken = token
                         )
                     )
 
@@ -177,31 +119,20 @@ module PipelineRepository =
                             CommandDefinition(
                                 "SELECT * FROM pipelines WHERE id = @Id",
                                 {| Id = pipeline.Id |},
-                                cancellationToken = cancellation
+                                cancellationToken = token
                             )
                         )
 
-                    logger.LogInformation("Updated pipeline {Id}", pipeline.Id)
                     return Ok pipeline
                 else
-                    logger.LogWarning("Pipeline {Id} not found for update", pipeline.Id)
                     return Error(NotFound $"Pipeline with id {pipeline.Id}")
             with ex ->
-                logger.LogError(ex, "Failed to update pipeline {Id}", pipeline.Id)
                 return Error(Unexpected ex)
         }
 
-    let private deletePipeline
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (id: int)
-        (token: CancellationToken)
-        =
+    let delete (db: IDbConnection) (id: int) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! rowsAffected =
                     db.ExecuteAsync(
                         CommandDefinition(
@@ -211,29 +142,14 @@ module PipelineRepository =
                         )
                     )
 
-                if rowsAffected > 0 then
-                    logger.LogInformation("Deleted pipeline {Id}", id)
-                    return Ok()
-                else
-                    logger.LogWarning("Pipeline {Id} not found for deletion", id)
-                    return Error(NotFound $"Pipeline with id {id}")
+                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {id}")
             with ex ->
-                logger.LogError(ex, "Failed to delete pipeline {Id}", id)
                 return Error(Unexpected ex)
         }
 
-    let private setEnabled
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (pipelineId: int)
-        (enabled: bool)
-        (token: CancellationToken)
-        =
+    let setEnabled (db: IDbConnection) (pipelineId: int) (enabled: bool) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let now = DateTime.UtcNow
 
                 let! rowsAffected =
@@ -245,29 +161,14 @@ module PipelineRepository =
                         )
                     )
 
-                if rowsAffected > 0 then
-                    logger.LogInformation("Set pipeline {Id} enabled = {Enabled}", pipelineId, enabled)
-                    return Ok()
-                else
-                    logger.LogWarning("Pipeline {Id} not found for enable/disable", pipelineId)
-                    return Error(NotFound $"Pipeline with id {pipelineId}")
+                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
-                logger.LogError(ex, "Failed to set enabled for pipeline {Id}", pipelineId)
                 return Error(Unexpected ex)
         }
 
-    let private updateLastExecuted
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (pipelineId: int)
-        (lastExecutedAt: DateTime)
-        (token: CancellationToken)
-        =
+    let updateLastExecuted (db: IDbConnection) (pipelineId: int) (lastExecutedAt: DateTime) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let now = DateTime.UtcNow
 
                 let! rowsAffected =
@@ -279,29 +180,14 @@ module PipelineRepository =
                         )
                     )
 
-                if rowsAffected > 0 then
-                    logger.LogDebug("Updated last executed for pipeline {Id}", pipelineId)
-                    return Ok()
-                else
-                    logger.LogWarning("Pipeline {Id} not found for last executed update", pipelineId)
-                    return Error(NotFound $"Pipeline with id {pipelineId}")
+                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
-                logger.LogError(ex, "Failed to update last executed for pipeline {Id}", pipelineId)
                 return Error(Unexpected ex)
         }
 
-    let private updateStatus
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (pipelineId: int)
-        (status: PipelineStatus)
-        (cancellation: CancellationToken)
-        =
+    let updateStatus (db: IDbConnection) (pipelineId: int) (status: PipelineStatus) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let now = DateTime.UtcNow
 
                 let! rowsAffected =
@@ -309,95 +195,63 @@ module PipelineRepository =
                         CommandDefinition(
                             "UPDATE pipelines SET status = @Status, updated_at = @UpdatedAt WHERE id = @Id",
                             {| Status = int status; UpdatedAt = now; Id = pipelineId |},
-                            cancellationToken = cancellation
+                            cancellationToken = token
                         )
                     )
 
-                if rowsAffected > 0 then
-                    logger.LogInformation("Updated status for pipeline {Id} to {Status}", pipelineId, status)
-                    return Ok()
-                else
-                    logger.LogWarning("Pipeline {Id} not found for status update", pipelineId)
-                    return Error(NotFound $"Pipeline with id {pipelineId}")
+                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
-                logger.LogError(ex, "Failed to update status for pipeline {Id}", pipelineId)
                 return Error(Unexpected ex)
         }
 
-    let private count (scopeFactory: IServiceScopeFactory) (logger: ILogger) (token: CancellationToken) =
+    let count (db: IDbConnection) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! result =
                     db.QuerySingleAsync<int>(
                         CommandDefinition("SELECT COUNT(1) FROM pipelines", cancellationToken = token)
                     )
 
-                logger.LogDebug("Pipeline count: {Count}", result)
                 return Ok result
             with ex ->
-                logger.LogError(ex, "Failed to count pipelines")
                 return Error(Unexpected ex)
         }
 
-    let private countEnabled (scopeFactory: IServiceScopeFactory) (logger: ILogger) (cancellation: CancellationToken) =
+    let countEnabled (db: IDbConnection) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! result =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
                             "SELECT COUNT(1) FROM pipelines WHERE enabled = true",
-                            cancellationToken = cancellation
+                            cancellationToken = token
                         )
                     )
 
-                logger.LogDebug("Enabled pipeline count: {Count}", result)
                 return Ok result
             with ex ->
-                logger.LogError(ex, "Failed to count enabled pipelines")
                 return Error(Unexpected ex)
         }
 
-    let private getAllTags (scopeFactory: IServiceScopeFactory) (logger: ILogger) (cancellation: CancellationToken) =
+    let getAllTags (db: IDbConnection) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let! results =
                     db.QueryAsync<string>(
                         CommandDefinition(
                             "SELECT tags FROM pipelines GROUP BY tags ORDER BY tags ASC",
-                            cancellationToken = cancellation
+                            cancellationToken = token
                         )
                     )
 
-                let tags = results |> Seq.toList
-                logger.LogDebug("Retrieved {Count} unique tag groups", tags.Length)
-                return Ok tags
+                return Ok(results |> Seq.toList)
             with ex ->
-                logger.LogError(ex, "Failed to get all tags")
                 return Error(Unexpected ex)
         }
 
-    let private search
-        (scopeFactory: IServiceScopeFactory)
-        (logger: ILogger)
-        (filters: SearchFilters)
-        (skip: int)
-        (take: int)
-        (cancellation: CancellationToken)
-        =
+    let search (db: IDbConnection) (filters: PipelineSearchFilters) (skip: int) (take: int) (token: CancellationToken) =
         task {
             try
-                use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
                 let conditions = ResizeArray<string>()
                 let parameters = DynamicParameters()
 
@@ -440,10 +294,10 @@ module PipelineRepository =
                 let dataSql = $"SELECT * FROM pipelines WHERE 1=1 {whereClause} {orderClause} OFFSET @Skip LIMIT @Take"
 
                 let! totalCount =
-                    db.QuerySingleAsync<int>(CommandDefinition(countSql, parameters, cancellationToken = cancellation))
+                    db.QuerySingleAsync<int>(CommandDefinition(countSql, parameters, cancellationToken = token))
 
                 let! results =
-                    db.QueryAsync<Pipeline>(CommandDefinition(dataSql, parameters, cancellationToken = cancellation))
+                    db.QueryAsync<Pipeline>(CommandDefinition(dataSql, parameters, cancellationToken = token))
 
                 let pipelines = results |> Seq.toList
 
@@ -454,32 +308,7 @@ module PipelineRepository =
                         pipelines |> List.filter (fun p -> p.Tags |> List.contains tag)
                     | _ -> pipelines
 
-                logger.LogDebug(
-                    "Search returned {Count} pipelines out of {Total}",
-                    filteredPipelines.Length,
-                    totalCount
-                )
-
                 return Ok { Pipelines = filteredPipelines; TotalCount = totalCount }
             with ex ->
-                logger.LogError(ex, "Failed to search pipelines")
                 return Error(Unexpected ex)
         }
-
-    let create (scopeFactory: IServiceScopeFactory) : T =
-        let loggerFactory = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILoggerFactory>()
-        let logger = loggerFactory.CreateLogger("PipelineRepository")
-
-        { GetById = getById scopeFactory logger
-          GetAll = getAll scopeFactory logger
-          GetEnabled = getEnabled scopeFactory logger
-          Create = createPipeline scopeFactory logger
-          Update = updatePipeline scopeFactory logger
-          Delete = deletePipeline scopeFactory logger
-          SetEnabled = setEnabled scopeFactory logger
-          UpdateLastExecuted = updateLastExecuted scopeFactory logger
-          UpdateStatus = updateStatus scopeFactory logger
-          Count = count scopeFactory logger
-          CountEnabled = countEnabled scopeFactory logger
-          GetAllTags = getAllTags scopeFactory logger
-          Search = search scopeFactory logger }

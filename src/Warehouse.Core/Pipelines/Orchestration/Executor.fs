@@ -1,6 +1,7 @@
 namespace Warehouse.Core.Pipelines.Orchestration
 
 open System
+open System.Data
 open System.Threading
 open System.Threading.Tasks
 open Microsoft.Extensions.DependencyInjection
@@ -24,9 +25,9 @@ module Executor =
           Stop: unit -> Task<unit>
           IsRunning: unit -> bool }
 
-    let private loadPipeline (repo: PipelineRepository.T) (pipelineId: int) (ct: CancellationToken) =
+    let private loadPipeline (db: IDbConnection) (pipelineId: int) (ct: CancellationToken) =
         task {
-            let! pipeline = repo.GetById pipelineId ct
+            let! pipeline = PipelineRepository.getById db pipelineId ct
 
             match pipeline with
             | Error _ -> return None
@@ -49,16 +50,15 @@ module Executor =
             try
                 while not ct.IsCancellationRequested do
                     use scope = services.CreateScope()
-                    let pipelineRepository = scope.ServiceProvider.GetRequiredService<PipelineRepository.T>()
-                    let stepsRepository = scope.ServiceProvider.GetRequiredService<PipelineStepRepository.T>()
+                    use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                    match! loadPipeline pipelineRepository pipelineId ct with
+                    match! loadPipeline db pipelineId ct with
                     | None ->
                         logger.LogWarning("Pipeline {PipelineId} not found, stopping executor", pipelineId)
                         return ()
 
                     | Some pipeline ->
-                        let! steps = stepsRepository.GetByPipelineId pipelineId ct
+                        let! steps = PipelineStepRepository.getByPipelineId db pipelineId ct
 
                         match steps with
                         | Error error ->
@@ -97,8 +97,8 @@ module Executor =
                                 do! Task.Delay(pipeline.ExecutionInterval, ct)
 
                             | Ok steps ->
-                                let repository = scope.ServiceProvider.GetRequiredService<CandlestickRepository.T>()
-                                let! latestCandle = repository.GetLatest pipeline.Symbol pipeline.MarketType "1m" ct
+                                let! latestCandle =
+                                    CandlestickRepository.getLatest db pipeline.Symbol pipeline.MarketType "1m" ct
 
                                 match latestCandle with
                                 | Error error ->
