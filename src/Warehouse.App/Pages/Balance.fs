@@ -18,20 +18,21 @@ module Data =
     let getMarketBalance
         (scopeFactory: IServiceScopeFactory)
         (marketType: MarketType)
-        (logger: ILogger option)
+        (logger: ILogger)
+        (ct: CancellationToken)
         : Task<Result<decimal, string>>
         =
         task {
             use scope = scopeFactory.CreateScope()
             let balanceManager = scope.ServiceProvider.GetRequiredService<BalanceManager.T>()
-            let! result = BalanceManager.getTotalUsdtValue balanceManager marketType CancellationToken.None
+            let! result = BalanceManager.getTotalUsdtValue balanceManager marketType ct
 
             return
                 match result with
                 | Ok value -> Ok value
                 | Error err ->
                     let msg = Errors.serviceMessage err
-                    logger |> Option.iter _.LogError("Error getting balance for {MarketType}: {Error}", marketType, msg)
+                    logger.LogError("Error getting balance for {MarketType}: {Error}", marketType, msg)
                     Error msg
         }
 
@@ -61,7 +62,7 @@ module Handler =
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Balances")
                     let marketTypeEnum = enum<MarketType> marketType
-                    let! result = Data.getMarketBalance scopeFactory marketTypeEnum (Some logger)
+                    let! result = Data.getMarketBalance scopeFactory marketTypeEnum logger ctx.RequestAborted
 
                     return!
                         match result with

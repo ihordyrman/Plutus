@@ -30,11 +30,16 @@ module Data =
         | key when key.Length > 8 -> key.Substring(0, 4) + "****" + key.Substring(key.Length - 4)
         | _ -> "****"
 
-    let getAccountDetails (scopeFactory: IServiceScopeFactory) (marketId: int) : Task<AccountDetailsInfo option> =
+    let getAccountDetails
+        (scopeFactory: IServiceScopeFactory)
+        (marketId: int)
+        (ct: CancellationToken)
+        : Task<AccountDetailsInfo option>
+        =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! result = MarketRepository.getById db marketId CancellationToken.None
+            let! result = MarketRepository.getById db marketId ct
 
             match result with
             | Error _ -> return None
@@ -273,7 +278,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! account = Data.getAccountDetails scopeFactory marketId
+                    let! account = Data.getAccountDetails scopeFactory marketId ctx.RequestAborted
 
                     match account with
                     | Some a -> return! Response.ofHtml (View.modal a) ctx

@@ -53,17 +53,22 @@ type OrderFilters =
           PageSize = 20 }
 
 module Data =
-    let getCount (scopeFactory: IServiceScopeFactory) : Task<int> =
+    let getCount (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<int> =
         task {
             use scope = scopeFactory.CreateScope()
             let db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            match! OrderRepository.count db CancellationToken.None with
+            match! OrderRepository.count db ct with
             | Ok n -> return n
             | Error _ -> return 0
         }
 
-    let getFilteredOrders (scopeFactory: IServiceScopeFactory) (filters: OrderFilters) : Task<OrdersGridData> =
+    let getFilteredOrders
+        (scopeFactory: IServiceScopeFactory)
+        (filters: OrderFilters)
+        (ct: CancellationToken)
+        : Task<OrdersGridData>
+        =
         task {
             use scope = scopeFactory.CreateScope()
             let db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
@@ -101,7 +106,7 @@ module Data =
 
             let skip = (filters.Page - 1) * filters.PageSize
 
-            match! OrderRepository.search db searchFilters skip filters.PageSize CancellationToken.None with
+            match! OrderRepository.search db searchFilters skip filters.PageSize ct with
             | Error _ -> return OrdersGridData.Empty
             | Ok result ->
                 let orderItems =
@@ -369,7 +374,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! count = Data.getCount scopeFactory
+                    let! count = Data.getCount scopeFactory ctx.RequestAborted
                     return! Response.ofHtml (View.count count) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Orders")
@@ -417,7 +422,7 @@ module Handler =
                           Page = tryGetQueryStringInt ctx.Request.Query "page" 1
                           PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20 }
 
-                    let! data = Data.getFilteredOrders scopeFactory filters
+                    let! data = Data.getFilteredOrders scopeFactory filters ctx.RequestAborted
                     return! Response.ofHtml (View.tableBody data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Orders")

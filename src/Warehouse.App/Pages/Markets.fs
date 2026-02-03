@@ -14,11 +14,11 @@ open Warehouse.Core.Repositories
 type MarketInfo = { Id: int; Type: MarketType; Name: string; Enabled: bool; HasCredentials: bool }
 
 module Data =
-    let getCount (scopeFactory: IServiceScopeFactory) : Task<int> =
+    let getCount (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<int> =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! count = MarketRepository.count db CancellationToken.None
+            let! count = MarketRepository.count db ct
 
             match count with
             | Ok count -> return count
@@ -26,11 +26,11 @@ module Data =
         }
 
 
-    let getActiveMarkets (scopeFactory: IServiceScopeFactory) : Task<MarketInfo list> =
+    let getActiveMarkets (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<MarketInfo list> =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! markets = MarketRepository.getAll db CancellationToken.None
+            let! markets = MarketRepository.getAll db ct
 
             match markets with
             | Error _ -> return []
@@ -171,7 +171,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! count = Data.getCount scopeFactory
+                    let! count = Data.getCount scopeFactory ctx.RequestAborted
                     return! Response.ofHtml (View.count count) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Markets")
@@ -184,7 +184,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! markets = Data.getActiveMarkets scopeFactory
+                    let! markets = Data.getActiveMarkets scopeFactory ctx.RequestAborted
                     return! Response.ofHtml (View.grid markets) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Markets")

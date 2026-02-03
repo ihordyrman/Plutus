@@ -36,12 +36,17 @@ module Data =
         elif apiKey.Length > 8 then apiKey.Substring(0, 4) + "****" + apiKey.Substring(apiKey.Length - 4)
         else "****"
 
-    let getEditViewModel (scopeFactory: IServiceScopeFactory) (marketId: int) : Task<EditAccountViewModel option> =
+    let getEditViewModel
+        (scopeFactory: IServiceScopeFactory)
+        (marketId: int)
+        (ct: CancellationToken)
+        : Task<EditAccountViewModel option>
+        =
         task {
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let! result = MarketRepository.getById db marketId CancellationToken.None
+                let! result = MarketRepository.getById db marketId ct
 
                 match result with
                 | Error _ -> return None
@@ -66,13 +71,19 @@ module Data =
           Passphrase = form.TryGetString "passphrase"
           IsSandbox = form.TryGetString "isSandbox" |> Option.map (fun _ -> true) |> Option.defaultValue false }
 
-    let updateAccount (scopeFactory: IServiceScopeFactory) (marketId: int) (formData: EditFormData) : Task<EditResult> =
+    let updateAccount
+        (scopeFactory: IServiceScopeFactory)
+        (marketId: int)
+        (formData: EditFormData)
+        (ct: CancellationToken)
+        : Task<EditResult>
+        =
         task {
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                let! existingMarket = MarketRepository.getById db marketId CancellationToken.None
+                let! existingMarket = MarketRepository.getById db marketId ct
 
                 match existingMarket with
                 | Error(Errors.NotFound _) -> return NotFoundError
@@ -84,7 +95,7 @@ module Data =
                           Passphrase = formData.Passphrase
                           IsSandbox = Some formData.IsSandbox }
 
-                    let! updateResult = MarketRepository.update db marketId updateRequest CancellationToken.None
+                    let! updateResult = MarketRepository.update db marketId updateRequest ct
 
                     match updateResult with
                     | Ok _ -> return Success
@@ -93,12 +104,12 @@ module Data =
                 return ServerError $"Failed to update account: {ex.Message}"
         }
 
-    let deleteAccount (scopeFactory: IServiceScopeFactory) (marketId: int) : Task<bool> =
+    let deleteAccount (scopeFactory: IServiceScopeFactory) (marketId: int) (ct: CancellationToken) : Task<bool> =
         task {
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let! result = MarketRepository.delete db marketId CancellationToken.None
+                let! result = MarketRepository.delete db marketId ct
 
                 match result with
                 | Ok() -> return true
@@ -414,7 +425,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! vm = Data.getEditViewModel scopeFactory marketId
+                    let! vm = Data.getEditViewModel scopeFactory marketId ctx.RequestAborted
 
                     match vm with
                     | Some v -> return! Response.ofHtml (View.modal v) ctx
@@ -432,7 +443,7 @@ module Handler =
                     let! form = Request.getForm ctx
                     let formData = Data.parseFormData form
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! result = Data.updateAccount scopeFactory marketId formData
+                    let! result = Data.updateAccount scopeFactory marketId formData ctx.RequestAborted
 
                     match result with
                     | Success -> return! Response.ofHtml (View.successResponse marketId) ctx
@@ -450,7 +461,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! deleted = Data.deleteAccount scopeFactory marketId
+                    let! deleted = Data.deleteAccount scopeFactory marketId ctx.RequestAborted
 
                     if deleted then
                         return! Response.ofHtml View.deletedResponse ctx

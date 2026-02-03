@@ -25,15 +25,20 @@ type PipelineDetailsInfo =
       UpdatedAt: DateTime }
 
 module Data =
-    let getPipelineDetails (scopeFactory: IServiceScopeFactory) (pipelineId: int) : Task<PipelineDetailsInfo option> =
+    let getPipelineDetails
+        (scopeFactory: IServiceScopeFactory)
+        (pipelineId: int)
+        (ct: CancellationToken)
+        : Task<PipelineDetailsInfo option>
+        =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! pipeline = PipelineRepository.getById db pipelineId CancellationToken.None
+            let! pipeline = PipelineRepository.getById db pipelineId ct
 
             match pipeline with
             | Ok pipeline ->
-                let! steps = PipelineStepRepository.getByPipelineId db pipelineId CancellationToken.None
+                let! steps = PipelineStepRepository.getByPipelineId db pipelineId ct
 
                 let count =
                     match steps with
@@ -291,7 +296,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! pipeline = Data.getPipelineDetails scopeFactory pipelineId
+                    let! pipeline = Data.getPipelineDetails scopeFactory pipelineId ctx.RequestAborted
 
                     match pipeline with
                     | Some p -> return! Response.ofHtml (View.modal p) ctx

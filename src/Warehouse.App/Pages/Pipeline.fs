@@ -56,11 +56,11 @@ type PipelinesTableData =
     static member Empty = { Pipelines = []; TotalCount = 0; Page = 1; PageSize = 20 }
 
 module Data =
-    let getTags (scopeFactory: IServiceScopeFactory) : Task<string list> =
+    let getTags (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<string list> =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! tags = PipelineRepository.getAllTags db CancellationToken.None
+            let! tags = PipelineRepository.getAllTags db ct
 
             match tags with
             | Ok tags -> return tags
@@ -70,11 +70,11 @@ module Data =
                 return []
         }
 
-    let getMarketTypes (scopeFactory: IServiceScopeFactory) : Task<string list> =
+    let getMarketTypes (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<string list> =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! markets = MarketRepository.getAll db CancellationToken.None
+            let! markets = MarketRepository.getAll db ct
 
             match markets with
             | Error err ->
@@ -89,11 +89,11 @@ module Data =
             | Ok markets -> return markets |> List.map _.Type.ToString()
         }
 
-    let getCount (scopeFactory: IServiceScopeFactory) : Task<int> =
+    let getCount (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<int> =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! count = PipelineRepository.count db CancellationToken.None
+            let! count = PipelineRepository.count db ct
 
             match count with
             | Ok count -> return count
@@ -103,13 +103,13 @@ module Data =
                 return 0
         }
 
-    let getGridData (scopeFactory: IServiceScopeFactory) : Task<PipelinesGridData> =
+    let getGridData (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<PipelinesGridData> =
         task {
-            let! tags = getTags scopeFactory
-            let! marketTypes = getMarketTypes scopeFactory
+            let! tags = getTags scopeFactory ct
+            let! marketTypes = getMarketTypes scopeFactory ct
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! pipelines = PipelineRepository.getAll db CancellationToken.None
+            let! pipelines = PipelineRepository.getAll db ct
 
             match pipelines with
             | Error _ -> return PipelinesGridData.Empty
@@ -131,6 +131,7 @@ module Data =
     let getFilteredPipelines
         (scopeFactory: IServiceScopeFactory)
         (filters: PipelineFilters)
+        (ct: CancellationToken)
         : Task<PipelinesTableData>
         =
         task {
@@ -151,7 +152,7 @@ module Data =
                   SortBy = filters.SortBy }
 
             let skip = (filters.Page - 1) * filters.PageSize
-            let! result = PipelineRepository.search db searchFilters skip filters.PageSize CancellationToken.None
+            let! result = PipelineRepository.search db searchFilters skip filters.PageSize ct
 
             match result with
             | Error _ -> return PipelinesTableData.Empty
@@ -424,7 +425,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! count = Data.getCount scopeFactory
+                    let! count = Data.getCount scopeFactory ctx.RequestAborted
                     return! Response.ofHtml (View.count count) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Pipelines")
@@ -437,7 +438,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! data = Data.getGridData scopeFactory
+                    let! data = Data.getGridData scopeFactory ctx.RequestAborted
                     return! Response.ofHtml (View.section data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Pipelines")
@@ -473,7 +474,7 @@ module Handler =
                           Page = tryGetQueryStringInt ctx.Request.Query "page" 1
                           PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20 }
 
-                    let! data = Data.getFilteredPipelines scopeFactory filters
+                    let! data = Data.getFilteredPipelines scopeFactory filters ctx.RequestAborted
                     return! Response.ofHtml (View.tableBody data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Pipelines")
@@ -487,7 +488,7 @@ module Handler =
                 try
                     use scope = ctx.Plug<IServiceScopeFactory>().CreateScope()
                     use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                    let! _ = PipelineRepository.delete db pipelineId CancellationToken.None
+                    let! _ = PipelineRepository.delete db pipelineId ctx.RequestAborted
                     return! Response.ofEmpty ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Pipelines")

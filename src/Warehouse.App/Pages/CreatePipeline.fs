@@ -76,7 +76,12 @@ module Data =
                   ExecutionInterval = interval
                   Enabled = formData.Enabled }
 
-    let createPipeline (scopeFactory: IServiceScopeFactory) (input: CreatePipelineInput) : Task<CreateResult> =
+    let createPipeline
+        (scopeFactory: IServiceScopeFactory)
+        (input: CreatePipelineInput)
+        (ct: CancellationToken)
+        : Task<CreateResult>
+        =
         task {
             try
                 use scope = scopeFactory.CreateScope()
@@ -95,7 +100,7 @@ module Data =
                       CreatedAt = DateTime.UtcNow
                       UpdatedAt = DateTime.UtcNow }
 
-                let! result = PipelineRepository.create db pipeline CancellationToken.None
+                let! result = PipelineRepository.create db pipeline ct
 
                 match result with
                 | Ok created -> return Success created.Symbol
@@ -386,7 +391,7 @@ module Handler =
                     | Error msg -> return! Response.ofHtml (View.createResult (ValidationError msg)) ctx
                     | Ok input ->
                         let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                        let! result = Data.createPipeline scopeFactory input
+                        let! result = Data.createPipeline scopeFactory input ctx.RequestAborted
                         return! Response.ofHtml (View.createResult result) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("CreatePipeline")

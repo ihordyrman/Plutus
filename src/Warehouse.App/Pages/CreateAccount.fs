@@ -61,12 +61,17 @@ module Data =
                   Passphrase = passphrase.Trim()
                   IsSandbox = formData.IsSandbox }
 
-    let createAccount (scopeFactory: IServiceScopeFactory) (input: CreateAccountInput) : Task<CreateResult> =
+    let createAccount
+        (scopeFactory: IServiceScopeFactory)
+        (input: CreateAccountInput)
+        (ct: CancellationToken)
+        : Task<CreateResult>
+        =
         task {
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let! existingMarket = MarketRepository.exists db input.MarketType CancellationToken.None
+                let! existingMarket = MarketRepository.exists db input.MarketType ct
 
                 match existingMarket with
                 | Error err -> return ServerError $"Failed to check existing accounts: {err}"
@@ -82,7 +87,7 @@ module Data =
                                   SecretKey = input.SecretKey
                                   Passphrase = Some input.Passphrase
                                   IsSandbox = input.IsSandbox }
-                                CancellationToken.None
+                                ct
 
                         match market with
                         | Error err -> return ServerError $"Failed to create account: {err}"
@@ -398,7 +403,7 @@ module Handler =
                     | Error msg -> return! Response.ofHtml (View.createResult (ValidationError msg)) ctx
                     | Ok input ->
                         let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                        let! result = Data.createAccount scopeFactory input
+                        let! result = Data.createAccount scopeFactory input ctx.RequestAborted
                         return! Response.ofHtml (View.createResult result) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("CreateAccount")

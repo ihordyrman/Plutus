@@ -16,13 +16,13 @@ type Status =
     | Error
 
 module Data =
-    let getStatus (scopeFactory: IServiceScopeFactory) (logger: ILogger option) : Task<Status> =
+    let getStatus (scopeFactory: IServiceScopeFactory) (logger: ILogger option) (ct: CancellationToken) : Task<Status> =
         task {
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                let! enabledCount = PipelineRepository.countEnabled db CancellationToken.None
+                let! enabledCount = PipelineRepository.countEnabled db ct
 
                 match enabledCount with
                 | Result.Error err ->
@@ -74,6 +74,6 @@ module Handler =
             task {
                 let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                 let logger = ctx.Plug<ILoggerFactory>().CreateLogger("System")
-                let! status = Data.getStatus scopeFactory (Some logger)
+                let! status = Data.getStatus scopeFactory (Some logger) ctx.RequestAborted
                 return! Response.ofHtml (View.statusBadge status) ctx
             }
