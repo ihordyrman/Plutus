@@ -239,7 +239,10 @@ module PipelineRepository =
                 let! results =
                     db.QueryAsync<string>(
                         CommandDefinition(
-                            "SELECT tags FROM pipelines GROUP BY tags ORDER BY tags ASC",
+                            """SELECT DISTINCT jsonb_array_elements_text(tags) AS tag
+                               FROM pipelines
+                               WHERE tags IS NOT NULL AND jsonb_array_length(tags) > 0
+                               ORDER BY tag ASC""",
                             cancellationToken = token
                         )
                     )
@@ -263,8 +266,11 @@ module PipelineRepository =
 
                 match filters.MarketType with
                 | Some marketType when not (String.IsNullOrEmpty marketType) ->
-                    conditions.Add("AND market_type = @MarketType")
-                    parameters.Add("MarketType", marketType)
+                    match Enum.TryParse<MarketType>(marketType) with
+                    | true, mt ->
+                        conditions.Add("AND market_type = @MarketType")
+                        parameters.Add("MarketType", int mt)
+                    | false, _ -> ()
                 | _ -> ()
 
                 match filters.Status with
