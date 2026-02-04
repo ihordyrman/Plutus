@@ -12,8 +12,8 @@ open Warehouse.Core.Queries
 open Warehouse.Core.Shared
 
 module Data =
-    let getTotalUsdt (scopeFactory: IServiceScopeFactory) : Task<decimal> =
-        (DashboardQueries.create scopeFactory).TotalBalanceUsdt()
+    let getTotalUsdt (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<decimal> =
+        (DashboardQueries.create scopeFactory).TotalBalanceUsdt ct
 
     let getMarketBalance
         (scopeFactory: IServiceScopeFactory)
@@ -47,7 +47,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! total = Data.getTotalUsdt scopeFactory
+                    let! total = Data.getTotalUsdt scopeFactory ctx.RequestAborted
                     return! Response.ofHtml (View.balanceText total) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Balances")

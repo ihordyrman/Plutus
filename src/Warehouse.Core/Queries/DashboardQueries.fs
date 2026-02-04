@@ -9,14 +9,14 @@ open Warehouse.Core.Markets.Services
 open Warehouse.Core.Repositories
 
 module DashboardQueries =
-    type T = { TotalBalanceUsdt: unit -> Task<decimal> }
+    type T = { TotalBalanceUsdt: CancellationToken -> Task<decimal> }
 
-    let private getTotalBalanceUsdt (scopeFactory: IServiceScopeFactory) =
+    let private getTotalBalanceUsdt (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
             let balanceManager = scope.ServiceProvider.GetRequiredService<BalanceManager.T>()
-            let! markets = MarketRepository.getAll db CancellationToken.None
+            let! markets = MarketRepository.getAll db ct
 
             match markets with
             | Error err ->
@@ -28,8 +28,7 @@ module DashboardQueries =
                     markets
                     |> Seq.map (fun market ->
                         task {
-                            let! result =
-                                (BalanceManager.getTotalUsdtValue balanceManager market.Type CancellationToken.None)
+                            let! result = (BalanceManager.getTotalUsdtValue balanceManager market.Type ct)
 
                             match result with
                             | Ok value -> return value
@@ -45,5 +44,4 @@ module DashboardQueries =
                 return results |> Array.sum
         }
 
-    let create (scopeFactory: IServiceScopeFactory) : T =
-        { TotalBalanceUsdt = fun () -> getTotalBalanceUsdt scopeFactory }
+    let create (scopeFactory: IServiceScopeFactory) : T = { TotalBalanceUsdt = getTotalBalanceUsdt scopeFactory }

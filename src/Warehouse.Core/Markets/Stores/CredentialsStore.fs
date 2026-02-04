@@ -18,7 +18,7 @@ module CredentialsStore =
 
     let create (scopeFactory: IServiceScopeFactory) : T =
         { GetCredentials =
-            fun marketType _ ->
+            fun marketType ct ->
                 use scope = scopeFactory.CreateScope()
                 let loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
                 let logger = loggerFactory.CreateLogger("CredentialsStore")
@@ -28,7 +28,7 @@ module CredentialsStore =
                         use scope = scope.ServiceProvider.CreateScope()
                         use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-                        let! results = MarketRepository.getByType db marketType CancellationToken.None
+                        let! results = MarketRepository.getByType db marketType ct
 
                         match results with
                         | Error err ->
