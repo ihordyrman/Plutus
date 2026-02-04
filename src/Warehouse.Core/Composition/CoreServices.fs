@@ -162,11 +162,17 @@ module CoreServices =
                     .WaitAndRetryAsync(
                         3,
                         (fun retryAttempt -> TimeSpan.FromSeconds(Math.Pow(2.0, float retryAttempt))),
-                        (fun _ timespan retryCount _ ->
+                        (fun result timespan retryCount _ ->
+                            let response = result.Result
+                            let statusCode = int response.StatusCode
+                            let uri = response.RequestMessage.RequestUri
+
                             logger.LogWarning(
-                                "Retry attempt {RetryCount} after {TimeSpan} seconds",
+                                "Retry attempt {RetryCount} after {TimeSpan} seconds due to HTTP {StatusCode} from {ReasonPhrase}",
                                 retryCount,
-                                timespan
+                                timespan,
+                                statusCode,
+                                uri
                             )
                         )
                     )

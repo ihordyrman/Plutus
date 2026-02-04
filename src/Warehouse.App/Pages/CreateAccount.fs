@@ -307,7 +307,6 @@ module View =
                             Hx.get "/accounts/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
-                            Attr.create "hx-on::after-request" "htmx.trigger('#accounts-container', 'load')"
                         ] [ Text.raw "Close" ]
                     ]
                 ]
