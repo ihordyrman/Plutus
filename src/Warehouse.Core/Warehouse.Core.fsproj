@@ -55,6 +55,10 @@
         <Compile Include="Pipelines\Trading\CheckPosition.fs" />
         <Compile Include="Pipelines\Trading\PositionGateStep.fs" />
         <Compile Include="Pipelines\Trading\EntryStep.fs" />
+        <Compile Include="Pipelines\Trading\EmaSignal.fs" />
+        <Compile Include="Pipelines\Trading\MacdSignal.fs" />
+        <Compile Include="Pipelines\Trading\VwapSignal.fs" />
+        <Compile Include="Pipelines\Trading\EwmacSignal.fs" />
         <Compile Include="Pipelines\Trading\TradingSteps.fs" />
         <Compile Include="Pipelines\Orchestration\Executor.fs" />
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />

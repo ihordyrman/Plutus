@@ -89,7 +89,7 @@ module EntryStep =
             return { ctx with ActiveOrderId = Some order.Id }
         }
 
-    let entryStep: StepDefinition<TradingContext> =
+    let entry: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
             let tradeAmount = params' |> ValidatedParams.getDecimal "tradeAmount" 100m
 

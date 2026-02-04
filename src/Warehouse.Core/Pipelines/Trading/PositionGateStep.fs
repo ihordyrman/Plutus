@@ -11,7 +11,7 @@ open Warehouse.Core.Repositories
 
 /// Initial step to determine if an entry trade should be placed
 module PositionGateStep =
-    let positionGateStep: StepDefinition<TradingContext> =
+    let positionGate: StepDefinition<TradingContext> =
         let create (_: ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
 
             fun ctx ct ->

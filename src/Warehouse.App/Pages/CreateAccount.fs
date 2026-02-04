@@ -285,6 +285,7 @@ module View =
 
     let successResponse (marketType: string) =
         _div [ _id_ "account-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
+            _div [ Hx.get "/markets/grid"; Hx.targetCss "#accounts-container"; Hx.swapInnerHtml; Hx.trigger "load" ] []
             _div [ _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" ] []
             _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
