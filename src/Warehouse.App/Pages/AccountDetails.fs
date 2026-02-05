@@ -62,7 +62,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-white hover:text-gray-200 transition-colors"
+            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
             Hx.get "/accounts/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -70,7 +70,7 @@ module View =
 
     let private modalBackdrop =
         _div [
-            _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
             Hx.get "/accounts/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -78,24 +78,24 @@ module View =
 
     let private statusBadge (hasCredentials: bool) =
         if hasCredentials then
-            _span [ _class_ "px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800" ] [
+            _span [ _class_ "px-3 py-1 rounded text-sm font-medium bg-green-50 text-green-700" ] [
                 _i [ _class_ "fas fa-check-circle mr-1" ] []
                 Text.raw "Connected"
             ]
         else
-            _span [ _class_ "px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600" ] [
+            _span [ _class_ "px-3 py-1 rounded text-sm font-medium bg-gray-50 text-gray-500" ] [
                 _i [ _class_ "fas fa-exclamation-circle mr-1" ] []
                 Text.raw "Not Configured"
             ]
 
     let private modeBadge (isSandbox: bool) =
         if isSandbox then
-            _span [ _class_ "px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800" ] [
+            _span [ _class_ "px-3 py-1 rounded text-sm font-medium bg-yellow-50 text-yellow-700" ] [
                 _i [ _class_ "fas fa-flask mr-1" ] []
                 Text.raw "Sandbox"
             ]
         else
-            _span [ _class_ "px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800" ] [
+            _span [ _class_ "px-3 py-1 rounded text-sm font-medium bg-gray-100 text-gray-700" ] [
                 _i [ _class_ "fas fa-bolt mr-1" ] []
                 Text.raw "Live"
             ]
@@ -109,12 +109,12 @@ module View =
     let private exchangeIcon (marketType: MarketType) =
         let (bgColor, iconColor) =
             match marketType with
-            | MarketType.Okx -> "bg-blue-100", "text-blue-600"
-            | MarketType.Binance -> "bg-yellow-100", "text-yellow-600"
-            | MarketType.IBKR -> "bg-orange-100", "text-orange-600"
-            | _ -> "bg-gray-100", "text-gray-600"
+            | MarketType.Okx -> "bg-gray-100", "text-gray-500"
+            | MarketType.Binance -> "bg-gray-100", "text-gray-500"
+            | MarketType.IBKR -> "bg-gray-100", "text-gray-500"
+            | _ -> "bg-gray-100", "text-gray-500"
 
-        _div [ _class_ $"w-16 h-16 {bgColor} rounded-xl flex items-center justify-center" ] [
+        _div [ _class_ $"w-16 h-16 {bgColor} rounded-md flex items-center justify-center" ] [
             _i [ _class_ $"fas fa-exchange-alt text-2xl {iconColor}" ] []
         ]
 
@@ -160,17 +160,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl transition-all w-full max-w-2xl"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-2xl"
                     ] [
                         // header
-                        _div [ _class_ "bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
                                 _div [] [
-                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-white" ] [
-                                        _i [ _class_ "fas fa-info-circle mr-2" ] []
+                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-gray-900" ] [
+                                        _i [ _class_ "fas fa-info-circle mr-2 text-gray-400" ] []
                                         Text.raw "Account Details"
                                     ]
-                                    _p [ _class_ "text-blue-100 text-sm mt-1" ] [
+                                    _p [ _class_ "text-gray-500 text-sm mt-1" ] [
                                         Text.raw $"{account.MarketType} • ID: {account.Id}"
                                     ]
                                 ]
@@ -205,13 +205,13 @@ module View =
 
                             // warning for sandbox
                             if account.IsSandbox then
-                                _div [ _class_ "mt-6 bg-yellow-50 border border-yellow-200 rounded-md p-4" ] [
+                                _div [ _class_ "mt-6 bg-gray-50 border border-gray-200 rounded-md p-4" ] [
                                     _div [ _class_ "flex" ] [
                                         _div [ _class_ "flex-shrink-0" ] [
-                                            _i [ _class_ "fas fa-info-circle text-yellow-600" ] []
+                                            _i [ _class_ "fas fa-info-circle text-gray-500" ] []
                                         ]
                                         _div [ _class_ "ml-3" ] [
-                                            _p [ _class_ "text-sm text-yellow-800" ] [
+                                            _p [ _class_ "text-sm text-gray-500" ] [
                                                 Text.raw
                                                     "This account is in sandbox mode. Trades are simulated and do not use real funds."
                                             ]
@@ -221,11 +221,11 @@ module View =
                         ]
 
                         // footer
-                        _div [ _class_ "bg-gray-50 px-6 py-4 flex justify-between border-t" ] [
+                        _div [ _class_ "px-6 py-4 flex justify-between border-t border-gray-100" ] [
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/accounts/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -234,7 +234,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all"
+                                    "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                                 Hx.get $"/accounts/{account.Id}/edit/modal"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -252,17 +252,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Account Not Found" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "The requested account could not be found." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                             Hx.get "/accounts/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml

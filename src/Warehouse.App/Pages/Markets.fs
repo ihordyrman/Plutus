@@ -48,83 +48,66 @@ module Data =
         }
 
 module View =
-    let private addAccountButton =
-        _button [
-            _type_ "button"
-            _class_
-                "inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all duration-200"
-            Hx.get "/accounts/modal"
-            Hx.targetCss "#modal-container"
-            Hx.swapInnerHtml
-        ] [ _i [ _class_ "fas fa-plus mr-2" ] []; Text.raw "Add Account" ]
-
     let emptyState =
-        _div [ _class_ "bg-white rounded-xl border-2 border-dashed border-gray-300 p-12 text-center" ] [
-            _div [ _class_ "inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4" ] [
-                _i [ _class_ "fas fa-exchange-alt text-3xl text-gray-400" ] []
+        _div [ _class_ "bg-white rounded-md border-2 border-dashed border-gray-200 p-12 text-center" ] [
+            _div [ _class_ "inline-flex items-center justify-center w-12 h-12 bg-gray-50 rounded-md mb-4" ] [
+                _i [ _class_ "fas fa-exchange-alt text-xl text-gray-400" ] []
             ]
-            _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "No Accounts Yet" ]
-            _p [ _class_ "text-gray-500 mb-4" ] [ Text.raw "Connect your first exchange account to start trading" ]
+            _h3 [ _class_ "text-sm font-semibold text-gray-900 mb-2" ] [ Text.raw "No Accounts Yet" ]
+            _p [ _class_ "text-gray-400 text-sm mb-4" ] [ Text.raw "Connect your first exchange account to start trading" ]
             _button [
                 _type_ "button"
                 _class_
-                    "inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                    "inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium text-sm rounded-md transition-colors"
                 Hx.get "/accounts/modal"
                 Hx.targetCss "#modal-container"
                 Hx.swapInnerHtml
-            ] [ _i [ _class_ "fas fa-plus mr-2" ] []; Text.raw "Add Your First Account" ]
+            ] [ _i [ _class_ "fas fa-plus mr-2 text-gray-400" ] []; Text.raw "Add Your First Account" ]
         ]
 
     let private marketPill (market: MarketInfo) =
-        let (gradientFrom, gradientTo, iconBg) =
-            match market.Type with
-            | MarketType.Okx -> ("from-blue-500", "to-blue-600", "bg-blue-400")
-            | MarketType.Binance -> ("from-yellow-500", "to-orange-500", "bg-yellow-400")
-            | MarketType.IBKR -> ("from-orange-500", "to-red-500", "bg-orange-400")
-            | _ -> ("from-gray-500", "to-gray-600", "bg-gray-400")
-
-        let statusDotClass = if market.Enabled then "bg-green-400 animate-pulse" else "bg-gray-400"
+        let statusDotClass =
+            if market.Enabled then "bg-green-400" else "bg-gray-300"
 
         _div [
             _class_
-                $"group relative bg-gradient-to-r {gradientFrom} {gradientTo} rounded-2xl px-5 py-3 shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+                "group bg-white border border-gray-200 rounded-md px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
             _id_ $"account-{market.Id}"
         ] [
-            _div [ _class_ "flex items-center gap-4" ] [
-                _div [
-                    _class_
-                        $"w-10 h-10 {iconBg} bg-opacity-30 rounded-xl flex items-center justify-center backdrop-blur-sm"
-                ] [ _i [ _class_ "fas fa-exchange-alt text-white text-lg" ] [] ]
+            _div [ _class_ "flex items-center gap-3" ] [
+                _div [ _class_ "w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center" ] [
+                    _i [ _class_ "fas fa-exchange-alt text-gray-500 text-sm" ] []
+                ]
 
                 // name and status
                 _div [ _class_ "flex items-center gap-3" ] [
-                    _span [ _class_ "text-white font-bold text-lg" ] [ Text.raw market.Name ]
+                    _span [ _class_ "text-gray-900 font-medium text-sm" ] [ Text.raw market.Name ]
                     _div [ _class_ "flex items-center gap-1.5" ] [
                         _div [ _class_ $"w-2 h-2 rounded-full {statusDotClass}" ] []
-                        _span [ _class_ "text-white text-opacity-80 text-sm font-medium" ] [
+                        _span [ _class_ "text-gray-400 text-xs" ] [
                             Text.raw (if market.Enabled then "Active" else "Inactive")
                         ]
                     ]
                 ]
 
-                _span [ _class_ "text-white text-opacity-40" ] [ Text.raw "•" ]
+                _span [ _class_ "text-gray-200" ] [ Text.raw "|" ]
 
                 // balance
                 _div [
                     Hx.get $"/balance/{int market.Type}"
                     Hx.trigger "load, every 60s"
                     Hx.swapInnerHtml
-                    _class_ "text-white font-bold text-lg"
-                ] [ _i [ _class_ "fas fa-spinner fa-spin text-white text-opacity-60 text-sm" ] [] ]
+                    _class_ "text-gray-900 font-medium text-sm"
+                ] [ _i [ _class_ "fas fa-spinner fa-spin text-gray-300 text-xs" ] [] ]
 
                 // credential indicator
                 if market.HasCredentials then
                     _div [ _class_ "ml-2"; _title_ "API Configured" ] [
-                        _i [ _class_ "fas fa-key text-white text-opacity-60 text-sm" ] []
+                        _i [ _class_ "fas fa-key text-gray-300 text-xs" ] []
                     ]
                 else
                     _div [ _class_ "ml-2"; _title_ "No API Credentials" ] [
-                        _i [ _class_ "fas fa-exclamation-circle text-yellow-300 text-sm" ] []
+                        _i [ _class_ "fas fa-exclamation-circle text-yellow-400 text-xs" ] []
                     ]
 
                 // actions
@@ -135,21 +118,21 @@ module View =
                     _button [
                         _type_ "button"
                         _class_
-                            "w-8 h-8 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg flex items-center justify-center transition-all"
+                            "w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center justify-center transition-colors"
                         _title_ "Details"
                         Hx.get $"/accounts/{market.Id}/details/modal"
                         Hx.targetCss "#modal-container"
                         Hx.swapInnerHtml
-                    ] [ _i [ _class_ "fas fa-info text-white text-sm" ] [] ]
+                    ] [ _i [ _class_ "fas fa-info text-gray-500 text-xs" ] [] ]
                     _button [
                         _type_ "button"
                         _class_
-                            "w-8 h-8 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg flex items-center justify-center transition-all"
+                            "w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center justify-center transition-colors"
                         _title_ "Edit"
                         Hx.get $"/accounts/{market.Id}/edit/modal"
                         Hx.targetCss "#modal-container"
                         Hx.swapInnerHtml
-                    ] [ _i [ _class_ "fas fa-cog text-white text-sm" ] [] ]
+                    ] [ _i [ _class_ "fas fa-cog text-gray-500 text-xs" ] [] ]
                 ]
             ]
         ]
@@ -158,7 +141,7 @@ module View =
         match markets with
         | [] -> emptyState
         | items ->
-            _div [ _class_ "flex flex-wrap gap-4"; _id_ "accounts-grid" ] [
+            _div [ _class_ "flex flex-wrap gap-3"; _id_ "accounts-grid" ] [
                 for market in items do
                     marketPill market
             ]

@@ -122,7 +122,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-white hover:text-gray-200 transition-colors"
+            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
             Hx.get "/accounts/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -130,7 +130,7 @@ module View =
 
     let private modalBackdrop =
         _div [
-            _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
             Hx.get "/accounts/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -138,21 +138,21 @@ module View =
 
     let private apiKeyField (maskedValue: string) =
         _div [] [
-            _label [ _for_ "apiKey"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [ Text.raw "API Key" ]
+            _label [ _for_ "apiKey"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [ Text.raw "API Key" ]
             _input [
                 _id_ "apiKey"
                 _name_ "apiKey"
                 _type_ "password"
                 Attr.create "placeholder" (if String.IsNullOrEmpty maskedValue then "Enter API key" else maskedValue)
                 _class_
-                    "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
             ]
             _p [ _class_ "text-sm text-gray-500 mt-1" ] [ Text.raw "Leave blank to keep current value" ]
         ]
 
     let private secretKeyField =
         _div [] [
-            _label [ _for_ "secretKey"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [
+            _label [ _for_ "secretKey"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
                 Text.raw "Secret Key"
             ]
             _input [
@@ -161,14 +161,14 @@ module View =
                 _type_ "password"
                 Attr.create "placeholder" "Enter new secret key (or leave blank)"
                 _class_
-                    "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
             ]
             _p [ _class_ "text-sm text-gray-500 mt-1" ] [ Text.raw "Leave blank to keep current value" ]
         ]
 
     let private passphraseField (hasPassphrase: bool) =
         _div [] [
-            _label [ _for_ "passphrase"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [
+            _label [ _for_ "passphrase"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
                 Text.raw "Passphrase"
             ]
             _input [
@@ -179,7 +179,7 @@ module View =
                     "placeholder"
                     (if hasPassphrase then "Enter new passphrase (or leave blank)" else "Enter passphrase")
                 _class_
-                    "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
             ]
             _p [ _class_ "text-sm text-gray-500 mt-1" ] [ Text.raw "Required for OKX accounts" ]
         ]
@@ -190,7 +190,7 @@ module View =
                 _id_ "isSandbox"
                 _name_ "isSandbox"
                 _type_ "checkbox"
-                _class_ "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                _class_ "h-4 w-4 text-gray-900 focus:ring-gray-300 border-gray-200 rounded"
                 if isSandbox then
                     Attr.create "checked" "checked"
             ]
@@ -198,7 +198,7 @@ module View =
         ]
 
     let private dangerZone (marketId: int) =
-        _div [ _class_ "mt-6 pt-4 border-t border-red-200" ] [
+        _div [ _class_ "mt-6 pt-4 border-t border-gray-200" ] [
             _h4 [ _class_ "text-sm font-semibold text-red-700 mb-3" ] [
                 _i [ _class_ "fas fa-exclamation-triangle mr-2" ] []
                 Text.raw "Danger Zone"
@@ -208,7 +208,7 @@ module View =
             ]
             _button [
                 _type_ "button"
-                _class_ "px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                _class_ "px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-md text-sm transition-colors"
                 Hx.delete $"/accounts/{marketId}"
                 Hx.confirm "Are you sure you want to delete this account? This action cannot be undone."
                 Hx.targetCss "#modal-container"
@@ -230,17 +230,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl transition-all w-full max-w-lg"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-lg"
                     ] [
                         // header
-                        _div [ _class_ "bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
                                 _div [] [
-                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-white" ] [
-                                        _i [ _class_ "fas fa-edit mr-2" ] []
+                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-gray-900" ] [
+                                        _i [ _class_ "fas fa-edit mr-2 text-gray-400" ] []
                                         Text.raw "Edit Account"
                                     ]
-                                    _p [ _class_ "text-blue-100 text-sm mt-1" ] [
+                                    _p [ _class_ "text-gray-500 text-sm mt-1" ] [
                                         Text.raw $"{vm.MarketType} • ID: {vm.Id}"
                                     ]
                                 ]
@@ -257,7 +257,7 @@ module View =
                         ] [
                             _div [ _class_ "px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto" ] [
                                 _div [] [
-                                    _label [ _class_ "block text-sm font-medium text-gray-700 mb-2" ] [
+                                    _label [ _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
                                         Text.raw "Exchange"
                                     ]
                                     _div [
@@ -278,11 +278,11 @@ module View =
                             ]
 
                             // footer
-                            _div [ _class_ "bg-gray-50 px-6 py-4 flex justify-end space-x-3 border-t" ] [
+                            _div [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-gray-100" ] [
                                 _button [
                                     _type_ "button"
                                     _class_
-                                        "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                        "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                                     Hx.get "/accounts/modal/close"
                                     Hx.targetCss "#modal-container"
                                     Hx.swapInnerHtml
@@ -290,7 +290,7 @@ module View =
                                 _button [
                                     _type_ "submit"
                                     _class_
-                                        "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all"
+                                        "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                                 ] [ _i [ _class_ "fas fa-save mr-2" ] []; Text.raw "Save Changes" ]
                             ]
                         ]
@@ -301,22 +301,22 @@ module View =
 
     let successResponse (marketId: int) =
         _div [ _id_ "account-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
-            _div [ _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" ] []
+            _div [ _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity" ] []
             _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4"
                         ] [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Account Updated!" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "Your changes have been saved successfully." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                             Hx.get "/accounts/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
@@ -329,22 +329,22 @@ module View =
 
     let deletedResponse =
         _div [ _id_ "account-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
-            _div [ _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" ] []
+            _div [ _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity" ] []
             _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4"
                         ] [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Account Deleted" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "The account has been removed successfully." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                             Hx.get "/accounts/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
@@ -357,15 +357,15 @@ module View =
 
     let errorResponse (message: string) (marketId: int) =
         _div [ _id_ "account-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
-            _div [ _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" ] []
+            _div [ _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity" ] []
             _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Error" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw message ]
@@ -373,7 +373,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/accounts/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -381,7 +381,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                                 Hx.get $"/accounts/{marketId}/edit/modal"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -399,17 +399,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Account Not Found" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "The requested account could not be found." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                             Hx.get "/accounts/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml

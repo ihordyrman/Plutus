@@ -605,7 +605,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-white hover:text-gray-200 transition-colors"
+            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -613,7 +613,7 @@ module View =
 
     let private modalBackdrop =
         _div [
-            _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -622,18 +622,18 @@ module View =
     let stepItem (step: StepItemViewModel) =
         let statusClass, statusIcon =
             if step.IsEnabled then
-                "bg-green-100 text-green-800", "fa-check"
+                "bg-green-50 text-green-700", "fa-check"
             else
-                "bg-gray-100 text-gray-500", "fa-pause"
+                "bg-gray-50 text-gray-400", "fa-pause"
 
         _div [
             _id_ $"step-{step.Id}"
-            _class_ "border rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
+            _class_ "border border-gray-200 rounded-md p-4 bg-white hover:bg-gray-50 transition-colors"
         ] [
             _div [ _class_ "flex items-start justify-between" ] [
                 _div [ _class_ "flex items-start space-x-3" ] [
-                    _div [ _class_ "flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center" ] [
-                        _i [ _class_ $"fas {step.Icon} text-blue-600" ] []
+                    _div [ _class_ "flex-shrink-0 w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center" ] [
+                        _i [ _class_ $"fas {step.Icon} text-gray-500" ] []
                     ]
                     _div [] [
                         _div [ _class_ "flex items-center space-x-2" ] [
@@ -675,7 +675,7 @@ module View =
                     // edit
                     _button [
                         _type_ "button"
-                        _class_ "p-1.5 text-blue-400 hover:text-blue-600 hover:bg-blue-50 rounded"
+                        _class_ "p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
                         _title_ "Edit parameters"
                         Hx.get $"/pipelines/{step.PipelineId}/steps/{step.Id}/editor"
                         Hx.targetCss "#step-editor-container"
@@ -730,7 +730,7 @@ module View =
         _div [ _class_ "p-4" ] [
             _div [ _class_ "flex items-center justify-between mb-4 pb-4 border-b" ] [
                 _h3 [ _class_ "text-lg font-semibold text-gray-900" ] [
-                    _i [ _class_ "fas fa-plus-circle mr-2 text-blue-600" ] []
+                    _i [ _class_ "fas fa-plus-circle mr-2 text-gray-400" ] []
                     Text.raw "Add Step"
                 ]
                 _button [
@@ -752,9 +752,9 @@ module View =
 
                                 let buttonClass =
                                     if isDisabled then
-                                        "w-full p-3 border rounded-lg text-left bg-gray-50 cursor-not-allowed opacity-60"
+                                        "w-full p-3 border rounded-md text-left bg-gray-50 cursor-not-allowed opacity-60"
                                     else
-                                        "w-full p-3 border rounded-lg text-left hover:border-blue-500 hover:bg-blue-50 transition-colors cursor-pointer"
+                                        "w-full p-3 border rounded-md text-left hover:border-gray-300 hover:bg-gray-50 transition-colors cursor-pointer"
 
                                 _button [
                                     _type_ "button"
@@ -769,8 +769,8 @@ module View =
                                     _div [ _class_ "flex items-start space-x-3" ] [
                                         _div [
                                             _class_
-                                                "flex-shrink-0 w-8 h-8 bg-blue-100 rounded flex items-center justify-center"
-                                        ] [ _i [ _class_ $"fas {def.Icon} text-blue-600 text-sm" ] [] ]
+                                                "flex-shrink-0 w-8 h-8 bg-gray-100 rounded flex items-center justify-center"
+                                        ] [ _i [ _class_ $"fas {def.Icon} text-gray-500 text-sm" ] [] ]
                                         _div [] [
                                             _span [ _class_ "font-medium text-gray-900" ] [ Text.raw def.Name ]
                                             if isDisabled then
@@ -804,7 +804,7 @@ module View =
                         _id_ inputId
                         _name_ field.Key
                         _type_ "checkbox"
-                        _class_ "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        _class_ "h-4 w-4 text-gray-900 focus:ring-gray-300 border-gray-200 rounded"
                         _value_ "true"
                         if currentVal = "true" || currentVal = "True" then
                             Attr.create "checked" "checked"
@@ -816,7 +816,7 @@ module View =
                     _id_ inputId
                     _name_ field.Key
                     _class_
-                        "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 ] [
                     for opt in options do
                         if opt = currentVal then
@@ -832,7 +832,7 @@ module View =
                     _type_ "number"
                     _value_ currentVal
                     _class_
-                        "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                     match minVal with
                     | Some m -> Attr.create "min" (string m)
                     | None -> ()
@@ -849,7 +849,7 @@ module View =
                     Attr.create "step" "0.01"
                     _value_ currentVal
                     _class_
-                        "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                     match minVal with
                     | Some m -> Attr.create "min" (string m)
                     | None -> ()
@@ -865,7 +865,7 @@ module View =
                     _type_ "text"
                     _value_ currentVal
                     _class_
-                        "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                 ]
 
             if not (String.IsNullOrEmpty field.Description) then
@@ -873,11 +873,11 @@ module View =
         ]
 
     let stepEditor (vm: StepEditorViewModel) =
-        _div [ _class_ "border-l bg-gray-50 p-4" ] [
+        _div [ _class_ "border-l border-gray-100 bg-white p-4" ] [
             _div [ _class_ "flex items-center justify-between mb-4 pb-4 border-b" ] [
                 _div [ _class_ "flex items-center space-x-3" ] [
-                    _div [ _class_ "w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center" ] [
-                        _i [ _class_ $"fas {vm.StepIcon} text-blue-600" ] []
+                    _div [ _class_ "w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center" ] [
+                        _i [ _class_ $"fas {vm.StepIcon} text-gray-500" ] []
                     ]
                     _div [] [
                         _h3 [ _class_ "font-semibold text-gray-900" ] [ Text.raw vm.StepName ]
@@ -913,13 +913,13 @@ module View =
                     _button [
                         _type_ "button"
                         _class_
-                            "px-3 py-2 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md transition-colors"
+                            "px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
                         Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''"
                     ] [ Text.raw "Cancel" ]
                     _button [
                         _type_ "submit"
                         _class_
-                            "px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                            "px-3 py-2 text-sm bg-gray-900 hover:bg-gray-800 text-white rounded-md transition-colors"
                     ] [ _i [ _class_ "fas fa-save mr-1" ] []; Text.raw "Save" ]
                 ]
             ]
@@ -932,7 +932,7 @@ module View =
             _div [ _class_ "space-y-4" ] [
                 // market type
                 _div [] [
-                    _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [
+                    _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
                         Text.raw "Market Type "
                         _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
                     ]
@@ -940,7 +940,7 @@ module View =
                         _id_ "marketType"
                         _name_ "marketType"
                         _class_
-                            "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                     ] [
                         for mt in vm.MarketTypes do
                             if mt = vm.MarketType then
@@ -954,7 +954,7 @@ module View =
 
                 // symbol
                 _div [] [
-                    _label [ _for_ "symbol"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [
+                    _label [ _for_ "symbol"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
                         Text.raw "Symbol "
                         _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
                     ]
@@ -965,14 +965,14 @@ module View =
                         _value_ vm.Symbol
                         Attr.create "placeholder" "e.g., BTC-USDT"
                         _class_
-                            "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                         Attr.create "required" "required"
                     ]
                 ]
 
                 // tags
                 _div [] [
-                    _label [ _for_ "tags"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [ Text.raw "Tags" ]
+                    _label [ _for_ "tags"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [ Text.raw "Tags" ]
                     _input [
                         _id_ "tags"
                         _name_ "tags"
@@ -980,14 +980,14 @@ module View =
                         _value_ vm.Tags
                         Attr.create "placeholder" "e.g., scalping, btc"
                         _class_
-                            "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                     ]
                     _p [ _class_ "text-sm text-gray-500 mt-1" ] [ Text.raw "Comma-separated tags" ]
                 ]
 
                 // execution interval
                 _div [] [
-                    _label [ _for_ "executionInterval"; _class_ "block text-sm font-medium text-gray-700 mb-2" ] [
+                    _label [ _for_ "executionInterval"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
                         Text.raw "Execution Interval (minutes) "
                         _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
                     ]
@@ -998,7 +998,7 @@ module View =
                         _value_ (string vm.ExecutionInterval)
                         Attr.create "min" "1"
                         _class_
-                            "w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
                         Attr.create "required" "required"
                     ]
                 ]
@@ -1009,7 +1009,7 @@ module View =
                         _id_ "enabled"
                         _name_ "enabled"
                         _type_ "checkbox"
-                        _class_ "h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        _class_ "h-4 w-4 text-gray-900 focus:ring-gray-300 border-gray-200 rounded"
                         if vm.Enabled then
                             Attr.create "checked" "checked"
                     ]
@@ -1023,7 +1023,7 @@ module View =
                     _button [
                         _type_ "submit"
                         _class_
-                            "w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                            "w-full px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                     ] [ _i [ _class_ "fas fa-save mr-2" ] []; Text.raw "Save Settings" ]
                 ]
             ]
@@ -1043,17 +1043,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl transition-all w-full max-w-7xl"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-7xl"
                     ] [
                         // header
-                        _div [ _class_ "bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
                                 _div [] [
-                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-white" ] [
-                                        _i [ _class_ "fas fa-edit mr-2" ] []
+                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-gray-900" ] [
+                                        _i [ _class_ "fas fa-edit mr-2 text-gray-400" ] []
                                         Text.raw "Edit Pipeline"
                                     ]
-                                    _p [ _class_ "text-blue-100 text-sm mt-1" ] [
+                                    _p [ _class_ "text-gray-500 text-sm mt-1" ] [
                                         Text.raw $"{vm.Symbol} • ID: {vm.Id}"
                                     ]
                                 ]
@@ -1082,7 +1082,7 @@ module View =
                                     _button [
                                         _type_ "button"
                                         _class_
-                                            "px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                                            "px-3 py-1.5 border border-gray-200 text-gray-700 hover:bg-gray-50 text-sm font-medium rounded-md transition-colors"
                                         Hx.get $"/pipelines/{vm.Id}/steps/selector"
                                         Hx.targetCss "#step-editor-container"
                                         Hx.swapInnerHtml
@@ -1096,9 +1096,9 @@ module View =
                         ]
 
                         // footer
-                        _div [ _class_ "bg-gray-50 px-6 py-4 flex justify-between items-center border-t" ] [
+                        _div [ _class_ "px-6 py-4 flex justify-between items-center border-t border-gray-100" ] [
                             _div [
-                                _class_ "bg-yellow-50 border border-yellow-200 rounded-md p-2 text-xs text-yellow-800"
+                                _class_ "bg-gray-50 border border-gray-200 rounded-md p-2 text-xs text-gray-500"
                             ] [
                                 _i [ _class_ "fas fa-info-circle mr-1" ] []
                                 Text.raw "Steps execute in order from top to bottom"
@@ -1106,7 +1106,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/pipelines/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -1124,17 +1124,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4"
                         ] [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Pipeline Updated!" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "Your changes have been saved successfully." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                             Hx.get "/pipelines/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
@@ -1152,10 +1152,10 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Error" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw message ]
@@ -1163,7 +1163,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/pipelines/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -1171,7 +1171,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                                 Hx.get $"/pipelines/{pipelineId}/edit/modal"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -1189,17 +1189,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Pipeline Not Found" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "The requested pipeline could not be found." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                             Hx.get "/pipelines/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml

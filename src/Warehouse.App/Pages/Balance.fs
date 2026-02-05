@@ -39,7 +39,7 @@ module Data =
 module View =
     let formatUsdt value = Text.raw $"$%.2f{value}"
     let balanceText (value: decimal) = Text.raw (value.ToString "C")
-    let balanceError = _span [ _class_ "text-red-500 text-sm" ] [ Text.raw "Failed to load" ]
+    let balanceError = _span [ _class_ "text-red-400 text-xs" ] [ Text.raw "Failed to load" ]
 
 module Handler =
     let total: HttpHandler =

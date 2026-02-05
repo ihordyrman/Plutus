@@ -41,16 +41,16 @@ module Data =
 module View =
     let private statusConfig =
         function
-        | Online -> "Online", "bg-green-100 text-green-800", "bg-green-400"
-        | Idle -> "Idle", "bg-yellow-100 text-yellow-800", "bg-yellow-400"
-        | Error -> "Error", "bg-red-100 text-red-800", "bg-red-400"
+        | Online -> "Online", "bg-green-50 text-green-700", "bg-green-400"
+        | Idle -> "Idle", "bg-yellow-50 text-yellow-700", "bg-yellow-400"
+        | Error -> "Error", "bg-red-50 text-red-700", "bg-red-400"
 
     let statusBadge (status: Status) =
         let text, badgeClass, dotClass = statusConfig status
 
         _span [
             _id_ "system-status"
-            _class_ $"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {badgeClass}"
+            _class_ $"inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium {badgeClass}"
             Hx.get "/system-status"
             Hx.trigger "every 30s"
             Hx.swapOuterHtml
@@ -59,7 +59,7 @@ module View =
     let statusPlaceholder =
         _span [
             _id_ "system-status"
-            _class_ "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+            _class_ "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-500"
             Hx.get "/system-status"
             Hx.trigger "load, every 30s"
             Hx.swapOuterHtml

@@ -64,7 +64,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-white hover:text-gray-200 transition-colors"
+            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -72,7 +72,7 @@ module View =
 
     let private modalBackdrop =
         _div [
-            _class_ "fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"
+            _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -80,12 +80,12 @@ module View =
 
     let private statusBadge (enabled: bool) =
         if enabled then
-            _span [ _class_ "px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800" ] [
+            _span [ _class_ "px-3 py-1 rounded text-sm font-medium bg-green-50 text-green-700" ] [
                 _i [ _class_ "fas fa-check-circle mr-1" ] []
                 Text.raw "Enabled"
             ]
         else
-            _span [ _class_ "px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600" ] [
+            _span [ _class_ "px-3 py-1 rounded text-sm font-medium bg-gray-50 text-gray-500" ] [
                 _i [ _class_ "fas fa-pause-circle mr-1" ] []
                 Text.raw "Disabled"
             ]
@@ -104,7 +104,7 @@ module View =
             _dl [ _class_ "space-y-3" ] [
                 infoRow
                     "Market Type"
-                    (_span [ _class_ "inline-flex items-center px-3 py-1 rounded-md bg-blue-100 text-blue-800" ] [
+                    (_span [ _class_ "inline-flex items-center px-3 py-1 rounded-md bg-gray-100 text-gray-700" ] [
                         _i [ _class_ "fas fa-exchange-alt mr-2" ] []
                         Text.raw (pipeline.MarketType.ToString())
                     ])
@@ -154,7 +154,7 @@ module View =
             else
                 _div [ _class_ "flex flex-wrap gap-2" ] [
                     for tag in tags do
-                        _span [ _class_ "px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full" ] [ Text.raw tag ]
+                        _span [ _class_ "px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded" ] [ Text.raw tag ]
                 ]
         ]
 
@@ -171,7 +171,7 @@ module View =
                 ]
                 _button [
                     _type_ "button"
-                    _class_ "text-blue-600 hover:text-blue-800 text-sm"
+                    _class_ "text-gray-400 hover:text-gray-600 text-sm"
                     Hx.get $"/pipelines/{pipelineId}/edit/modal"
                     Hx.targetCss "#modal-container"
                     Hx.swapInnerHtml
@@ -206,17 +206,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl transition-all w-full max-w-2xl"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-2xl"
                     ] [
                         // Header
-                        _div [ _class_ "bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
                                 _div [] [
-                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-white" ] [
-                                        _i [ _class_ "fas fa-info-circle mr-2" ] []
+                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-gray-900" ] [
+                                        _i [ _class_ "fas fa-info-circle mr-2 text-gray-400" ] []
                                         Text.raw "Pipeline Details"
                                     ]
-                                    _p [ _class_ "text-blue-100 text-sm mt-1" ] [
+                                    _p [ _class_ "text-gray-500 text-sm mt-1" ] [
                                         Text.raw $"{pipeline.Symbol} • ID: {pipeline.Id}"
                                     ]
                                 ]
@@ -239,11 +239,11 @@ module View =
                         ]
 
                         // Footer
-                        _div [ _class_ "bg-gray-50 px-6 py-4 flex justify-between border-t" ] [
+                        _div [ _class_ "px-6 py-4 flex justify-between border-t border-gray-100" ] [
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/pipelines/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -252,7 +252,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm hover:shadow-md transition-all"
+                                    "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
                                 Hx.get $"/pipelines/{pipeline.Id}/edit/modal"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -270,17 +270,17 @@ module View =
                 _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
                     _div [
                         _class_
-                            "relative transform overflow-hidden rounded-xl bg-white shadow-2xl w-full max-w-md p-6 text-center"
+                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
                     ] [
                         _div [
-                            _class_ "mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4"
+                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
                         _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Pipeline Not Found" ]
                         _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw "The requested pipeline could not be found." ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition-colors"
+                                "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
                             Hx.get "/pipelines/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
