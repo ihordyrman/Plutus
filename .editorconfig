@@ -14,5 +14,5 @@ fsharp_max_line_length = 120
 fsharp_multiline_bracket_style = cramped
 fsharp_multi_line_lambda_closing_newline = true
 
-[*/Warehouse.App/Pages/*.fs]
+[*/Plutus.App/Pages/*.fs]
 fsharp_experimental_elmish = true

@@ -1,0 +1,25 @@
+﻿<Solution>
+    <Folder Name="/diagrams/">
+        <File Path="diagrams\execution-flow.mmd" />
+        <File Path="diagrams\pipelines-overview.mmd" />
+    </Folder>
+    <Folder Name="/docker/">
+        <File Path="docker\docker-compose.yaml" />
+    </Folder>
+    <Folder Name="/docs/">
+        <File Path="docs\index.md" />
+    </Folder>
+    <Folder Name="/items/">
+        <File Path="README.md" />
+        <File Path=".gitignore" />
+        <File Path=".editorconfig" />
+    </Folder>
+    <Folder Name="/src/">
+        <Project Path="src\Plutus.Core\Plutus.Core.fsproj" />
+        <Project Path="src\Plutus.Dashboard\Plutus.Dashboard.fsproj" />
+    </Folder>
+    <Folder Name="/tools/">
+        <Project Path="tools\Plutus.DbMigration\Plutus.DbMigration.fsproj" />
+        <Project Path="tools\Plutus.Sandbox\Plutus.Sandbox.fsproj" />
+    </Folder>
+</Solution>

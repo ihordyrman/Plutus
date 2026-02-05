@@ -10,11 +10,11 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         networks:
-            - warehouse-network
+            - plutus-network
 
 volumes:
     postgres_data:
 
 networks:
-    warehouse-network:
+    plutus-network:
         driver: bridge
