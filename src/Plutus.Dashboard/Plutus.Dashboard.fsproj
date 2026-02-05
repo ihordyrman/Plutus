@@ -19,6 +19,7 @@
         <Compile Include="Pages\PipelineEdit.fs" />
         <Compile Include="Pages\CreatePipeline.fs" />
         <Compile Include="Pages\Orders.fs" />
+        <Compile Include="Pages\Login.fs" />
         <Compile Include="Pages\Index.fs" />
         <Compile Include="Program.fs" />
     </ItemGroup>

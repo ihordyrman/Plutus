@@ -1,8 +1,4 @@
 ﻿<Solution>
-    <Folder Name="/diagrams/">
-        <File Path="diagrams\execution-flow.mmd" />
-        <File Path="diagrams\pipelines-overview.mmd" />
-    </Folder>
     <Folder Name="/docker/">
         <File Path="docker\docker-compose.yaml" />
     </Folder>

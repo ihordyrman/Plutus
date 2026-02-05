@@ -107,3 +107,12 @@ create table orders
 
 create index ix_orders_pipeline_id on orders (pipeline_id);
 create index ix_orders_symbol on orders (symbol);
+
+create table users
+(
+    id            serial primary key,
+    username      varchar(100) not null unique,
+    password_hash varchar(255) not null,
+    created_at    timestamp    not null,
+    updated_at    timestamp    not null
+);

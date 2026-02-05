@@ -23,6 +23,14 @@ let private header =
                     ]
                 ]
                 _div [ _class_ "flex items-center space-x-4" ] [
+                    _a [
+                        _href_ "/logout"
+                        _class_ "text-gray-400 hover:text-gray-600 text-sm flex items-center gap-1.5 transition-colors"
+                    ] [
+                        _i [ _class_ "fas fa-sign-out-alt text-xs" ] []
+                        Text.raw "Logout"
+                    ]
+                    _div [ _class_ "h-4 w-px bg-gray-200" ] []
                     _span [ _class_ "text-sm text-gray-400" ] [ Text.raw "Status:" ]
                     SystemStatus.View.statusPlaceholder
                 ]

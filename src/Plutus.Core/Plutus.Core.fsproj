@@ -15,6 +15,7 @@
         <Compile Include="Infrastructure\WebSockets.fs" />
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
+        <Compile Include="Infrastructure\Authentication.fs" />
 
         <Compile Include="Shared\Errors.fs" />
 
@@ -24,6 +25,7 @@
         <Compile Include="Repositories\MarketRepository.fs" />
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
+        <Compile Include="Repositories\UserRepository.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\BalanceProvider.fs" />
@@ -70,6 +72,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
         <PackageReference Include="Dapper.FSharp" Version="4.9.0" />
         <PackageReference Include="FSharp.Control.TaskSeq" Version="0.4.0" />
         <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="4.18.0" />
