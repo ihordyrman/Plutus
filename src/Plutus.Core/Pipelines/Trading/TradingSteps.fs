@@ -10,9 +10,10 @@ module TradingSteps =
     open MacdSignal
     open VwapSignal
     open EwmacSignal
+    open TrendFollowingSignal
 
     let private executionSteps = [ entry ]
     let private validationSteps = [ checkPosition; positionGate ]
-    let private signalSteps = [ ema; macd; vwap; ewmac ]
+    let private signalSteps = [ ema; macd; vwap; ewmac; trendFollowing ]
 
     let all = executionSteps @ validationSteps @ signalSteps

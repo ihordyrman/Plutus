@@ -379,6 +379,8 @@ module Data =
                                 | Parameters.IntValue i -> string i
                                 | Parameters.BoolValue b -> string b
                                 | Parameters.ChoiceValue c -> c
+                                | Parameters.ListValue items ->
+                                    items |> String.concat (string Parameters.multiChoiceDelimiter)
 
                             p.Key, value
                         )
@@ -550,10 +552,12 @@ module Data =
                         | Some value ->
                             match param.Type with
                             | Parameters.Bool -> newParams.[param.Key] <- if value = "true" then "true" else "false"
+                            | Parameters.MultiChoice _ when String.IsNullOrWhiteSpace(value) -> ()
                             | _ -> newParams.[param.Key] <- value
                         | None ->
-                            if param.Type = Parameters.Bool then
-                                newParams.[param.Key] <- "false"
+                            match param.Type with
+                            | Parameters.Bool -> newParams.[param.Key] <- "false"
+                            | _ -> ()
 
                     let rawMap = newParams |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq
 
@@ -823,6 +827,35 @@ module View =
                             _option [ _value_ opt; Attr.create "selected" "selected" ] [ Text.raw opt ]
                         else
                             _option [ _value_ opt ] [ Text.raw opt ]
+                ]
+
+            | Parameters.MultiChoice options ->
+                let selectedValues =
+                    currentVal.Split(Parameters.multiChoiceDelimiter)
+                    |> Array.map _.Trim()
+                    |> Set.ofArray
+
+                let containerId = $"mc-{field.Key}"
+
+                let syncScript =
+                    $"var h=document.getElementById('{inputId}');var c=document.getElementById('{containerId}');h.value=Array.from(c.querySelectorAll('input:checked')).map(i=>i.value).join('{Parameters.multiChoiceDelimiter}')"
+
+                _div [ _class_ "space-y-2" ] [
+                    _input [ _id_ inputId; _name_ field.Key; _type_ "hidden"; _value_ currentVal ]
+                    _div [ _id_ containerId; _class_ "max-h-48 overflow-y-auto space-y-1 border border-gray-200 rounded-md p-2" ] [
+                        for opt in options do
+                            _label [ _class_ "flex items-center space-x-2 cursor-pointer py-1 px-1 hover:bg-gray-50 rounded" ] [
+                                _input [
+                                    _type_ "checkbox"
+                                    _class_ "h-4 w-4 text-gray-900 focus:ring-gray-300 border-gray-200 rounded"
+                                    _value_ opt
+                                    Attr.create "onchange" syncScript
+                                    if Set.contains opt selectedValues then
+                                        Attr.create "checked" "checked"
+                                ]
+                                _span [ _class_ "text-sm text-gray-700" ] [ Text.raw opt ]
+                            ]
+                    ]
                 ]
 
             | Parameters.Int(minVal, maxVal) ->

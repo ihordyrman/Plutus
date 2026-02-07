@@ -64,6 +64,7 @@
         <Compile Include="Pipelines\Trading\MacdSignal.fs" />
         <Compile Include="Pipelines\Trading\VwapSignal.fs" />
         <Compile Include="Pipelines\Trading\EwmacSignal.fs" />
+        <Compile Include="Pipelines\Trading\TrendFollowingSignal.fs" />
         <Compile Include="Pipelines\Trading\TradingSteps.fs" />
         <Compile Include="Pipelines\Orchestration\Executor.fs" />
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />

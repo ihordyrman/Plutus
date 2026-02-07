@@ -4,12 +4,15 @@ open System
 
 module Parameters =
 
+    let multiChoiceDelimiter = ';'
+
     type ParamValue =
         | StringValue of string
         | DecimalValue of decimal
         | IntValue of int
         | BoolValue of bool
         | ChoiceValue of string
+        | ListValue of string list
 
     type ParameterDef =
         { Key: string
@@ -26,6 +29,7 @@ module Parameters =
         | Int of min: int option * max: int option
         | Bool
         | Choice of options: string list
+        | MultiChoice of options: string list
 
     type ParameterSchema = { Parameters: ParameterDef list }
 
@@ -73,6 +77,16 @@ module Parameters =
         let getBool key defaultValue param = tryGetBool key param |> Option.defaultValue defaultValue
         let getString key defaultValue param = tryGetString key param |> Option.defaultValue defaultValue
 
+        let tryGetList key param =
+            tryGet key param
+            |> Option.bind (
+                function
+                | ListValue x -> Some x
+                | _ -> None
+            )
+
+        let getList key defaultValue param = tryGetList key param |> Option.defaultValue defaultValue
+
     let private parseValue (def: ParameterDef) (raw: string) : Result<ParamValue, string> =
         match def.Type with
         | String -> Ok(StringValue raw)
@@ -106,6 +120,18 @@ module Parameters =
             else
                 let options = options |> List.map (sprintf "'%s'")
                 Error $"must be one of: {options}"
+
+        | MultiChoice options ->
+            let selected =
+                raw.Split multiChoiceDelimiter
+                |> Array.map _.Trim()
+                |> Array.filter (fun x -> List.contains x options)
+
+            if selected.Length = 0 then
+                let options = options |> List.map (sprintf "'%s'")
+                Error $"must contain at least one of: {options}"
+            else
+                Ok(ListValue(List.ofArray selected))
 
     let validate (schema: ParameterSchema) (raw: Map<string, string>) : Result<ValidatedParams, ValidationError list> =
         let results =
