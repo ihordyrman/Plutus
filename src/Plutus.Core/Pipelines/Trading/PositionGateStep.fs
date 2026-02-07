@@ -7,7 +7,6 @@ open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
-open Plutus.Core.Pipelines.Trading
 open Plutus.Core.Repositories
 
 /// Initial step to determine if an entry trade should be placed

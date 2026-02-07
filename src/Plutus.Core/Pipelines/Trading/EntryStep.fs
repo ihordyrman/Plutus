@@ -11,7 +11,6 @@ open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
-open Plutus.Core.Pipelines.Trading
 open Plutus.Core.Repositories
 open Plutus.Core.Shared.Errors
 
@@ -93,28 +92,45 @@ module EntryStep =
     let entry: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
             let tradeAmount = params' |> ValidatedParams.getDecimal "tradeAmount" 100m
+            let buyThreshold = params' |> ValidatedParams.getDecimal "buyThreshold" 0.5m
+            let sellThreshold = params' |> ValidatedParams.getDecimal "sellThreshold" -0.5m
 
             { key = "entry-step"
               execute =
                 fun ctx ct ->
                     task {
-                        match ctx.ActiveOrderId, ctx.Action with
+                        let totalWeight = ctx.SignalWeights |> Map.values |> Seq.sum
+
+                        let action =
+                            if totalWeight > buyThreshold then Buy
+                            elif totalWeight < sellThreshold then Sell
+                            else ctx.Action
+
+                        match ctx.ActiveOrderId, action with
                         | None, Buy ->
-                            match! placeOrder services { ctx with Quantity = Some tradeAmount } ct with
+                            match! placeOrder services { ctx with Action = Buy; Quantity = Some tradeAmount } ct with
                             | Ok ctx ->
-                                return Continue(ctx, $"Placed buy order for order ID {ctx.ActiveOrderId.Value}.")
+                                return
+                                    Continue(
+                                        ctx,
+                                        $"Placed buy order for order ID {ctx.ActiveOrderId.Value}. (totalWeight={totalWeight:F2})"
+                                    )
                             | Error err -> return Fail $"Error placing buy order: {err}"
                         | Some _, Sell ->
-                            match! placeOrder services ctx ct with
+                            match! placeOrder services { ctx with Action = Sell } ct with
                             | Ok ctx ->
-                                return Continue(ctx, $"Placed sell order for order ID {ctx.ActiveOrderId.Value}.")
+                                return
+                                    Continue(
+                                        ctx,
+                                        $"Placed sell order for order ID {ctx.ActiveOrderId.Value}. (totalWeight={totalWeight:F2})"
+                                    )
                             | Error err -> return Fail $"Error placing sell order: {err}"
-                        | _ -> return Continue(ctx, "No action taken.")
+                        | _ -> return Continue(ctx, $"No action taken. (totalWeight={totalWeight:F2})")
                     } }
 
         { Key = "entry-step"
           Name = "Entry Step"
-          Description = "Places an entry trade based on the defined strategy."
+          Description = "Places an entry trade based on aggregated signal weights."
           Category = StepCategory.Execution
           Icon = "fa-sign-in-alt"
           ParameterSchema =
@@ -125,5 +141,19 @@ module EntryStep =
                     Type = Decimal(Some 1m, Some 100000m)
                     Required = true
                     DefaultValue = Some(DecimalValue 100m)
-                    Group = Some "Order Settings" } ] }
+                    Group = Some "Order Settings" }
+                  { Key = "buyThreshold"
+                    Name = "Buy Threshold"
+                    Description = "Minimum total signal weight to trigger a buy"
+                    Type = Decimal(Some -100m, Some 100m)
+                    Required = false
+                    DefaultValue = Some(DecimalValue 0.5m)
+                    Group = Some "Thresholds" }
+                  { Key = "sellThreshold"
+                    Name = "Sell Threshold"
+                    Description = "Maximum total signal weight to trigger a sell"
+                    Type = Decimal(Some -100m, Some 100m)
+                    Required = false
+                    DefaultValue = Some(DecimalValue -0.5m)
+                    Group = Some "Thresholds" } ] }
           Create = create }

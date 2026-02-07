@@ -14,6 +14,9 @@
         <Project Path="src\Plutus.Core\Plutus.Core.fsproj" />
         <Project Path="src\Plutus.Dashboard\Plutus.Dashboard.fsproj" />
     </Folder>
+    <Folder Name="/tests/">
+        <Project Path="tests/Plutus.Core.UnitTests/Plutus.Core.UnitTests.fsproj" />
+    </Folder>
     <Folder Name="/tools/">
         <Project Path="tools\Plutus.DbMigration\Plutus.DbMigration.fsproj" />
         <Project Path="tools\Plutus.Sandbox\Plutus.Sandbox.fsproj" />

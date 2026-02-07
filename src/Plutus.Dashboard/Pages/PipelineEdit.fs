@@ -790,9 +790,22 @@ module View =
             ]
         ]
 
+    let private paramValueToString (v: Parameters.ParamValue) =
+        match v with
+        | Parameters.StringValue s -> s
+        | Parameters.DecimalValue d -> string d
+        | Parameters.IntValue i -> string i
+        | Parameters.BoolValue b -> if b then "true" else "false"
+        | Parameters.ChoiceValue s -> s
+        | Parameters.ListValue l -> String.concat (string Parameters.multiChoiceDelimiter) l
+
     let private parameterField (field: ParameterFieldViewModel) =
         let inputId = $"param-{field.Key}"
-        let currentVal = field.CurrentValue |> Option.defaultValue ""
+
+        let currentVal =
+            field.CurrentValue
+            |> Option.orElse (field.DefaultValue |> Option.map paramValueToString)
+            |> Option.defaultValue ""
 
         _div [ _class_ "space-y-1" ] [
             _label [ _for_ inputId; _class_ "block text-sm font-medium text-gray-700" ] [
@@ -936,6 +949,7 @@ module View =
                 Hx.post $"/pipelines/{vm.PipelineId}/steps/{vm.StepId}/save"
                 Hx.targetCss $"#step-{vm.StepId}"
                 Hx.swapOuterHtml
+                Attr.create "hx-on::after-swap" "if(event.detail.target.id!=='step-editor-container'){document.getElementById('step-editor-container').innerHTML=''}"
             ] [
                 _div [ _class_ "space-y-4" ] [
                     for field in vm.Fields do
@@ -1368,5 +1382,8 @@ module Handler =
 
                 match result with
                 | Ok step -> return! Response.ofHtml (View.stepItem step) ctx
-                | Error vm -> return! Response.ofHtml (View.stepEditor vm) ctx
+                | Error vm ->
+                    ctx.Response.Headers["HX-Retarget"] <- "#step-editor-container"
+                    ctx.Response.Headers["HX-Reswap"] <- "innerHTML"
+                    return! Response.ofHtml (View.stepEditor vm) ctx
             }
