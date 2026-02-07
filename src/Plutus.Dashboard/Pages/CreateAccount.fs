@@ -101,7 +101,7 @@ module View =
 
     let private marketTypeField =
         _div [] [
-            _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "Exchange "
                 _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
             ]
@@ -109,7 +109,7 @@ module View =
                 _id_ "marketType"
                 _name_ "marketType"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ] [
                 for marketType in marketTypes do
                     _option [ _value_ (string (int marketType)) ] [ Text.raw (marketType.ToString()) ]
@@ -118,7 +118,7 @@ module View =
 
     let private apiKeyField =
         _div [] [
-            _label [ _for_ "apiKey"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "apiKey"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "API Key "
                 _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
             ]
@@ -128,14 +128,14 @@ module View =
                 _type_ "password"
                 Attr.create "placeholder" "Enter your API key"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                 Attr.create "required" "required"
             ]
         ]
 
     let private secretKeyField =
         _div [] [
-            _label [ _for_ "secretKey"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "secretKey"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "Secret Key "
                 _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
             ]
@@ -145,14 +145,14 @@ module View =
                 _type_ "password"
                 Attr.create "placeholder" "Enter your secret key"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                 Attr.create "required" "required"
             ]
         ]
 
     let private passphraseField =
         _div [] [
-            _label [ _for_ "passphrase"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "passphrase"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "Passphrase"
             ]
             _input [
@@ -161,9 +161,9 @@ module View =
                 _type_ "password"
                 Attr.create "placeholder" "Enter passphrase (if required)"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ]
-            _p [ _class_ "text-sm text-gray-500 mt-1" ] [ Text.raw "Required for OKX accounts" ]
+            _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw "Required for OKX accounts" ]
         ]
 
     let private sandboxField =
@@ -172,19 +172,19 @@ module View =
                 _id_ "isSandbox"
                 _name_ "isSandbox"
                 _type_ "checkbox"
-                _class_ "h-4 w-4 text-gray-900 focus:ring-gray-300 border-gray-200 rounded"
+                _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
                 Attr.create "checked" "checked"
             ]
-            _label [ _for_ "isSandbox"; _class_ "ml-2 block text-sm text-gray-700" ] [ Text.raw "Sandbox/Demo mode" ]
+            _label [ _for_ "isSandbox"; _class_ "ml-2 block text-sm text-slate-700" ] [ Text.raw "Sandbox/Demo mode" ]
         ]
 
     let private helpSection =
-        _div [ _class_ "mt-4 bg-gray-50 border border-gray-200 rounded-md p-3" ] [
-            _h4 [ _class_ "text-xs font-semibold text-gray-700 mb-1" ] [
+        _div [ _class_ "mt-4 bg-slate-50 border border-slate-200 rounded-md p-3" ] [
+            _h4 [ _class_ "text-xs font-semibold text-slate-700 mb-1" ] [
                 _i [ _class_ "fas fa-exclamation-triangle mr-1" ] []
                 Text.raw "Security Notice"
             ]
-            _ul [ _class_ "text-xs text-gray-500 space-y-0.5" ] [
+            _ul [ _class_ "text-xs text-slate-500 space-y-0.5" ] [
                 _li [] [ Text.raw "• API credentials are stored securely" ]
                 _li [] [ Text.raw "• Use API keys with limited permissions" ]
                 _li [] [ Text.raw "• Start with sandbox mode for testing" ]
@@ -194,7 +194,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
+            _class_ "text-slate-400 hover:text-slate-600 transition-colors"
             Hx.get "/accounts/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -211,7 +211,7 @@ module View =
     let private cancelButton =
         _button [
             _type_ "button"
-            _class_ "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
+            _class_ "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
             Hx.get "/accounts/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -221,7 +221,7 @@ module View =
         _button [
             _type_ "submit"
             _class_
-                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
+                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
         ] [ _i [ _class_ "fas fa-plus mr-2" ] []; Text.raw "Add Account" ]
 
     let modal =
@@ -241,15 +241,15 @@ module View =
                             "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-lg"
                     ] [
                         // header
-                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-slate-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
-                                _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-gray-900" ] [
-                                    _i [ _class_ "fas fa-plus-circle mr-2 text-gray-400" ] []
+                                _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-slate-900" ] [
+                                    _i [ _class_ "fas fa-plus-circle mr-2 text-slate-400" ] []
                                     Text.raw "Add Exchange Account"
                                 ]
                                 closeModalButton
                             ]
-                            _p [ _class_ "text-gray-500 text-sm mt-1" ] [
+                            _p [ _class_ "text-slate-500 text-sm mt-1" ] [
                                 Text.raw "Connect your exchange API credentials"
                             ]
                         ]
@@ -271,7 +271,7 @@ module View =
                             ]
 
                             // Footer
-                            _div [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-gray-100" ] [
+                            _div [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-slate-100" ] [
                                 cancelButton
                                 submitButton
                             ]
@@ -296,14 +296,14 @@ module View =
                         _div [
                             _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4"
                         ] [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Account Added!" ]
-                        _p [ _class_ "text-gray-600 mb-4" ] [
+                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Account Added!" ]
+                        _p [ _class_ "text-slate-600 mb-4" ] [
                             Text.raw $"{marketType} account has been connected successfully."
                         ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
+                                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
                             Hx.get "/accounts/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
@@ -325,15 +325,15 @@ module View =
                         _div [
                             _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation text-3xl text-yellow-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Account Exists" ]
-                        _p [ _class_ "text-gray-600 mb-4" ] [
+                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Account Exists" ]
+                        _p [ _class_ "text-slate-600 mb-4" ] [
                             Text.raw $"A {marketType} account is already configured. You can edit it instead."
                         ]
                         _div [ _class_ "flex justify-center space-x-3" ] [
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
+                                    "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/accounts/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -356,13 +356,13 @@ module View =
                         _div [
                             _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Error" ]
-                        _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw message ]
+                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Error" ]
+                        _p [ _class_ "text-slate-600 mb-4" ] [ Text.raw message ]
                         _div [ _class_ "flex justify-center space-x-3" ] [
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
+                                    "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/accounts/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -370,7 +370,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
+                                    "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/accounts/modal"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml

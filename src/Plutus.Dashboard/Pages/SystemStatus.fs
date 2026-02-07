@@ -59,12 +59,12 @@ module View =
     let statusPlaceholder =
         _span [
             _id_ "system-status"
-            _class_ "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-50 text-gray-500"
+            _class_ "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-slate-50 text-slate-500"
             Hx.get "/system-status"
             Hx.trigger "load, every 30s"
             Hx.swapOuterHtml
         ] [
-            _span [ _class_ "w-2 h-2 rounded-full mr-1.5 bg-gray-400 animate-pulse" ] []
+            _span [ _class_ "w-2 h-2 rounded-full mr-1.5 bg-slate-400 animate-pulse" ] []
             Text.raw "Loading..."
         ]
 

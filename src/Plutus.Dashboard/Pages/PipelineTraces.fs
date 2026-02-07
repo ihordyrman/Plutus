@@ -157,7 +157,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
+            _class_ "text-slate-400 hover:text-slate-600 transition-colors"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -178,7 +178,7 @@ module View =
 
             match prev with
             | None ->
-                _pre [ _class_ "text-xs bg-gray-50 border border-gray-100 p-3 rounded-md overflow-x-auto max-h-48 text-gray-600 font-mono" ] [
+                _pre [ _class_ "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ] [
                     Text.raw (JsonSerializer.Serialize(currentDoc.RootElement, JsonSerializerOptions(WriteIndented = true)))
                 ]
             | Some prevJson ->
@@ -214,11 +214,11 @@ module View =
                     |> List.concat
 
                 if lines.IsEmpty then
-                    _div [ _class_ "text-xs text-gray-400 italic" ] [ Text.raw "No context changes" ]
+                    _div [ _class_ "text-xs text-slate-400 italic" ] [ Text.raw "No context changes" ]
                 else
-                    _pre [ _class_ "text-xs bg-gray-50 border border-gray-100 p-3 rounded-md overflow-x-auto max-h-48 font-mono" ] lines
+                    _pre [ _class_ "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 font-mono" ] lines
         with _ ->
-            _pre [ _class_ "text-xs bg-gray-50 border border-gray-100 p-3 rounded-md overflow-x-auto max-h-48 text-gray-600 font-mono" ] [
+            _pre [ _class_ "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ] [
                 Text.raw current
             ]
 
@@ -229,7 +229,7 @@ module View =
 
         _div [ _id_ "traces-list" ] [
             if data.Executions.IsEmpty then
-                _div [ _class_ "py-12 text-center text-gray-400" ] [
+                _div [ _class_ "py-12 text-center text-slate-400" ] [
                     _i [ _class_ "fas fa-search text-3xl mb-3" ] []
                     _p [ _class_ "text-sm font-medium" ] [ Text.raw "No executions yet" ]
                     _p [ _class_ "text-xs" ] [ Text.raw "This pipeline hasn't been executed" ]
@@ -239,39 +239,39 @@ module View =
                     for exec in data.Executions do
                         _div [
                             _class_
-                                "px-4 py-3 border border-gray-200 rounded-md bg-white hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors"
+                                "px-4 py-3 border border-slate-200 rounded-md bg-white hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
                             Hx.get $"/pipelines/{data.PipelineId}/traces/{exec.ExecutionId}"
                             Hx.targetCss "#traces-content"
                             Hx.swapInnerHtml
                         ] [
                             _div [ _class_ "flex items-center gap-3" ] [
-                                _span [ _class_ "font-mono text-sm font-medium text-gray-900" ] [
+                                _span [ _class_ "font-mono text-sm font-medium text-slate-900" ] [
                                     Text.raw (exec.ExecutionId.Substring(0, min 8 exec.ExecutionId.Length))
                                 ]
-                                _span [ _class_ "text-xs text-gray-400" ] [
+                                _span [ _class_ "text-xs text-slate-400" ] [
                                     Text.raw (exec.StartTime.ToString("MMM dd, HH:mm:ss"))
                                 ]
                             ]
                             _div [ _class_ "flex items-center gap-3" ] [
-                                _span [ _class_ "text-xs text-gray-400" ] [
+                                _span [ _class_ "text-xs text-slate-400" ] [
                                     _i [ _class_ "fas fa-layer-group mr-1" ] []
                                     Text.raw $"{exec.StepCount} steps"
                                 ]
-                                _span [ _class_ "text-xs text-gray-400 font-mono" ] [
+                                _span [ _class_ "text-xs text-slate-400 font-mono" ] [
                                     _i [ _class_ "fas fa-clock mr-1" ] []
                                     Text.raw (formatDuration exec.Duration)
                                 ]
                                 outcomeBadge exec.Outcome
-                                _i [ _class_ "fas fa-chevron-right text-xs text-gray-300" ] []
+                                _i [ _class_ "fas fa-chevron-right text-xs text-slate-300" ] []
                             ]
                         ]
                 ]
 
-                let enabledBtnClass = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                let disabledBtnClass = "bg-gray-50 text-gray-300 cursor-not-allowed"
+                let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
 
-                _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-gray-100" ] [
-                    _div [ _class_ "text-xs text-gray-400" ] [
+                _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ] [
+                    _div [ _class_ "text-xs text-slate-400" ] [
                         Text.raw $"{data.TotalCount} execution(s)"
                     ]
                     _div [ _class_ "flex gap-2" ] [
@@ -286,7 +286,7 @@ module View =
                             else
                                 Attr.create "disabled" "disabled"
                         ] [ Text.raw "Previous" ]
-                        _span [ _class_ "px-3 py-1 text-xs text-gray-400" ] [
+                        _span [ _class_ "px-3 py-1 text-xs text-slate-400" ] [
                             Text.raw $"Page {data.Page} of {totalPages}"
                         ]
                         _button [
@@ -309,19 +309,19 @@ module View =
         let executionStart = if detail.Steps.IsEmpty then DateTime.MinValue else (detail.Steps |> List.map _.StartTime |> List.min)
 
         _div [] [
-            _div [ _class_ "flex items-center gap-3 pb-4 mb-4 border-b border-gray-100" ] [
+            _div [ _class_ "flex items-center gap-3 pb-4 mb-4 border-b border-slate-100" ] [
                 _button [
                     _type_ "button"
-                    _class_ "p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                    _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
                     Hx.get $"/pipelines/{detail.PipelineId}/traces/modal"
                     Hx.targetCss "#modal-container"
                     Hx.swapInnerHtml
                 ] [ _i [ _class_ "fas fa-arrow-left" ] [] ]
                 _div [ _class_ "flex items-center gap-2" ] [
-                    _span [ _class_ "font-mono text-sm font-medium text-gray-900" ] [ Text.raw detail.ExecutionId ]
+                    _span [ _class_ "font-mono text-sm font-medium text-slate-900" ] [ Text.raw detail.ExecutionId ]
                     outcomeBadge detail.OverallOutcome
                 ]
-                _span [ _class_ "text-xs text-gray-400 ml-auto" ] [
+                _span [ _class_ "text-xs text-slate-400 ml-auto" ] [
                     _i [ _class_ "fas fa-clock mr-1" ] []
                     Text.raw (formatDuration detail.TotalDuration)
                 ]
@@ -353,42 +353,42 @@ module View =
                     let stepId = $"step-detail-{i}"
                     let chevronId = $"step-chevron-{i}"
 
-                    _div [ _class_ "border border-gray-200 rounded-md bg-white transition-colors" ] [
+                    _div [ _class_ "border border-slate-200 rounded-md bg-white transition-colors" ] [
                         _div [
-                            _class_ "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                            _class_ "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
                             Attr.create
                                 "onclick"
                                 $"document.getElementById('{stepId}').classList.toggle('hidden');document.getElementById('{chevronId}').classList.toggle('rotate-90')"
                         ] [
                             _i [
                                 _id_ chevronId
-                                _class_ "fas fa-chevron-right text-xs text-gray-300 transition-transform"
+                                _class_ "fas fa-chevron-right text-xs text-slate-300 transition-transform"
                             ] []
-                            _span [ _class_ "w-44 truncate text-sm font-medium text-gray-900" ] [
+                            _span [ _class_ "w-44 truncate text-sm font-medium text-slate-900" ] [
                                 Text.raw step.StepTypeKey
                             ]
-                            _div [ _class_ "flex-1 h-4 bg-gray-100 rounded-full relative overflow-hidden" ] [
+                            _div [ _class_ "flex-1 h-4 bg-slate-100 rounded-full relative overflow-hidden" ] [
                                 _div [
                                     _class_ $"absolute top-0 h-full rounded-full {barColor}"
                                     Attr.create "style" $"left:{offsetPct:F1}%%;width:{widthPct:F1}%%"
                                 ] []
                             ]
-                            _span [ _class_ "w-16 text-xs text-gray-400 text-right font-mono" ] [
+                            _span [ _class_ "w-16 text-xs text-slate-400 text-right font-mono" ] [
                                 Text.raw (formatDuration step.Duration)
                             ]
                             outcomeBadge step.Outcome
                         ]
-                        _div [ _id_ stepId; _class_ "hidden border-t border-gray-100" ] [
+                        _div [ _id_ stepId; _class_ "hidden border-t border-slate-100" ] [
                             _div [ _class_ "px-4 py-3 space-y-3" ] [
                                 if not (String.IsNullOrWhiteSpace step.Message) then
                                     _div [] [
-                                        _div [ _class_ "text-xs font-medium text-gray-400 uppercase tracking-wide mb-1" ] [
+                                        _div [ _class_ "text-xs font-medium text-slate-400 uppercase tracking-wide mb-1" ] [
                                             Text.raw "Message"
                                         ]
-                                        _p [ _class_ "text-sm text-gray-700" ] [ Text.raw step.Message ]
+                                        _p [ _class_ "text-sm text-slate-700" ] [ Text.raw step.Message ]
                                     ]
                                 _div [] [
-                                    _div [ _class_ "text-xs font-medium text-gray-400 uppercase tracking-wide mb-1" ] [
+                                    _div [ _class_ "text-xs font-medium text-slate-400 uppercase tracking-wide mb-1" ] [
                                         Text.raw "Context"
                                     ]
                                     contextDiff prevSnapshot step.ContextSnapshot
@@ -413,10 +413,10 @@ module View =
                         _class_
                             "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-5xl"
                     ] [
-                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-slate-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
-                                _h3 [ _class_ "text-lg font-semibold text-gray-900" ] [
-                                    _i [ _class_ "fas fa-timeline mr-2 text-gray-400" ] []
+                                _h3 [ _class_ "text-lg font-semibold text-slate-900" ] [
+                                    _i [ _class_ "fas fa-timeline mr-2 text-slate-400" ] []
                                     Text.raw "Execution Traces"
                                 ]
                                 closeModalButton
@@ -494,7 +494,7 @@ module Handler =
                     | None ->
                         return!
                             Response.ofHtml
-                                (_div [ _class_ "py-8 text-center text-gray-400" ] [
+                                (_div [ _class_ "py-8 text-center text-slate-400" ] [
                                     _p [ _class_ "text-sm" ] [ Text.raw "Execution not found" ]
                                 ])
                                 ctx

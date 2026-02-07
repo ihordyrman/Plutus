@@ -49,61 +49,61 @@ module Data =
 
 module View =
     let emptyState =
-        _div [ _class_ "bg-white rounded-md border-2 border-dashed border-gray-200 p-12 text-center" ] [
-            _div [ _class_ "inline-flex items-center justify-center w-12 h-12 bg-gray-50 rounded-md mb-4" ] [
-                _i [ _class_ "fas fa-exchange-alt text-xl text-gray-400" ] []
+        _div [ _class_ "bg-white rounded-md border-2 border-dashed border-slate-200 p-12 text-center" ] [
+            _div [ _class_ "inline-flex items-center justify-center w-12 h-12 bg-slate-50 rounded-md mb-4" ] [
+                _i [ _class_ "fas fa-exchange-alt text-xl text-slate-400" ] []
             ]
-            _h3 [ _class_ "text-sm font-semibold text-gray-900 mb-2" ] [ Text.raw "No Accounts Yet" ]
-            _p [ _class_ "text-gray-400 text-sm mb-4" ] [ Text.raw "Connect your first exchange account to start trading" ]
+            _h3 [ _class_ "text-sm font-semibold text-slate-900 mb-2" ] [ Text.raw "No Accounts Yet" ]
+            _p [ _class_ "text-slate-400 text-sm mb-4" ] [ Text.raw "Connect your first exchange account to start trading" ]
             _button [
                 _type_ "button"
                 _class_
-                    "inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium text-sm rounded-md transition-colors"
+                    "inline-flex items-center px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm rounded-md transition-colors"
                 Hx.get "/accounts/modal"
                 Hx.targetCss "#modal-container"
                 Hx.swapInnerHtml
-            ] [ _i [ _class_ "fas fa-plus mr-2 text-gray-400" ] []; Text.raw "Add Your First Account" ]
+            ] [ _i [ _class_ "fas fa-plus mr-2 text-slate-400" ] []; Text.raw "Add Your First Account" ]
         ]
 
     let private marketPill (market: MarketInfo) =
         let statusDotClass =
-            if market.Enabled then "bg-green-400" else "bg-gray-300"
+            if market.Enabled then "bg-green-400" else "bg-slate-300"
 
         _div [
             _class_
-                "group bg-white border border-gray-200 rounded-md px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
+                "group bg-white border border-slate-200 rounded-md px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer"
             _id_ $"account-{market.Id}"
         ] [
             _div [ _class_ "flex items-center gap-3" ] [
-                _div [ _class_ "w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center" ] [
-                    _i [ _class_ "fas fa-exchange-alt text-gray-500 text-sm" ] []
+                _div [ _class_ "w-8 h-8 bg-slate-100 rounded-md flex items-center justify-center" ] [
+                    _i [ _class_ "fas fa-exchange-alt text-slate-500 text-sm" ] []
                 ]
 
                 // name and status
                 _div [ _class_ "flex items-center gap-3" ] [
-                    _span [ _class_ "text-gray-900 font-medium text-sm" ] [ Text.raw market.Name ]
+                    _span [ _class_ "text-slate-900 font-medium text-sm" ] [ Text.raw market.Name ]
                     _div [ _class_ "flex items-center gap-1.5" ] [
                         _div [ _class_ $"w-2 h-2 rounded-full {statusDotClass}" ] []
-                        _span [ _class_ "text-gray-400 text-xs" ] [
+                        _span [ _class_ "text-slate-400 text-xs" ] [
                             Text.raw (if market.Enabled then "Active" else "Inactive")
                         ]
                     ]
                 ]
 
-                _span [ _class_ "text-gray-200" ] [ Text.raw "|" ]
+                _span [ _class_ "text-slate-200" ] [ Text.raw "|" ]
 
                 // balance
                 _div [
                     Hx.get $"/balance/{int market.Type}"
                     Hx.trigger "load, every 60s"
                     Hx.swapInnerHtml
-                    _class_ "text-gray-900 font-medium text-sm"
-                ] [ _i [ _class_ "fas fa-spinner fa-spin text-gray-300 text-xs" ] [] ]
+                    _class_ "text-slate-900 font-medium text-sm"
+                ] [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-xs" ] [] ]
 
                 // credential indicator
                 if market.HasCredentials then
                     _div [ _class_ "ml-2"; _title_ "API Configured" ] [
-                        _i [ _class_ "fas fa-key text-gray-300 text-xs" ] []
+                        _i [ _class_ "fas fa-key text-slate-300 text-xs" ] []
                     ]
                 else
                     _div [ _class_ "ml-2"; _title_ "No API Credentials" ] [
@@ -118,21 +118,21 @@ module View =
                     _button [
                         _type_ "button"
                         _class_
-                            "w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center justify-center transition-colors"
+                            "w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-md flex items-center justify-center transition-colors"
                         _title_ "Details"
                         Hx.get $"/accounts/{market.Id}/details/modal"
                         Hx.targetCss "#modal-container"
                         Hx.swapInnerHtml
-                    ] [ _i [ _class_ "fas fa-info text-gray-500 text-xs" ] [] ]
+                    ] [ _i [ _class_ "fas fa-info text-slate-500 text-xs" ] [] ]
                     _button [
                         _type_ "button"
                         _class_
-                            "w-7 h-7 bg-gray-100 hover:bg-gray-200 rounded-md flex items-center justify-center transition-colors"
+                            "w-7 h-7 bg-slate-100 hover:bg-slate-200 rounded-md flex items-center justify-center transition-colors"
                         _title_ "Edit"
                         Hx.get $"/accounts/{market.Id}/edit/modal"
                         Hx.targetCss "#modal-container"
                         Hx.swapInnerHtml
-                    ] [ _i [ _class_ "fas fa-cog text-gray-500 text-xs" ] [] ]
+                    ] [ _i [ _class_ "fas fa-cog text-slate-500 text-xs" ] [] ]
                 ]
             ]
         ]

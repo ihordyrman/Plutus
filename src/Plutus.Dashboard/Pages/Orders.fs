@@ -135,11 +135,11 @@ module Data =
 module View =
     let private filterSelect name label options =
         _div [ _class_ "min-w-[120px]" ] [
-            _label [ _class_ "block text-xs font-medium text-gray-500 mb-1" ] [ Text.raw label ]
+            _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw label ]
             _select [
                 _name_ name
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ] [
                 yield _option [ _value_ "" ] [ Text.raw $"All" ]
                 for (value, text) in options do
@@ -150,8 +150,8 @@ module View =
     let private sectionHeader =
         _div [ _class_ "flex justify-between items-center mb-6" ] [
             _div [] [
-                _h1 [ _class_ "text-lg font-semibold text-gray-900" ] [ Text.raw "Orders History" ]
-                _p [ _class_ "text-gray-400 text-sm" ] [ Text.raw "View and filter your trading orders" ]
+                _h1 [ _class_ "text-lg font-semibold text-slate-900" ] [ Text.raw "Orders History" ]
+                _p [ _class_ "text-slate-400 text-sm" ] [ Text.raw "View and filter your trading orders" ]
             ]
         ]
 
@@ -167,13 +167,13 @@ module View =
                 _input [ _type_ "hidden"; _name_ "page"; _value_ "1" ]
                 _div [ _class_ "flex flex-wrap gap-4" ] [
                     _div [ _class_ "flex-1 min-w-[200px]" ] [
-                        _label [ _class_ "block text-xs font-medium text-gray-500 mb-1" ] [ Text.raw "Search Symbol" ]
+                        _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw "Search Symbol" ]
                         _input [
                             _type_ "text"
                             _name_ "searchTerm"
                             Attr.create "placeholder" "Search by symbol..."
                             _class_
-                                "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                                "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                         ]
                     ]
                     filterSelect "filterSide" "Side" [ ("buy", "Buy"); ("sell", "Sell") ]
@@ -211,7 +211,7 @@ module View =
                       "Price", "right"
                       "Fee", "right"
                       "Created", "left" ] do
-                    _th [ _class_ $"px-4 py-3 text-{align} text-xs font-medium text-gray-400 uppercase tracking-wider" ] [
+                    _th [ _class_ $"px-4 py-3 text-{align} text-xs font-medium text-slate-400 uppercase tracking-wider" ] [
                         Text.raw text
                     ]
             ]
@@ -224,9 +224,9 @@ module View =
             | OrderStatus.Placed -> "bg-blue-50", "text-blue-700", "Placed"
             | OrderStatus.PartiallyFilled -> "bg-indigo-50", "text-indigo-700", "Partial"
             | OrderStatus.Filled -> "bg-green-50", "text-green-700", "Filled"
-            | OrderStatus.Cancelled -> "bg-gray-50", "text-gray-500", "Cancelled"
+            | OrderStatus.Cancelled -> "bg-slate-50", "text-slate-500", "Cancelled"
             | OrderStatus.Failed -> "bg-red-50", "text-red-700", "Failed"
-            | _ -> "bg-gray-50", "text-gray-500", "Unknown"
+            | _ -> "bg-slate-50", "text-slate-500", "Unknown"
 
         _span [ _class_ $"px-2 py-0.5 text-xs font-medium rounded {bgClass} {textClass}" ] [ Text.raw label ]
 
@@ -235,7 +235,7 @@ module View =
             match side with
             | OrderSide.Buy -> "bg-green-50", "text-green-700", "Buy"
             | OrderSide.Sell -> "bg-red-50", "text-red-700", "Sell"
-            | _ -> "bg-gray-50", "text-gray-500", "Unknown"
+            | _ -> "bg-slate-50", "text-slate-500", "Unknown"
 
         _span [ _class_ $"px-2 py-0.5 text-xs font-medium rounded {bgClass} {textClass}" ] [ Text.raw label ]
 
@@ -250,26 +250,26 @@ module View =
         | None -> "-"
 
     let orderRow (order: OrderListItem) =
-        _tr [ _id_ $"order-{order.Id}"; _class_ "hover:bg-gray-50" ] [
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-gray-500" ] [ Text.raw (string order.Id) ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-gray-500" ] [
+        _tr [ _id_ $"order-{order.Id}"; _class_ "hover:bg-slate-50" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [ Text.raw (string order.Id) ]
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [
                 Text.raw (formatPipelineId order.PipelineId)
             ]
             _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [
-                _span [ _class_ "font-medium text-gray-900 text-sm" ] [ Text.raw order.Symbol ]
+                _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw order.Symbol ]
             ]
             _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ sideBadge order.Side ]
             _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ statusBadge order.Status ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-900" ] [
                 Text.raw (order.Quantity.ToString("N4"))
             ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-500" ] [
                 Text.raw (formatDecimal order.Price)
             ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-500" ] [
                 Text.raw (formatDecimal order.Fee)
             ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-gray-500" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [
                 Text.raw (order.CreatedAt.ToString("MMM dd, HH:mm"))
             ]
         ]
@@ -277,7 +277,7 @@ module View =
     let emptyState =
         _tr [] [
             _td [ Attr.create "colspan" "9"; _class_ "px-4 py-12 text-center" ] [
-                _div [ _class_ "text-gray-400" ] [
+                _div [ _class_ "text-slate-400" ] [
                     _i [ _class_ "fas fa-receipt text-3xl mb-3" ] []
                     _p [ _class_ "text-sm font-medium" ] [ Text.raw "No orders found" ]
                     _p [ _class_ "text-xs" ] [ Text.raw "Orders will appear here when you start trading" ]
@@ -287,7 +287,7 @@ module View =
 
     let loadingState =
         _tr [] [
-            _td [ Attr.create "colspan" "9"; _class_ "px-4 py-8 text-center text-gray-400" ] [
+            _td [ Attr.create "colspan" "9"; _class_ "px-4 py-8 text-center text-slate-400" ] [
                 _i [ _class_ "fas fa-spinner fa-spin text-lg mb-2" ] []
                 _p [ _class_ "text-sm" ] [ Text.raw "Loading orders..." ]
             ]
@@ -300,13 +300,13 @@ module View =
         let startRecord = if data.TotalCount = 0 then 0 else (data.Page - 1) * data.PageSize + 1
         let endRecord = min (data.Page * data.PageSize) data.TotalCount
 
-        let enabledBtnClass = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-        let disabledBtnClass = "bg-gray-50 text-gray-300 cursor-not-allowed"
+        let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+        let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
         let prevBtnClass = if hasPrev then enabledBtnClass else disabledBtnClass
         let nextBtnClass = if hasNext then enabledBtnClass else disabledBtnClass
 
-        _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-gray-100" ] [
-            _div [ _class_ "text-xs text-gray-400" ] [
+        _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ] [
+            _div [ _class_ "text-xs text-slate-400" ] [
                 Text.raw $"Showing {startRecord} to {endRecord} of {data.TotalCount} orders"
             ]
             _div [ _class_ "flex gap-2" ] [
@@ -321,7 +321,7 @@ module View =
                     else
                         Attr.create "disabled" "disabled"
                 ] [ Text.raw "Previous" ]
-                _span [ _class_ "px-3 py-1 text-xs text-gray-400" ] [ Text.raw $"Page {data.Page} of {totalPages}" ]
+                _span [ _class_ "px-3 py-1 text-xs text-slate-400" ] [ Text.raw $"Page {data.Page} of {totalPages}" ]
                 _button [
                     _type_ "button"
                     _class_ $"px-3 py-1 text-xs font-medium rounded-md {nextBtnClass}"
@@ -344,9 +344,9 @@ module View =
 
         _div [ _id_ "orders-table-container" ] [
             _div [ _class_ "overflow-x-auto" ] [
-                _table [ _class_ "min-w-full divide-y divide-gray-100" ] [
+                _table [ _class_ "min-w-full divide-y divide-slate-100" ] [
                     tableHeader
-                    _tbody [ _class_ "bg-white divide-y divide-gray-100" ] rows
+                    _tbody [ _class_ "bg-white divide-y divide-slate-100" ] rows
                 ]
             ]
             paginationControls data
@@ -356,9 +356,9 @@ module View =
         _div [ _class_ "card overflow-hidden" ] [
             _div [ _id_ "orders-table-container"; Hx.get "/orders/table"; Hx.trigger "load"; Hx.swapOuterHtml ] [
                 _div [ _class_ "overflow-x-auto" ] [
-                    _table [ _class_ "min-w-full divide-y divide-gray-100" ] [
+                    _table [ _class_ "min-w-full divide-y divide-slate-100" ] [
                         tableHeader
-                        _tbody [ _class_ "bg-white divide-y divide-gray-100" ] [ loadingState ]
+                        _tbody [ _class_ "bg-white divide-y divide-slate-100" ] [ loadingState ]
                     ]
                 ]
             ]

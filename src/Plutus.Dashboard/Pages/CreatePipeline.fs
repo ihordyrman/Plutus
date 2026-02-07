@@ -116,7 +116,7 @@ module View =
 
     let private marketTypeField =
         _div [] [
-            _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "Market Type "
                 _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
             ]
@@ -124,7 +124,7 @@ module View =
                 _id_ "marketType"
                 _name_ "marketType"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ] [
                 for marketType in marketTypes do
                     _option [ _value_ (string (int marketType)) ] [ Text.raw (marketType.ToString()) ]
@@ -133,7 +133,7 @@ module View =
 
     let private symbolField =
         _div [] [
-            _label [ _for_ "symbol"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "symbol"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "Symbol "
                 _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
             ]
@@ -143,33 +143,33 @@ module View =
                 _type_ "text"
                 Attr.create "placeholder" "e.g., BTC-USDT, ETH-USDT"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                 Attr.create "required" "required"
             ]
-            _p [ _class_ "text-sm text-gray-500 mt-1" ] [
+            _p [ _class_ "text-sm text-slate-500 mt-1" ] [
                 Text.raw "Enter the trading pair symbol (uppercase letters, numbers, hyphens, and slashes only)"
             ]
         ]
 
     let private tagsField =
         _div [] [
-            _label [ _for_ "tags"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [ Text.raw "Tags" ]
+            _label [ _for_ "tags"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [ Text.raw "Tags" ]
             _input [
                 _id_ "tags"
                 _name_ "tags"
                 _type_ "text"
                 Attr.create "placeholder" "e.g., scalping, high-frequency, btc"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ]
-            _p [ _class_ "text-sm text-gray-500 mt-1" ] [
+            _p [ _class_ "text-sm text-slate-500 mt-1" ] [
                 Text.raw "Enter tags separated by commas. Tags help organize and filter pipelines."
             ]
         ]
 
     let private executionIntervalField =
         _div [] [
-            _label [ _for_ "executionInterval"; _class_ "block text-sm font-medium text-gray-600 mb-1.5" ] [
+            _label [ _for_ "executionInterval"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
                 Text.raw "Execution Interval (minutes) "
                 _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
             ]
@@ -180,10 +180,10 @@ module View =
                 Attr.create "min" "1"
                 Attr.create "placeholder" "e.g., 5"
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                 Attr.create "required" "required"
             ]
-            _p [ _class_ "text-sm text-gray-500 mt-1" ] [
+            _p [ _class_ "text-sm text-slate-500 mt-1" ] [
                 Text.raw "Specify how often the pipeline should execute (in minutes)."
             ]
         ]
@@ -194,20 +194,20 @@ module View =
                 _id_ "enabled"
                 _name_ "enabled"
                 _type_ "checkbox"
-                _class_ "h-4 w-4 text-gray-900 focus:ring-gray-300 border-gray-200 rounded"
+                _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
             ]
-            _label [ _for_ "enabled"; _class_ "ml-2 block text-sm text-gray-700" ] [
+            _label [ _for_ "enabled"; _class_ "ml-2 block text-sm text-slate-700" ] [
                 Text.raw "Enable pipeline immediately"
             ]
         ]
 
     let private helpSection =
-        _div [ _class_ "mt-4 bg-gray-50 border border-gray-200 rounded-md p-3" ] [
-            _h4 [ _class_ "text-xs font-semibold text-gray-700 mb-1" ] [
+        _div [ _class_ "mt-4 bg-slate-50 border border-slate-200 rounded-md p-3" ] [
+            _h4 [ _class_ "text-xs font-semibold text-slate-700 mb-1" ] [
                 _i [ _class_ "fas fa-info-circle mr-1" ] []
                 Text.raw "Tips"
             ]
-            _ul [ _class_ "text-xs text-gray-500 space-y-0.5" ] [
+            _ul [ _class_ "text-xs text-slate-500 space-y-0.5" ] [
                 _li [] [ Text.raw "• Symbol must match exchange format (e.g., BTC-USDT)" ]
                 _li [] [ Text.raw "• Each market + symbol combination must be unique" ]
             ]
@@ -216,7 +216,7 @@ module View =
     let private closeModalButton =
         _button [
             _type_ "button"
-            _class_ "text-gray-400 hover:text-gray-600 transition-colors"
+            _class_ "text-slate-400 hover:text-slate-600 transition-colors"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -233,7 +233,7 @@ module View =
     let private cancelButton =
         _button [
             _type_ "button"
-            _class_ "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
+            _class_ "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
             Hx.get "/pipelines/modal/close"
             Hx.targetCss "#modal-container"
             Hx.swapInnerHtml
@@ -243,7 +243,7 @@ module View =
         _button [
             _type_ "submit"
             _class_
-                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
+                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
         ] [ _i [ _class_ "fas fa-plus mr-2" ] []; Text.raw "Create Pipeline" ]
 
     let modal =
@@ -263,15 +263,15 @@ module View =
                             "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-lg"
                     ] [
                         // Header
-                        _div [ _class_ "border-b border-gray-100 px-6 py-4" ] [
+                        _div [ _class_ "border-b border-slate-100 px-6 py-4" ] [
                             _div [ _class_ "flex items-center justify-between" ] [
-                                _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-gray-900" ] [
-                                    _i [ _class_ "fas fa-plus-circle mr-2 text-gray-400" ] []
+                                _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-slate-900" ] [
+                                    _i [ _class_ "fas fa-plus-circle mr-2 text-slate-400" ] []
                                     Text.raw "Create New Pipeline"
                                 ]
                                 closeModalButton
                             ]
-                            _p [ _class_ "text-gray-500 text-sm mt-1" ] [ Text.raw "Configure a new trading pipeline" ]
+                            _p [ _class_ "text-slate-500 text-sm mt-1" ] [ Text.raw "Configure a new trading pipeline" ]
                         ]
 
                         // Form
@@ -291,7 +291,7 @@ module View =
                             ]
 
                             // Footer
-                            _div [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-gray-100" ] [
+                            _div [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-slate-100" ] [
                                 cancelButton
                                 submitButton
                             ]
@@ -321,14 +321,14 @@ module View =
                         _div [
                             _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4"
                         ] [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Pipeline Created!" ]
-                        _p [ _class_ "text-gray-600 mb-4" ] [
+                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Pipeline Created!" ]
+                        _p [ _class_ "text-slate-600 mb-4" ] [
                             Text.raw $"Pipeline for {symbol} has been created successfully."
                         ]
                         _button [
                             _type_ "button"
                             _class_
-                                "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
+                                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
                             Hx.get "/pipelines/modal/close"
                             Hx.targetCss "#modal-container"
                             Hx.swapInnerHtml
@@ -350,13 +350,13 @@ module View =
                         _div [
                             _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
                         ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-gray-900 mb-2" ] [ Text.raw "Error" ]
-                        _p [ _class_ "text-gray-600 mb-4" ] [ Text.raw message ]
+                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Error" ]
+                        _p [ _class_ "text-slate-600 mb-4" ] [ Text.raw message ]
                         _div [ _class_ "flex justify-center space-x-3" ] [
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 text-gray-600 hover:bg-gray-100 font-medium text-sm rounded-md transition-colors"
+                                    "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/pipelines/modal/close"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml
@@ -364,7 +364,7 @@ module View =
                             _button [
                                 _type_ "button"
                                 _class_
-                                    "px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white font-medium text-sm rounded-md transition-colors"
+                                    "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
                                 Hx.get "/pipelines/modal"
                                 Hx.targetCss "#modal-container"
                                 Hx.swapInnerHtml

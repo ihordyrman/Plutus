@@ -178,11 +178,11 @@ module Data =
 module View =
     let private filterSelect name label options =
         _div [ _class_ "min-w-[150px]" ] [
-            _label [ _class_ "block text-xs font-medium text-gray-500 mb-1" ] [ Text.raw label ]
+            _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw label ]
             _select [
                 _name_ name
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ] [
                 yield _option [ _value_ "" ] [ Text.raw $"All {label}" ]
                 for opt in options do
@@ -192,11 +192,11 @@ module View =
 
     let private filterSelectLabeled name label options =
         _div [ _class_ "min-w-[150px]" ] [
-            _label [ _class_ "block text-xs font-medium text-gray-500 mb-1" ] [ Text.raw label ]
+            _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw label ]
             _select [
                 _name_ name
                 _class_
-                    "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
             ] [
                 yield _option [ _value_ "" ] [ Text.raw $"All {label}" ]
                 for (value, text) in options do
@@ -207,8 +207,8 @@ module View =
     let private sectionHeader =
         _div [ _class_ "flex justify-between items-center mb-6" ] [
             _div [] [
-                _h1 [ _class_ "text-lg font-semibold text-gray-900" ] [ Text.raw "Trading Pipelines" ]
-                _p [ _class_ "text-gray-400 text-sm" ] [ Text.raw "Manage your automated trading pipelines" ]
+                _h1 [ _class_ "text-lg font-semibold text-slate-900" ] [ Text.raw "Trading Pipelines" ]
+                _p [ _class_ "text-slate-400 text-sm" ] [ Text.raw "Manage your automated trading pipelines" ]
             ]
             _button [
                 _type_ "button"
@@ -216,8 +216,8 @@ module View =
                 Hx.targetCss "#modal-container"
                 Hx.swapInnerHtml
                 _class_
-                    "inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium text-sm rounded-md transition-colors"
-            ] [ _i [ _class_ "fas fa-plus mr-2 text-gray-400" ] []; Text.raw "Add Pipeline" ]
+                    "inline-flex items-center px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm rounded-md transition-colors"
+            ] [ _i [ _class_ "fas fa-plus mr-2 text-slate-400" ] []; Text.raw "Add Pipeline" ]
         ]
 
     let private filterBar (data: PipelinesGridData) =
@@ -232,13 +232,13 @@ module View =
                 _input [ _type_ "hidden"; _name_ "page"; _value_ "1" ]
                 _div [ _class_ "flex flex-wrap gap-4" ] [
                     _div [ _class_ "flex-1 min-w-[200px]" ] [
-                        _label [ _class_ "block text-xs font-medium text-gray-500 mb-1" ] [ Text.raw "Search Symbol" ]
+                        _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw "Search Symbol" ]
                         _input [
                             _type_ "text"
                             _name_ "searchTerm"
                             Attr.create "placeholder" "Search by symbol..."
                             _class_
-                                "w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300"
+                                "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                         ]
                     ]
                     filterSelect "filterTag" "Tag" data.Tags
@@ -268,7 +268,7 @@ module View =
                       "Tags", "left"
                       "Last Updated", "left"
                       "Actions", "right" ] do
-                    _th [ _class_ $"px-4 py-3 text-{align} text-xs font-medium text-gray-400 uppercase tracking-wider" ] [
+                    _th [ _class_ $"px-4 py-3 text-{align} text-xs font-medium text-slate-400 uppercase tracking-wider" ] [
                         Text.raw text
                     ]
             ]
@@ -279,13 +279,13 @@ module View =
             if pipeline.Enabled then
                 "bg-green-50 text-green-700", "Enabled"
             else
-                "bg-gray-50 text-gray-500", "Disabled"
+                "bg-slate-50 text-slate-500", "Disabled"
 
-        _tr [ _id_ $"pipeline-{pipeline.Id}"; _class_ "hover:bg-gray-50" ] [
+        _tr [ _id_ $"pipeline-{pipeline.Id}"; _class_ "hover:bg-slate-50" ] [
             _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [
-                _span [ _class_ "font-medium text-gray-900 text-sm" ] [ Text.raw pipeline.Symbol ]
+                _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw pipeline.Symbol ]
             ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-gray-500" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [
                 Text.raw (pipeline.MarketType.ToString())
             ]
             _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [
@@ -294,36 +294,36 @@ module View =
             _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [
                 _div [ _class_ "flex gap-1" ] [
                     for tag in pipeline.Tags |> List.truncate 3 do
-                        _span [ _class_ "px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded" ] [ Text.raw tag ]
+                        _span [ _class_ "px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded" ] [ Text.raw tag ]
                 ]
             ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-gray-500" ] [
+            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [
                 Text.raw (pipeline.UpdatedAt.ToString("MMM dd, HH:mm"))
             ]
             _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm" ] [
                 _button [
-                    _class_ "text-gray-400 hover:text-gray-600 mr-3"
+                    _class_ "text-slate-400 hover:text-slate-600 mr-3"
                     Hx.get $"/pipelines/{pipeline.Id}/details/modal"
                     Hx.targetCss "#modal-container"
                     Hx.swapInnerHtml
                 ] [ Text.raw "View" ]
 
                 _button [
-                    _class_ "text-gray-400 hover:text-gray-600 mr-3"
+                    _class_ "text-slate-400 hover:text-slate-600 mr-3"
                     Hx.get $"/pipelines/{pipeline.Id}/edit/modal"
                     Hx.targetCss "#modal-container"
                     Hx.swapInnerHtml
                 ] [ Text.raw "Edit" ]
 
                 _button [
-                    _class_ "text-gray-400 hover:text-gray-600 mr-3"
+                    _class_ "text-slate-400 hover:text-slate-600 mr-3"
                     Hx.get $"/pipelines/{pipeline.Id}/traces/modal"
                     Hx.targetCss "#modal-container"
                     Hx.swapInnerHtml
                 ] [ Text.raw "Traces" ]
 
                 _button [
-                    _class_ "text-gray-400 hover:text-red-500"
+                    _class_ "text-slate-400 hover:text-red-500"
                     Hx.delete $"/pipelines/{pipeline.Id}"
                     Hx.confirm "Are you sure you want to delete this pipeline?"
                     Hx.targetCss $"#pipeline-{pipeline.Id}"
@@ -335,7 +335,7 @@ module View =
     let emptyState =
         _tr [] [
             _td [ Attr.create "colspan" "6"; _class_ "px-4 py-12 text-center" ] [
-                _div [ _class_ "text-gray-400" ] [
+                _div [ _class_ "text-slate-400" ] [
                     _i [ _class_ "fas fa-robot text-3xl mb-3" ] []
                     _p [ _class_ "text-sm font-medium" ] [ Text.raw "No pipelines yet" ]
                     _p [ _class_ "text-xs" ] [ Text.raw "Create your first trading pipeline to get started" ]
@@ -345,7 +345,7 @@ module View =
 
     let loadingState =
         _tr [] [
-            _td [ Attr.create "colspan" "6"; _class_ "px-4 py-8 text-center text-gray-400" ] [
+            _td [ Attr.create "colspan" "6"; _class_ "px-4 py-8 text-center text-slate-400" ] [
                 _i [ _class_ "fas fa-spinner fa-spin text-lg mb-2" ] []
                 _p [ _class_ "text-sm" ] [ Text.raw "Loading pipelines..." ]
             ]
@@ -358,13 +358,13 @@ module View =
         let startRecord = if data.TotalCount = 0 then 0 else (data.Page - 1) * data.PageSize + 1
         let endRecord = min (data.Page * data.PageSize) data.TotalCount
 
-        let enabledBtnClass = "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-        let disabledBtnClass = "bg-gray-50 text-gray-300 cursor-not-allowed"
+        let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+        let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
         let prevBtnClass = if hasPrev then enabledBtnClass else disabledBtnClass
         let nextBtnClass = if hasNext then enabledBtnClass else disabledBtnClass
 
-        _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-gray-100" ] [
-            _div [ _class_ "text-xs text-gray-400" ] [
+        _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ] [
+            _div [ _class_ "text-xs text-slate-400" ] [
                 Text.raw $"Showing {startRecord} to {endRecord} of {data.TotalCount} pipelines"
             ]
             _div [ _class_ "flex gap-2" ] [
@@ -379,7 +379,7 @@ module View =
                     else
                         Attr.create "disabled" "disabled"
                 ] [ Text.raw "Previous" ]
-                _span [ _class_ "px-3 py-1 text-xs text-gray-400" ] [ Text.raw $"Page {data.Page} of {totalPages}" ]
+                _span [ _class_ "px-3 py-1 text-xs text-slate-400" ] [ Text.raw $"Page {data.Page} of {totalPages}" ]
                 _button [
                     _type_ "button"
                     _class_ $"px-3 py-1 text-xs font-medium rounded-md {nextBtnClass}"
@@ -402,9 +402,9 @@ module View =
 
         _div [ _id_ "pipelines-table-container" ] [
             _div [ _class_ "overflow-x-auto" ] [
-                _table [ _class_ "min-w-full divide-y divide-gray-100" ] [
+                _table [ _class_ "min-w-full divide-y divide-slate-100" ] [
                     tableHeader
-                    _tbody [ _class_ "bg-white divide-y divide-gray-100" ] rows
+                    _tbody [ _class_ "bg-white divide-y divide-slate-100" ] rows
                 ]
             ]
             paginationControls data
@@ -414,9 +414,9 @@ module View =
         _div [ _class_ "card overflow-hidden" ] [
             _div [ _id_ "pipelines-table-container"; Hx.get "/pipelines/table"; Hx.trigger "load"; Hx.swapOuterHtml ] [
                 _div [ _class_ "overflow-x-auto" ] [
-                    _table [ _class_ "min-w-full divide-y divide-gray-100" ] [
+                    _table [ _class_ "min-w-full divide-y divide-slate-100" ] [
                         tableHeader
-                        _tbody [ _class_ "bg-white divide-y divide-gray-100" ] [ loadingState ]
+                        _tbody [ _class_ "bg-white divide-y divide-slate-100" ] [ loadingState ]
                     ]
                 ]
             ]
