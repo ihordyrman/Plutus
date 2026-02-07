@@ -178,10 +178,8 @@ module View =
 
             match prev with
             | None ->
-                _div [ _class_ "mt-2" ] [
-                    _pre [ _class_ "text-xs bg-gray-50 p-3 rounded overflow-x-auto max-h-48 text-gray-700" ] [
-                        Text.raw (JsonSerializer.Serialize(currentDoc.RootElement, JsonSerializerOptions(WriteIndented = true)))
-                    ]
+                _pre [ _class_ "text-xs bg-gray-50 border border-gray-100 p-3 rounded-md overflow-x-auto max-h-48 text-gray-600 font-mono" ] [
+                    Text.raw (JsonSerializer.Serialize(currentDoc.RootElement, JsonSerializerOptions(WriteIndented = true)))
                 ]
             | Some prevJson ->
                 let prevDoc = JsonDocument.Parse(prevJson)
@@ -216,11 +214,11 @@ module View =
                     |> List.concat
 
                 if lines.IsEmpty then
-                    _div [ _class_ "mt-2 text-xs text-gray-400 italic" ] [ Text.raw "No context changes" ]
+                    _div [ _class_ "text-xs text-gray-400 italic" ] [ Text.raw "No context changes" ]
                 else
-                    _pre [ _class_ "mt-2 text-xs bg-gray-50 p-3 rounded overflow-x-auto max-h-48 font-mono" ] lines
+                    _pre [ _class_ "text-xs bg-gray-50 border border-gray-100 p-3 rounded-md overflow-x-auto max-h-48 font-mono" ] lines
         with _ ->
-            _pre [ _class_ "mt-2 text-xs bg-gray-50 p-3 rounded overflow-x-auto max-h-48 text-gray-700" ] [
+            _pre [ _class_ "text-xs bg-gray-50 border border-gray-100 p-3 rounded-md overflow-x-auto max-h-48 text-gray-600 font-mono" ] [
                 Text.raw current
             ]
 
@@ -237,16 +235,17 @@ module View =
                     _p [ _class_ "text-xs" ] [ Text.raw "This pipeline hasn't been executed" ]
                 ]
             else
-                _div [ _class_ "divide-y divide-gray-100" ] [
+                _div [ _class_ "space-y-1" ] [
                     for exec in data.Executions do
                         _div [
-                            _class_ "px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
+                            _class_
+                                "px-4 py-3 border border-gray-200 rounded-md bg-white hover:bg-gray-50 cursor-pointer flex items-center justify-between transition-colors"
                             Hx.get $"/pipelines/{data.PipelineId}/traces/{exec.ExecutionId}"
                             Hx.targetCss "#traces-content"
                             Hx.swapInnerHtml
                         ] [
-                            _div [ _class_ "flex items-center gap-4" ] [
-                                _span [ _class_ "font-mono text-sm text-gray-700" ] [
+                            _div [ _class_ "flex items-center gap-3" ] [
+                                _span [ _class_ "font-mono text-sm font-medium text-gray-900" ] [
                                     Text.raw (exec.ExecutionId.Substring(0, min 8 exec.ExecutionId.Length))
                                 ]
                                 _span [ _class_ "text-xs text-gray-400" ] [
@@ -255,10 +254,15 @@ module View =
                             ]
                             _div [ _class_ "flex items-center gap-3" ] [
                                 _span [ _class_ "text-xs text-gray-400" ] [
+                                    _i [ _class_ "fas fa-layer-group mr-1" ] []
                                     Text.raw $"{exec.StepCount} steps"
                                 ]
-                                _span [ _class_ "text-xs text-gray-400" ] [ Text.raw (formatDuration exec.Duration) ]
+                                _span [ _class_ "text-xs text-gray-400 font-mono" ] [
+                                    _i [ _class_ "fas fa-clock mr-1" ] []
+                                    Text.raw (formatDuration exec.Duration)
+                                ]
                                 outcomeBadge exec.Outcome
+                                _i [ _class_ "fas fa-chevron-right text-xs text-gray-300" ] []
                             ]
                         ]
                 ]
@@ -305,20 +309,25 @@ module View =
         let executionStart = if detail.Steps.IsEmpty then DateTime.MinValue else (detail.Steps |> List.map _.StartTime |> List.min)
 
         _div [] [
-            _div [ _class_ "flex items-center gap-3 mb-4" ] [
+            _div [ _class_ "flex items-center gap-3 pb-4 mb-4 border-b border-gray-100" ] [
                 _button [
                     _type_ "button"
-                    _class_ "text-gray-400 hover:text-gray-600 text-sm"
+                    _class_ "p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
                     Hx.get $"/pipelines/{detail.PipelineId}/traces/modal"
                     Hx.targetCss "#modal-container"
                     Hx.swapInnerHtml
-                ] [ _i [ _class_ "fas fa-arrow-left mr-1" ] []; Text.raw "Back" ]
-                _span [ _class_ "font-mono text-sm text-gray-700" ] [ Text.raw detail.ExecutionId ]
-                outcomeBadge detail.OverallOutcome
-                _span [ _class_ "text-xs text-gray-400 ml-auto" ] [ Text.raw (formatDuration detail.TotalDuration) ]
+                ] [ _i [ _class_ "fas fa-arrow-left" ] [] ]
+                _div [ _class_ "flex items-center gap-2" ] [
+                    _span [ _class_ "font-mono text-sm font-medium text-gray-900" ] [ Text.raw detail.ExecutionId ]
+                    outcomeBadge detail.OverallOutcome
+                ]
+                _span [ _class_ "text-xs text-gray-400 ml-auto" ] [
+                    _i [ _class_ "fas fa-clock mr-1" ] []
+                    Text.raw (formatDuration detail.TotalDuration)
+                ]
             ]
 
-            _div [ _class_ "space-y-1" ] [
+            _div [ _class_ "space-y-2" ] [
                 for i, step in detail.Steps |> List.indexed do
                     let barColor =
                         match step.Outcome with
@@ -342,31 +351,49 @@ module View =
                         if i > 0 then Some detail.Steps.[i - 1].ContextSnapshot else None
 
                     let stepId = $"step-detail-{i}"
+                    let chevronId = $"step-chevron-{i}"
 
-                    _div [ _class_ "border border-gray-100 rounded" ] [
+                    _div [ _class_ "border border-gray-200 rounded-md bg-white transition-colors" ] [
                         _div [
-                            _class_ "flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-gray-50"
-                            Attr.create "onclick" $"document.getElementById('{stepId}').classList.toggle('hidden')"
+                            _class_ "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors"
+                            Attr.create
+                                "onclick"
+                                $"document.getElementById('{stepId}').classList.toggle('hidden');document.getElementById('{chevronId}').classList.toggle('rotate-90')"
                         ] [
-                            _span [ _class_ "w-40 truncate text-sm font-medium text-gray-700" ] [
+                            _i [
+                                _id_ chevronId
+                                _class_ "fas fa-chevron-right text-xs text-gray-300 transition-transform"
+                            ] []
+                            _span [ _class_ "w-44 truncate text-sm font-medium text-gray-900" ] [
                                 Text.raw step.StepTypeKey
                             ]
-                            _span [ _class_ "w-16 text-xs text-gray-400 text-right" ] [
-                                Text.raw (formatDuration step.Duration)
-                            ]
-                            _div [ _class_ "flex-1 h-5 bg-gray-100 rounded relative" ] [
+                            _div [ _class_ "flex-1 h-4 bg-gray-100 rounded-full relative overflow-hidden" ] [
                                 _div [
-                                    _class_ $"absolute top-0 h-full rounded {barColor}"
+                                    _class_ $"absolute top-0 h-full rounded-full {barColor}"
                                     Attr.create "style" $"left:{offsetPct:F1}%%;width:{widthPct:F1}%%"
                                 ] []
                             ]
+                            _span [ _class_ "w-16 text-xs text-gray-400 text-right font-mono" ] [
+                                Text.raw (formatDuration step.Duration)
+                            ]
                             outcomeBadge step.Outcome
                         ]
-                        _div [ _id_ stepId; _class_ "hidden px-3 py-2 border-t border-gray-100 bg-gray-50/50" ] [
-                            if not (String.IsNullOrWhiteSpace step.Message) then
-                                _p [ _class_ "text-sm text-gray-600 mb-2" ] [ Text.raw step.Message ]
-                            _div [ _class_ "text-xs text-gray-500 font-medium mb-1" ] [ Text.raw "Context" ]
-                            contextDiff prevSnapshot step.ContextSnapshot
+                        _div [ _id_ stepId; _class_ "hidden border-t border-gray-100" ] [
+                            _div [ _class_ "px-4 py-3 space-y-3" ] [
+                                if not (String.IsNullOrWhiteSpace step.Message) then
+                                    _div [] [
+                                        _div [ _class_ "text-xs font-medium text-gray-400 uppercase tracking-wide mb-1" ] [
+                                            Text.raw "Message"
+                                        ]
+                                        _p [ _class_ "text-sm text-gray-700" ] [ Text.raw step.Message ]
+                                    ]
+                                _div [] [
+                                    _div [ _class_ "text-xs font-medium text-gray-400 uppercase tracking-wide mb-1" ] [
+                                        Text.raw "Context"
+                                    ]
+                                    contextDiff prevSnapshot step.ContextSnapshot
+                                ]
+                            ]
                         ]
                     ]
             ]
