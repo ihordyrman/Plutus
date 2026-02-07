@@ -12,7 +12,7 @@ module Steps =
         | Stop of message: string
         | Fail of error: string
 
-    type Step<'ctx> = 'ctx -> CancellationToken -> Task<StepResult<'ctx>>
+    type Step<'ctx> = { key: string; execute: 'ctx -> CancellationToken -> Task<StepResult<'ctx>> }
 
     type StepCategory =
         | Validation = 0

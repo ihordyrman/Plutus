@@ -1,12 +1,23 @@
 namespace Plutus.Core.Pipelines.Core
 
+open System
 open System.Threading
 open System.Threading.Tasks
+open Plutus.Core.Infrastructure
 
 module Runner =
     open Steps
 
-    let run (steps: Step<'ctx> list) (ctx: 'ctx) (ct: CancellationToken) : Task<StepResult<'ctx>> =
+    let run
+        (pipelineId: int)
+        (executionId: string)
+        (serializeContext: 'ctx -> string)
+        (logStep: ExecutionLog -> unit)
+        (steps: Step<'ctx> list)
+        (ctx: 'ctx)
+        (ct: CancellationToken)
+        : Task<StepResult<'ctx>>
+        =
         task {
             let mutable currentCtx = ctx
             let mutable finalResult = Continue(ctx, "Started")
@@ -17,13 +28,28 @@ module Runner =
                 else
                     match finalResult with
                     | Continue(c, _) ->
-                        let! result = step c ct
+                        let startTime = DateTime.UtcNow
+                        let! result = step.execute c ct
+                        let endTime = DateTime.UtcNow
 
-                        currentCtx <-
+                        let outcome, message, updatedCtx =
                             match result with
-                            | Continue(c', _) -> c'
-                            | _ -> currentCtx
+                            | Continue(c', msg) -> StepOutcome.Success, msg, c'
+                            | Stop msg -> StepOutcome.Stopped, msg, currentCtx
+                            | Fail err -> StepOutcome.Failed, err, currentCtx
 
+                        let contextSnapshot = serializeContext updatedCtx
+
+                        let log =
+                            { ExecutionLog.create pipelineId executionId step.key startTime with
+                                Outcome = outcome
+                                Message = message
+                                ContextSnapshot = contextSnapshot
+                                EndTime = endTime }
+
+                        logStep log
+
+                        currentCtx <- updatedCtx
                         finalResult <- result
                     | Stop _
                     | Fail _ -> ()

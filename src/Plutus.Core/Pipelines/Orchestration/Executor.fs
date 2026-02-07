@@ -7,6 +7,7 @@ open System.Threading.Tasks
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
+open Plutus.Core.Infrastructure
 open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Trading
@@ -43,6 +44,7 @@ module Executor =
         (services: IServiceProvider)
         (pipelineId: int)
         (registry: Registry.T<TradingContext>)
+        (executionLogger: ExecutionLogger.T)
         (logger: ILogger)
         (ct: CancellationToken)
         =
@@ -130,7 +132,15 @@ module Executor =
                                             steps.Length
                                         )
 
-                                        let! result = Runner.run steps context ct
+                                        let! result =
+                                            Runner.run
+                                                pipelineId
+                                                context.ExecutionId
+                                                TradingContext.serializeForLog
+                                                executionLogger.Post
+                                                steps
+                                                context
+                                                ct
 
                                         match result with
                                         | Steps.Continue(_, msg) ->
@@ -160,6 +170,7 @@ module Executor =
         : T
         =
 
+        let executionLogger = services.GetRequiredService<ExecutionLogger.T>()
         let state = { Cts = None; Task = None; IsRunning = false }
 
         let start (ct: CancellationToken) =
@@ -170,7 +181,14 @@ module Executor =
                     let cts = CancellationTokenSource.CreateLinkedTokenSource(ct)
                     state.Cts <- Some cts
                     state.IsRunning <- true
-                    state.Task <- Some(Task.Run(fun () -> executeLoop services pipelineId registry logger cts.Token))
+
+                    state.Task <-
+                        Some(
+                            Task.Run(fun () ->
+                                executeLoop services pipelineId registry executionLogger logger cts.Token
+                            )
+                        )
+
                     logger.LogInformation("Started executor for pipeline {PipelineId}", pipelineId)
             }
 

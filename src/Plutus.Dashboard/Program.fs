@@ -68,6 +68,22 @@ let pipelines =
       mapGet "/pipelines/{id:int}/edit/modal" _.GetInt("id") (fun id -> requireAuth (PipelineEdit.Handler.modal id))
       mapPost "/pipelines/{id:int}/edit" _.GetInt("id") (fun id -> requireAuth (PipelineEdit.Handler.update id))
       mapDelete "/pipelines/{id:int}" _.GetInt("id") (fun id -> requireAuth (Pipeline.Handler.delete id))
+      mapGet
+          "/pipelines/{id:int}/traces/modal"
+          _.GetInt("id")
+          (fun id -> requireAuth (PipelineTraces.Handler.tracesModal id))
+      mapGet
+          "/pipelines/{id:int}/traces/list"
+          _.GetInt("id")
+          (fun id -> requireAuth (PipelineTraces.Handler.tracesList id))
+      get
+          "/pipelines/{pipelineId:int}/traces/{executionId}"
+          (requireAuth (fun ctx ->
+              let route = Request.getRoute ctx
+              let pipelineId = route.GetInt("pipelineId")
+              let executionId = route.GetString("executionId")
+              PipelineTraces.Handler.executionDetail pipelineId executionId ctx
+          ))
       mapGet "/pipelines/{id:int}/steps/list" _.GetInt("id") (fun id -> requireAuth (PipelineEdit.Handler.stepsList id))
       mapGet
           "/pipelines/{id:int}/steps/selector"

@@ -116,3 +116,16 @@ create table users
     created_at    timestamp    not null,
     updated_at    timestamp    not null
 );
+
+create table execution_logs
+(
+    id            serial primary key,
+    pipeline_id   int references pipelines (id) on delete cascade,
+    execution_id  varchar(100) not null,
+    step_type_key varchar(100) not null,
+    outcome       int          not null,
+    message       text         not null,
+    context       jsonb        not null default '{}',
+    start_time    timestamp    not null,
+    end_time      timestamp    not null
+);

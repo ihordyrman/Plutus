@@ -316,6 +316,13 @@ module View =
                 ] [ Text.raw "Edit" ]
 
                 _button [
+                    _class_ "text-gray-400 hover:text-gray-600 mr-3"
+                    Hx.get $"/pipelines/{pipeline.Id}/traces/modal"
+                    Hx.targetCss "#modal-container"
+                    Hx.swapInnerHtml
+                ] [ Text.raw "Traces" ]
+
+                _button [
                     _class_ "text-gray-400 hover:text-red-500"
                     Hx.delete $"/pipelines/{pipeline.Id}"
                     Hx.confirm "Are you sure you want to delete this pipeline?"

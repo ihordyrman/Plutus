@@ -8,6 +8,7 @@ open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
 open Plutus.Core.Markets.Abstractions
+open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Pipelines.Trading
@@ -93,19 +94,23 @@ module EntryStep =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
             let tradeAmount = params' |> ValidatedParams.getDecimal "tradeAmount" 100m
 
-            fun ctx ct ->
-                task {
-                    match ctx.ActiveOrderId, ctx.Action with
-                    | None, Buy ->
-                        match! placeOrder services { ctx with Quantity = Some tradeAmount } ct with
-                        | Ok ctx -> return Continue(ctx, $"Placed buy order for order ID {ctx.ActiveOrderId.Value}.")
-                        | Error err -> return Fail $"Error placing buy order: {err}"
-                    | Some _, Sell ->
-                        match! placeOrder services ctx ct with
-                        | Ok ctx -> return Continue(ctx, $"Placed sell order for order ID {ctx.ActiveOrderId.Value}.")
-                        | Error err -> return Fail $"Error placing sell order: {err}"
-                    | _ -> return Continue(ctx, "No action taken.")
-                }
+            { key = "entry-step"
+              execute =
+                fun ctx ct ->
+                    task {
+                        match ctx.ActiveOrderId, ctx.Action with
+                        | None, Buy ->
+                            match! placeOrder services { ctx with Quantity = Some tradeAmount } ct with
+                            | Ok ctx ->
+                                return Continue(ctx, $"Placed buy order for order ID {ctx.ActiveOrderId.Value}.")
+                            | Error err -> return Fail $"Error placing buy order: {err}"
+                        | Some _, Sell ->
+                            match! placeOrder services ctx ct with
+                            | Ok ctx ->
+                                return Continue(ctx, $"Placed sell order for order ID {ctx.ActiveOrderId.Value}.")
+                            | Error err -> return Fail $"Error placing sell order: {err}"
+                        | _ -> return Continue(ctx, "No action taken.")
+                    } }
 
         { Key = "entry-step"
           Name = "Entry Step"

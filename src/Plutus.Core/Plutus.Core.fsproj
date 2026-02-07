@@ -16,6 +16,8 @@
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
         <Compile Include="Infrastructure\Authentication.fs" />
+        <Compile Include="Infrastructure\Tracing.fs" />
+        <Compile Include="Infrastructure\ExecutionLogger.fs" />
 
         <Compile Include="Shared\Errors.fs" />
 
@@ -26,6 +28,7 @@
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
         <Compile Include="Repositories\UserRepository.fs" />
+        <Compile Include="Repositories\ExecutionLogRepository.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\BalanceProvider.fs" />
@@ -46,14 +49,14 @@
 
         <Compile Include="Markets\Services\BalanceManager.fs" />
         <Compile Include="Markets\Services\ConnectionManager.fs" />
+        <Compile Include="Pipelines\Core\Context.fs" />
 
         <Compile Include="Pipelines\Core\Parameters.fs" />
+
         <Compile Include="Pipelines\Core\Steps.fs" />
         <Compile Include="Pipelines\Core\Registry.fs" />
         <Compile Include="Pipelines\Core\Builder.fs" />
         <Compile Include="Pipelines\Core\Runner.fs" />
-
-        <Compile Include="Pipelines\Trading\Context.fs" />
         <Compile Include="Pipelines\Trading\CheckPosition.fs" />
         <Compile Include="Pipelines\Trading\PositionGateStep.fs" />
         <Compile Include="Pipelines\Trading\EntryStep.fs" />

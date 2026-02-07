@@ -1,4 +1,4 @@
-namespace Plutus.Core.Pipelines.Trading
+namespace Plutus.Core.Pipelines.Core
 
 open Plutus.Core.Domain
 open Plutus.Core.Markets.Abstractions
@@ -11,6 +11,7 @@ type TradingAction =
 
 type TradingContext =
     { PipelineId: int
+      ExecutionId: string
       Symbol: string
       MarketType: MarketType
       CurrentPrice: decimal
@@ -24,8 +25,15 @@ type TradingContext =
       Data: Map<string, obj> }
 
 module TradingContext =
+    open System.Text.Json
+    open System.Text.Json.Serialization
+
+    // see no reason to save whole guid, just need some random string to identify execution in logs
+    let private getRandomExecutionId = fun () -> System.Guid.CreateVersion7().ToString().Substring(24, 12)
+
     let empty pipelineId symbol marketType =
         { PipelineId = pipelineId
+          ExecutionId = getRandomExecutionId ()
           Symbol = symbol
           MarketType = marketType
           CurrentPrice = 0m
@@ -40,3 +48,18 @@ module TradingContext =
     let withPrice price ctx = { ctx with CurrentPrice = price }
     let withData key value ctx = { ctx with Data = Map.add key (box value) ctx.Data }
     let getData<'a> key ctx = ctx.Data |> Map.tryFind key |> Option.map unbox<'a>
+
+    let serializeForLog (ctx: TradingContext) : string =
+        let snapshot =
+            {| Action =
+                match ctx.Action with
+                | NoAction -> "NoAction"
+                | Hold -> "Hold"
+                | Buy -> "Buy"
+                | Sell -> "Sell"
+               BuyPrice = ctx.BuyPrice
+               Quantity = ctx.Quantity
+               ActiveOrderId = ctx.ActiveOrderId
+               CurrentPrice = ctx.CurrentPrice |}
+
+        JsonSerializer.Serialize(snapshot, JsonSerializerOptions(WriteIndented = false))

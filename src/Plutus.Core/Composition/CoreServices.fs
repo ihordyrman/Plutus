@@ -125,6 +125,19 @@ module CoreServices =
     let private liveDataStore (services: IServiceCollection) =
         services.AddSingleton<LiveDataStore.T>(fun _ -> LiveDataStore.create ()) |> ignore
 
+    let private executionLogger (services: IServiceCollection) =
+        services.AddSingleton<ExecutionLogger.T>(fun provider ->
+            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
+            let logger = provider.GetRequiredService<ILogger<ExecutionLogger.T>>()
+
+            let getConnection () =
+                let scope = scopeFactory.CreateScope()
+                scope.ServiceProvider.GetRequiredService<IDbConnection>()
+
+            ExecutionLogger.create getConnection logger
+        )
+        |> ignore
+
     let private database (services: IServiceCollection) (configuration: IConfiguration) =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
@@ -187,6 +200,7 @@ module CoreServices =
         database services configuration
 
         [ liveDataStore
+          executionLogger
           balanceManager
           credentialsStore
           heartbeat
