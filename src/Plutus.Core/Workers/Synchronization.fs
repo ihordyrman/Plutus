@@ -13,8 +13,6 @@ open Plutus.Core.Shared.Errors
 
 module CandlestickSync =
 
-    let toPairSymbol (instrument: Instrument) = { Left = instrument; Right = Instrument.USDT }.ToString()
-
     let toCandlestick (symbol: string) (timeframe: string) (c: OkxCandlestick) : Candlestick =
         { Id = 0
           Symbol = symbol
@@ -43,19 +41,16 @@ module CandlestickSync =
             | Error err -> logger.LogError("Sync failed for {Symbol}: {Error}", symbol, serviceMessage err)
         }
 
+    let getEnabledSymbols (db: IDbConnection) (ct: CancellationToken) =
+        task {
+            match! PipelineRepository.getEnabled db ct with
+            | Ok pipelines -> return pipelines |> List.map _.Symbol |> List.distinct |> Array.ofList
+            | Error _ -> return Array.empty
+        }
+
 
 type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogger<OkxSynchronizationWorker>) =
     inherit BackgroundService()
-
-    let symbols =
-        [| Instrument.BTC
-           Instrument.ETH
-           Instrument.SOL
-           Instrument.OKB
-           Instrument.DOGE
-           Instrument.XRP
-           Instrument.BCH
-           Instrument.LTC |]
 
     override _.ExecuteAsync(ct) =
         task {
@@ -63,34 +58,35 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
             let http = scope.ServiceProvider.GetRequiredService<Http.T>()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            [| for i in 0..23 do
-                   DateTimeOffset.UtcNow.AddHours(-i).ToUnixTimeMilliseconds().ToString() |]
-            |> Array.rev
-            |> Array.iter (fun after ->
-                for instrument in symbols do
-                    CandlestickSync.sync http db logger (CandlestickSync.toPairSymbol instrument) after 60 ct
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
-            )
+            let! symbols = CandlestickSync.getEnabledSymbols db ct
+
+            if symbols.Length > 0 then
+                [| for i in 0..23 do
+                       DateTimeOffset.UtcNow.AddHours(-i).ToUnixTimeMilliseconds().ToString() |]
+                |> Array.rev
+                |> Array.iter (fun after ->
+                    for symbol in symbols do
+                        CandlestickSync.sync http db logger symbol after 60 ct
+                        |> Async.AwaitTask
+                        |> Async.RunSynchronously
+                )
 
             logger.LogInformation("Initial sync complete")
             use timer = new PeriodicTimer(TimeSpan.FromMinutes 1.0)
 
             while not ct.IsCancellationRequested do
                 let! _ = timer.WaitForNextTickAsync(ct)
+                let! currentSymbols = CandlestickSync.getEnabledSymbols db ct
 
-                do
-                    symbols
-                    |> Array.iter (fun instrument ->
-                        CandlestickSync.sync
-                            http
-                            db
-                            logger
-                            (CandlestickSync.toPairSymbol instrument)
-                            (DateTimeOffset.UtcNow.AddMinutes(-1.0).ToUnixTimeMilliseconds().ToString())
-                            10
-                            ct
-                        |> Async.AwaitTask
-                        |> Async.RunSynchronously
-                    )
+                for symbol in currentSymbols do
+                    CandlestickSync.sync
+                        http
+                        db
+                        logger
+                        symbol
+                        (DateTimeOffset.UtcNow.AddMinutes(-1.0).ToUnixTimeMilliseconds().ToString())
+                        10
+                        ct
+                    |> Async.AwaitTask
+                    |> Async.RunSynchronously
         }

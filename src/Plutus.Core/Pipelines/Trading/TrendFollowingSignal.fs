@@ -11,15 +11,14 @@ open Plutus.Core.Repositories
 
 module TrendFollowingSignal =
     let instruments =
-        [ Instrument.BTC
-          Instrument.ETH
-          Instrument.SOL
-          Instrument.OKB
-          Instrument.DOGE
-          Instrument.XRP
-          Instrument.BCH
-          Instrument.LTC ]
-        |> List.map (fun x -> { Left = x; Right = Instrument.USDT }.ToString())
+        [ "BTC-USDT"
+          "ETH-USDT"
+          "SOL-USDT"
+          "OKB-USDT"
+          "DOGE-USDT"
+          "XRP-USDT"
+          "BCH-USDT"
+          "LTC-USDT" ]
 
     let private timeframes = [ "1m"; "5m"; "15m"; "30m"; "1H"; "4H"; "1Dutc" ]
 

@@ -79,6 +79,9 @@ module CoreServices =
     let private okxWorker (services: IServiceCollection) =
         services.AddHostedService<OkxSynchronizationWorker>() |> ignore
 
+    let private instrumentSyncWorker (services: IServiceCollection) =
+        services.AddHostedService<InstrumentSyncWorker>() |> ignore
+
     let private orderExecutor (services: IServiceCollection) =
         services.AddScoped<OrderExecutor.T>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
@@ -173,6 +176,7 @@ module CoreServices =
           credentialsStore
           httpClientFactory
           httpClient
+          instrumentSyncWorker
           okxWorker
           orderExecutor
           pipelineOrchestrator ]

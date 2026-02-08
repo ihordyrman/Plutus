@@ -7,6 +7,7 @@
 
     <ItemGroup>
         <Compile Include="Domain\Common.fs" />
+        <Compile Include="Domain\Instruments.fs" />
         <Compile Include="Domain\Markets.fs" />
         <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Pipelines.fs" />
@@ -27,6 +28,7 @@
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
         <Compile Include="Repositories\UserRepository.fs" />
+        <Compile Include="Repositories\InstrumentRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
@@ -63,6 +65,7 @@
         <Compile Include="Pipelines\Orchestration\Executor.fs" />
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />
 
+        <Compile Include="Workers\InstrumentSync.fs" />
         <Compile Include="Workers\Synchronization.fs" />
         <Compile Include="Composition\CoreServices.fs" />
 

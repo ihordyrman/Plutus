@@ -125,29 +125,55 @@ module View =
                 _name_ "marketType"
                 _class_
                     "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                Attr.create "hx-on:change"
+                    "var b=document.getElementById('baseCurrency');if(b)htmx.trigger(b,'load')"
             ] [
                 for marketType in marketTypes do
                     _option [ _value_ (string (int marketType)) ] [ Text.raw (marketType.ToString()) ]
             ]
         ]
 
-    let private symbolField =
-        _div [] [
-            _label [ _for_ "symbol"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
-                Text.raw "Symbol "
-                _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
+    let private symbolFields =
+        let selectClass =
+            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+
+        _div [ _class_ "space-y-3" ] [
+            _input [ _id_ "symbol"; _name_ "symbol"; _type_ "hidden" ]
+            _div [] [
+                _label [ _for_ "baseCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
+                    Text.raw "Base Currency "
+                    _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
+                ]
+                _select [
+                    _id_ "baseCurrency"
+                    _name_ "baseCurrency"
+                    _class_ selectClass
+                    Hx.get "/instruments/base-currencies"
+                    Hx.trigger "load"
+                    Hx.includeCss "[name='marketType']"
+                    Hx.targetCss "#baseCurrency"
+                    Hx.swap HxSwap.InnerHTML
+                    Attr.create "hx-on::after-settle"
+                        "var q=document.getElementById('quoteCurrency');if(q){htmx.trigger(q,'change')};var s=document.getElementById('symbol');if(s)s.value=''"
+                ] [ _option [ _value_ "" ] [ Text.raw "Loading..." ] ]
             ]
-            _input [
-                _id_ "symbol"
-                _name_ "symbol"
-                _type_ "text"
-                Attr.create "placeholder" "e.g., BTC-USDT, ETH-USDT"
-                _class_
-                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                Attr.create "required" "required"
-            ]
-            _p [ _class_ "text-sm text-slate-500 mt-1" ] [
-                Text.raw "Enter the trading pair symbol (uppercase letters, numbers, hyphens, and slashes only)"
+            _div [] [
+                _label [ _for_ "quoteCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
+                    Text.raw "Quote Currency "
+                    _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
+                ]
+                _select [
+                    _id_ "quoteCurrency"
+                    _name_ "quoteCurrency"
+                    _class_ selectClass
+                    Hx.get "/instruments/quote-currencies"
+                    Hx.trigger "change from:#baseCurrency"
+                    Hx.includeCss "[name='marketType'],[name='baseCurrency']"
+                    Hx.targetCss "#quoteCurrency"
+                    Hx.swap HxSwap.InnerHTML
+                    Attr.create "hx-on::after-settle"
+                        "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''"
+                ] [ _option [ _value_ "" ] [ Text.raw "-- Select base first --" ] ]
             ]
         ]
 
@@ -208,7 +234,7 @@ module View =
                 Text.raw "Tips"
             ]
             _ul [ _class_ "text-xs text-slate-500 space-y-0.5" ] [
-                _li [] [ Text.raw "• Symbol must match exchange format (e.g., BTC-USDT)" ]
+                _li [] [ Text.raw "• Select base and quote currencies to define the trading pair" ]
                 _li [] [ Text.raw "• Each market + symbol combination must be unique" ]
             ]
         ]
@@ -283,7 +309,7 @@ module View =
                         ] [
                             _div [ _class_ "px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto" ] [
                                 marketTypeField
-                                symbolField
+                                symbolFields
                                 tagsField
                                 executionIntervalField
                                 enabledField

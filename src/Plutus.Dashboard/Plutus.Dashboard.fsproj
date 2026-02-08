@@ -14,6 +14,7 @@
         <Compile Include="Pages\AccountDetails.fs" />
         <Compile Include="Pages\AccountEdit.fs" />
         <Compile Include="Pages\CreateAccount.fs" />
+        <Compile Include="Pages\Instruments.fs" />
         <Compile Include="Pages\Pipeline.fs" />
         <Compile Include="Pages\PipelineDetails.fs" />
         <Compile Include="Pages\PipelineEdit.fs" />

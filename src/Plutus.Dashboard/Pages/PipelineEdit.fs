@@ -60,12 +60,16 @@ type StepEditorViewModel =
 type EditPipelineViewModel =
     { Id: int
       Symbol: string
+      BaseCurrency: string
+      QuoteCurrency: string
       MarketType: MarketType
       Enabled: bool
       ExecutionInterval: int
       Tags: string
       Steps: StepItemViewModel list
       MarketTypes: MarketType list
+      BaseCurrencies: string list
+      QuoteCurrencies: string list
       StepDefinitions: StepDefinitionViewModel list }
 
 type EditFormData =
@@ -170,16 +174,41 @@ module Data =
                         mapStepToViewModel pipelineId def step (i = 0) (i = stepCount - 1)
                     )
 
+                let baseCurrency, quoteCurrency =
+                    match pipeline.Symbol.Split('-') with
+                    | [| b; q |] -> b, q
+                    | _ -> pipeline.Symbol, ""
+
+                let! baseCurrencies =
+                    InstrumentRepository.getBaseCurrencies db (int pipeline.MarketType) "SPOT" ct
+
+                let baseCurrencies =
+                    match baseCurrencies with
+                    | Ok c -> c
+                    | Error _ -> []
+
+                let! quoteCurrencies =
+                    InstrumentRepository.getQuoteCurrencies db (int pipeline.MarketType) "SPOT" baseCurrency ct
+
+                let quoteCurrencies =
+                    match quoteCurrencies with
+                    | Ok c -> c
+                    | Error _ -> []
+
                 return
                     Option.Some
                         { Id = pipeline.Id
                           Symbol = pipeline.Symbol
+                          BaseCurrency = baseCurrency
+                          QuoteCurrency = quoteCurrency
                           MarketType = pipeline.MarketType
                           Enabled = pipeline.Enabled
                           ExecutionInterval = int pipeline.ExecutionInterval.TotalMinutes
                           Tags = pipeline.Tags |> String.concat ", "
                           Steps = stepVms
                           MarketTypes = marketTypes
+                          BaseCurrencies = baseCurrencies
+                          QuoteCurrencies = quoteCurrencies
                           StepDefinitions = defs }
         }
 
@@ -988,6 +1017,13 @@ module View =
                         _name_ "marketType"
                         _class_
                             "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                        Hx.get "/instruments/base-currencies"
+                        Hx.trigger "change"
+                        Hx.includeCss "[name='marketType']"
+                        Hx.targetCss "#baseCurrency"
+                        Hx.swap HxSwap.InnerHTML
+                        Attr.create "hx-on::after-settle"
+                            "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('symbol');if(s)s.value=''"
                     ] [
                         for mt in vm.MarketTypes do
                             if mt = vm.MarketType then
@@ -999,21 +1035,53 @@ module View =
                     ]
                 ]
 
-                // symbol
+                // symbol (base + quote dropdowns)
+                _input [ _id_ "symbol"; _name_ "symbol"; _type_ "hidden"; _value_ vm.Symbol ]
                 _div [] [
-                    _label [ _for_ "symbol"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
-                        Text.raw "Symbol "
+                    _label [ _for_ "baseCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
+                        Text.raw "Base Currency "
                         _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
                     ]
-                    _input [
-                        _id_ "symbol"
-                        _name_ "symbol"
-                        _type_ "text"
-                        _value_ vm.Symbol
-                        Attr.create "placeholder" "e.g., BTC-USDT"
+                    _select [
+                        _id_ "baseCurrency"
+                        _name_ "baseCurrency"
                         _class_
                             "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                        Attr.create "required" "required"
+                        Hx.get "/instruments/quote-currencies"
+                        Hx.trigger "change"
+                        Hx.includeCss "[name='marketType'],[name='baseCurrency']"
+                        Hx.targetCss "#quoteCurrency"
+                        Hx.swap HxSwap.InnerHTML
+                        Attr.create "hx-on::after-settle"
+                            "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''"
+                    ] [
+                        _option [ _value_ "" ] [ Text.raw "-- Select --" ]
+                        for c in vm.BaseCurrencies do
+                            if c = vm.BaseCurrency then
+                                _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
+                            else
+                                _option [ _value_ c ] [ Text.raw c ]
+                    ]
+                ]
+                _div [] [
+                    _label [ _for_ "quoteCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
+                        Text.raw "Quote Currency "
+                        _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
+                    ]
+                    _select [
+                        _id_ "quoteCurrency"
+                        _name_ "quoteCurrency"
+                        _class_
+                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                        Attr.create "hx-on:change"
+                            "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''"
+                    ] [
+                        _option [ _value_ "" ] [ Text.raw "-- Select --" ]
+                        for c in vm.QuoteCurrencies do
+                            if c = vm.QuoteCurrency then
+                                _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
+                            else
+                                _option [ _value_ c ] [ Text.raw c ]
                     ]
                 ]
 

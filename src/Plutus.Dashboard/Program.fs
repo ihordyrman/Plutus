@@ -26,6 +26,10 @@ let requireAuth (handler: HttpHandler) : HttpHandler =
                 return! Response.redirectTemporarily "/login" ctx
         }
 
+let instruments =
+    [ get "/instruments/base-currencies" (requireAuth Instruments.Handler.baseCurrencies)
+      get "/instruments/quote-currencies" (requireAuth Instruments.Handler.quoteCurrencies) ]
+
 let general =
     [ get "/" (requireAuth Index.get); get "/system-status" (requireAuth SystemStatus.Handler.status) ]
 
@@ -175,4 +179,4 @@ app.UseRouting() |> ignore
 app.UseAuthentication() |> ignore
 app.UseAuthorization() |> ignore
 app.UseDefaultFiles().UseStaticFiles() |> ignore
-app.UseFalco(auth @ general @ balances @ markets @ accounts @ pipelines @ orders).Run(Response.ofPlainText "Not found")
+app.UseFalco(auth @ general @ instruments @ balances @ markets @ accounts @ pipelines @ orders).Run(Response.ofPlainText "Not found")

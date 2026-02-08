@@ -5,6 +5,14 @@ open System.Globalization
 open System.Text.Json
 open System.Text.Json.Serialization
 
+type InstrumentType =
+    | Spot
+    | Margin
+    | Swap
+    | Futures
+    | Option
+    | Any
+
 [<JsonConverter(typeof<JsonStringEnumConverter>)>]
 type OkxResponseCode =
     | Success = 0
@@ -24,21 +32,6 @@ type OkxResponseCode =
     | InternalLoginError = 63999
     | RateLimitReached = 50011
     | SystemBusy = 50026
-
-type OkxAction =
-    | [<JsonPropertyName("snapshot")>] Snapshot = 0
-    | [<JsonPropertyName("event")>] Event = 1
-    | [<JsonPropertyName("update")>] Update = 2
-
-type OkxEvent =
-    | Login = 0
-    | Subscribe = 1
-    | Unsubscribe = 2
-    | Order = 3
-    | Trade = 4
-    | Balance = 5
-    | Position = 6
-    | Error = 7
 
 [<CLIMutable>]
 type OkxAssetsValuationDetail =
@@ -344,48 +337,54 @@ type OkxInstrument =
       [<JsonPropertyName("quoteCcy")>]
       QuoteCurrency: string }
 
-[<CLIMutable>]
-type OkxSocketEventResponse =
-    { [<JsonPropertyName("event")>]
-      Event: OkxEvent option }
 
-[<CLIMutable>]
-type OkxSocketResponse =
-    { [<JsonPropertyName("event")>]
-      Event: OkxEvent option
-      [<JsonPropertyName("arg")>]
-      Arguments: OkxSocketArgs option
-      [<JsonPropertyName("action")>]
-      Action: OkxAction option
-      [<JsonPropertyName("data")>]
-      Data: OkxSocketBookData[] option
-      [<JsonPropertyName("msg")>]
-      Message: string option
-      [<JsonPropertyName("code")>]
-      Code: OkxResponseCode option }
-
-[<CLIMutable>]
-type OkxSocketLoginResponse =
-    { [<JsonPropertyName("event")>]
-      Event: OkxEvent option
-      [<JsonPropertyName("msg")>]
-      Message: string option
-      [<JsonPropertyName("code")>]
-      Code: OkxResponseCode option
-      [<JsonPropertyName("connId")>]
-      ConnectionId: string option }
-
-[<CLIMutable>]
-type OkxSocketSubscriptionData =
-    { [<JsonPropertyName("asks")>]
-      Asks: string list list
-      [<JsonPropertyName("bids")>]
-      Bids: string list list
-      [<JsonPropertyName("ts")>]
-      Timestamp: string
-      [<JsonPropertyName("checksum")>]
-      Checksum: int64
-      [<JsonPropertyName("seqId")>]
-      SequenceId: int64
-      [<JsonPropertyName("prevSeqId")>]
-      PreviousSequenceId: int64 }
+//    "auctionEndTime": "",
+// "baseCcy": "BTC",
+// "ctMult": "",
+// "ctType": "",
+// "ctVal": "",
+// "ctValCcy": "",
+// "contTdSwTime": "1704876947000",
+// "elp": "0",
+// "expTime": "",
+// "futureSettlement": false,
+// "groupId": "4",
+// "instFamily": "",
+// "instId": "BTC-EUR",
+// "instType": "SPOT",
+// "lever": "",
+// "listTime": "1704876947000",
+// "lotSz": "0.00000001",
+// "maxIcebergSz": "9999999999.0000000000000000",
+// "maxLmtAmt": "1000000",
+// "maxLmtSz": "9999999999",
+// "maxMktAmt": "1000000",
+// "maxMktSz": "1000000",
+// "maxPlatOILmt": "1000000000",
+// "maxStopSz": "1000000",
+// "maxTriggerSz": "9999999999.0000000000000000",
+// "maxTwapSz": "9999999999.0000000000000000",
+// "minSz": "0.00001",
+// "optType": "",
+// "openType": "call_auction",
+// "preMktSwTime": "",
+// "posLmtPct": "30",
+// "posLmtAmt": "2500000",
+// "quoteCcy": "EUR",
+// "tradeQuoteCcyList": [
+//     "EUR"
+// ],
+// "settleCcy": "",
+// "state": "live",
+// "ruleType": "normal",
+// "stk": "",
+// "tickSz": "1",
+// "uly": "",
+// "instIdCode": 1000000000,
+// "upcChg": [
+//     {
+//         "param": "tickSz",
+//         "newValue": "0.0001",
+//         "effTime": "1704876947000"
+//     }
+// ]

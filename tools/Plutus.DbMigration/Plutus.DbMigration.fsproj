@@ -10,6 +10,9 @@
         <Content Include="sql\01-initial.sql">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <Content Include="sql\02-instruments.sql">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
         <Compile Include="Seeding.fs" />
         <Compile Include="Program.fs" />
         <Content Include="appsettings.json">
