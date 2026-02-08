@@ -8,10 +8,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
-open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Pipelines.Core
-open Plutus.Core.Pipelines.Trading
-open Plutus.Core.Markets.Stores
 open Plutus.Core.Repositories
 open Plutus.Core.Shared
 
@@ -35,10 +32,9 @@ module Executor =
             | Ok pipeline -> return Some pipeline
         }
 
-    let private createContext (pipeline: Pipeline) (currentPrice: decimal) (marketData: MarketData option) =
+    let private createContext (pipeline: Pipeline) (currentPrice: decimal) =
         { TradingContext.empty pipeline.Id pipeline.Symbol pipeline.MarketType with
-            CurrentPrice = currentPrice
-            CurrentMarketData = marketData }
+            CurrentPrice = currentPrice }
 
     let private executeLoop
         (services: IServiceProvider)
@@ -122,9 +118,7 @@ module Executor =
                                         do! Task.Delay(pipeline.ExecutionInterval, ct)
 
                                     | Some candle ->
-                                        let liveDataStore = scope.ServiceProvider.GetRequiredService<LiveDataStore.T>()
-                                        let marketData = liveDataStore.Get pipeline.Symbol pipeline.MarketType
-                                        let context = createContext pipeline candle.Close marketData
+                                        let context = createContext pipeline candle.Close
 
                                         logger.LogDebug(
                                             "Executing pipeline {PipelineId} with {StepCount} steps",

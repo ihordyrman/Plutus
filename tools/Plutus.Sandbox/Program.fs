@@ -22,13 +22,9 @@ CoreServices.registerSlim serviceCollection configuration
 let serviceProvider = serviceCollection.BuildServiceProvider()
 let http = serviceProvider.GetRequiredService<Http.T>()
 
-// 1440 last entries for 1 timeframe
-// if 1 min frame -> 1 day data
-let after = DateTimeOffset.UtcNow.AddDays(-1.0).ToUnixTimeMilliseconds().ToString()
-
-let candlestics =
-    http.getCandlesticks "BTC-USDT" { Bar = Some "1H"; After = Some after; Before = None; Limit = Some 300 }
+let instruments =
+    http.getInstruments InstrumentType.Spot
     |> Async.AwaitTask
     |> Async.RunSynchronously
 
-printfn $"%A{candlestics}"
+printfn $"%A{instruments}"

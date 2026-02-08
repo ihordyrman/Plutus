@@ -46,24 +46,6 @@ module CoreServices =
                 JsonSerializer.Deserialize<Dictionary<string, string>>(json)
             | _ -> Dictionary<string, string>()
 
-    let private heartbeat (services: IServiceCollection) =
-        services.AddSingleton<Heartbeat.T>(fun provider ->
-            let webSocket = provider.GetRequiredService<WebSocketClient.T>()
-            let logger = provider.GetRequiredService<ILogger<Heartbeat.T>>()
-            Heartbeat.create logger webSocket
-        )
-        |> ignore
-
-    let private okxAdapter (services: IServiceCollection) =
-        services.AddSingleton<OkxAdapter.T>(fun provider ->
-            let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
-            let liveDataStore = provider.GetRequiredService<LiveDataStore.T>()
-            let webSocket = WebSocketClient.create (loggerFactory.CreateLogger("WebSocket"))
-            let logger = loggerFactory.CreateLogger("OkxAdapter")
-            OkxAdapter.create webSocket liveDataStore logger
-        )
-        |> ignore
-
     let private pipelineOrchestrator (services: IServiceCollection) =
         let registry = TradingSteps.all |> Registry.create
         services.AddSingleton<Registry.T<TradingContext>>(registry) |> ignore
@@ -84,13 +66,6 @@ module CoreServices =
         )
         |> ignore
 
-    let private webSocketClient (services: IServiceCollection) =
-        services.AddSingleton<WebSocketClient.T>(fun provider ->
-            let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("WebSocket")
-            WebSocketClient.create logger
-        )
-        |> ignore
-
     let private balanceManager (services: IServiceCollection) =
         services.AddScoped<BalanceManager.T>(fun provider ->
             let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
@@ -100,9 +75,6 @@ module CoreServices =
             BalanceManager.create [ okxBalance ]
         )
         |> ignore
-
-    let private marketConnectionService (services: IServiceCollection) =
-        services.AddHostedService<MarketConnectionService.Worker>() |> ignore
 
     let private okxWorker (services: IServiceCollection) =
         services.AddHostedService<OkxSynchronizationWorker>() |> ignore
@@ -121,9 +93,6 @@ module CoreServices =
             CredentialsStore.create scopeFactory
         )
         |> ignore
-
-    let private liveDataStore (services: IServiceCollection) =
-        services.AddSingleton<LiveDataStore.T>(fun _ -> LiveDataStore.create ()) |> ignore
 
     let private executionLogger (services: IServiceCollection) =
         services.AddSingleton<ExecutionLogger.T>(fun provider ->
@@ -199,23 +168,18 @@ module CoreServices =
     let register (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [ liveDataStore
-          executionLogger
+        [ executionLogger
           balanceManager
           credentialsStore
-          heartbeat
           httpClientFactory
           httpClient
-          marketConnectionService
-          okxAdapter
           okxWorker
           orderExecutor
-          pipelineOrchestrator
-          webSocketClient ]
+          pipelineOrchestrator ]
         |> List.iter (fun addService -> addService services)
 
     let registerSlim (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [ liveDataStore; credentialsStore; httpClientFactory; httpClient; okxAdapter; orderExecutor ]
+        [ credentialsStore; httpClientFactory; httpClient; orderExecutor ]
         |> List.iter (fun addService -> addService services)

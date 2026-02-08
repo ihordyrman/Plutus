@@ -35,7 +35,8 @@ module Http =
           getAccountBalance: string option -> Task<Result<OkxAccountBalance[], ServiceError>>
           getAssetsValuation: string option -> Task<Result<OkxAssetsValuation[], ServiceError>>
           getCandlesticks: string -> CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>
-          placeOrder: OkxPlaceOrderRequest -> Task<Result<OkxPlaceOrderResponse[], ServiceError>> }
+          placeOrder: OkxPlaceOrderRequest -> Task<Result<OkxPlaceOrderResponse[], ServiceError>>
+          getInstruments: InstrumentType -> Task<Result<OkxInstrument[], ServiceError>> }
 
     let get endpoint = { Endpoint = endpoint; Method = Get; Parameters = Map.empty; Body = None }
     let post endpoint body = { Endpoint = endpoint; Method = Post; Parameters = Map.empty; Body = Some body }
@@ -163,4 +164,12 @@ module Http =
                 |> withParamOpt "limit" (p.Limit |> Option.map string)
                 |> run
 
-          placeOrder = fun order -> post "/api/v5/trade/order" order |> run }
+          placeOrder = fun order -> post "/api/v5/trade/order" order |> run
+          getInstruments =
+            fun instType ->
+                match instType with
+                | InstrumentType.Spot -> get "/api/v5/public/instruments" |> withParam "instType" "SPOT" |> run
+                | InstrumentType.Futures -> get "/api/v5/public/instruments" |> withParam "instType" "FUTURES" |> run
+                | InstrumentType.Swap -> get "/api/v5/public/instruments" |> withParam "instType" "SWAP" |> run
+                | InstrumentType.Option -> get "/api/v5/public/instruments" |> withParam "instType" "OPTION" |> run
+                | _ -> failwith "Unsupported instrument type" }

@@ -334,27 +334,15 @@ type OkxPlaceOrderResponse =
 
     member x.IsSuccess = x.StatusCode = "0"
 
-[<CLIMutable>]
-type OkxSocketArgs =
-    { [<JsonPropertyName("channel")>]
-      Channel: string option
-      [<JsonPropertyName("instId")>]
-      InstrumentId: string option }
-
-[<CLIMutable>]
-type OkxSocketBookData =
-    { [<JsonPropertyName("asks")>]
-      Asks: string[][] option
-      [<JsonPropertyName("bids")>]
-      Bids: string[][] option
-      [<JsonPropertyName("ts")>]
-      Timestamp: string option
-      [<JsonPropertyName("checksum")>]
-      Checksum: int64 option
-      [<JsonPropertyName("seqId")>]
-      SequenceId: int64
-      [<JsonPropertyName("prevSeqId")>]
-      PreviousSequenceId: int64 }
+type OkxInstrument =
+    { [<JsonPropertyName("instId")>]
+      InstrumentId: string
+      [<JsonPropertyName("instType")>]
+      InstrumentType: string
+      [<JsonPropertyName("baseCcy")>]
+      BaseCurrency: string
+      [<JsonPropertyName("quoteCcy")>]
+      QuoteCurrency: string }
 
 [<CLIMutable>]
 type OkxSocketEventResponse =

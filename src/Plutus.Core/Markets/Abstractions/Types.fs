@@ -1,7 +1,6 @@
 namespace Plutus.Core.Markets.Abstractions
 
 open System
-open System.Collections.Frozen
 open Plutus.Core.Domain
 
 [<CLIMutable>]
@@ -32,12 +31,3 @@ type BalanceSnapshot =
       mutable AccountSummary: AccountBalance option
       Timestamp: DateTime }
 
-type MarketData =
-    { Asks: FrozenDictionary<decimal, struct (decimal * int)>
-      Bids: FrozenDictionary<decimal, struct (decimal * int)> }
-
-    static member Empty =
-        { Asks = FrozenDictionary<decimal, struct (decimal * int)>.Empty
-          Bids = FrozenDictionary<decimal, struct (decimal * int)>.Empty }
-
-type MarketDataEvent = { Symbol: string; Source: MarketType; Asks: string[][]; Bids: string[][] }

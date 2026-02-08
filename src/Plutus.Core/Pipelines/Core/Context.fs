@@ -1,7 +1,6 @@
 namespace Plutus.Core.Pipelines.Core
 
 open Plutus.Core.Domain
-open Plutus.Core.Markets.Abstractions
 
 type TradingAction =
     | NoAction
@@ -15,8 +14,6 @@ type TradingContext =
       Symbol: string
       MarketType: MarketType
       CurrentPrice: decimal
-      CurrentMarketData: MarketData option
-
       Action: TradingAction
       BuyPrice: decimal option
       Quantity: decimal option
@@ -38,7 +35,6 @@ module TradingContext =
           Symbol = symbol
           MarketType = marketType
           CurrentPrice = 0m
-          CurrentMarketData = None
           Action = NoAction
           BuyPrice = None
           Quantity = None

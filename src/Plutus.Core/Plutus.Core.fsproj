@@ -12,7 +12,6 @@
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />
 
-        <Compile Include="Infrastructure\WebSockets.fs" />
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
         <Compile Include="Infrastructure\Authentication.fs" />
@@ -35,20 +34,14 @@
         <Compile Include="Markets\Abstractions\OrderExecutor.fs" />
 
         <Compile Include="Markets\Stores\CredentialsStore.fs" />
-        <Compile Include="Markets\Stores\LiveDataStore.fs" />
 
-        <Compile Include="Markets\Exchanges\Okx\Constants.fs" />
         <Compile Include="Markets\Exchanges\Okx\Types.fs" />
         <Compile Include="Markets\Exchanges\Okx\Auth.fs" />
         <Compile Include="Markets\Exchanges\Okx\Http.fs" />
-        <Compile Include="Markets\Exchanges\Okx\Heartbeat.fs" />
-        <Compile Include="Markets\Exchanges\Okx\MessageParser.fs" />
         <Compile Include="Markets\Exchanges\Okx\BalanceProvider.fs" />
         <Compile Include="Markets\Exchanges\Okx\OrderExecutor.fs" />
-        <Compile Include="Markets\Exchanges\Okx\Adapter.fs" />
 
         <Compile Include="Markets\Services\BalanceManager.fs" />
-        <Compile Include="Markets\Services\ConnectionManager.fs" />
         <Compile Include="Pipelines\Core\Context.fs" />
 
         <Compile Include="Pipelines\Core\Parameters.fs" />

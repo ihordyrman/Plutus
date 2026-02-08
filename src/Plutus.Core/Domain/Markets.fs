@@ -7,12 +7,6 @@ type MarketType =
     | Binance = 1
     | IBKR = 2
 
-type ConnectionState =
-    | Disconnected = 0
-    | Connecting = 1
-    | Connected = 2
-    | Failed = 3
-
 [<CLIMutable>]
 type Market =
     { Id: int
