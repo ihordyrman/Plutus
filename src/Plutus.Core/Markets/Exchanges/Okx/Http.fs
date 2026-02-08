@@ -136,7 +136,6 @@ module Http =
 
         let credentials =
             match
-                // todo: instead of going each time to the database, we can just cache the credentials in memory (with expiration)
                 credentialsStore.GetCredentials MarketType.Okx CancellationToken.None
                 |> Async.AwaitTask
                 |> Async.RunSynchronously
