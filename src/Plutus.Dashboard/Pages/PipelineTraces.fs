@@ -13,7 +13,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Infrastructure
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 type ExecutionSummary =
     { ExecutionId: string

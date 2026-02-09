@@ -29,7 +29,7 @@ module EntryStep =
         taskResult {
             let side, positionStatus, price =
                 match ctx.Action with
-                | Buy -> OrderSide.Buy, PositionStatus.Open, ctx.BuyPrice.Value
+                | Buy -> OrderSide.Buy, PositionStatus.Open, ctx.CurrentPrice
                 | Sell -> OrderSide.Sell, PositionStatus.Closed, ctx.CurrentPrice
                 | _ -> failwith "Invalid action for placing order"
 

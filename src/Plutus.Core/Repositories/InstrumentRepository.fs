@@ -1,6 +1,5 @@
 namespace Plutus.Core.Repositories
 
-open System
 open System.Data
 open System.Threading
 open Dapper

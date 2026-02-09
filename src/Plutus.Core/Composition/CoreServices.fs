@@ -83,10 +83,10 @@ module CoreServices =
         services.AddHostedService<InstrumentSyncWorker>() |> ignore
 
     let private orderExecutor (services: IServiceCollection) =
-        services.AddScoped<OrderExecutor.T>(fun provider ->
+        services.AddScoped<OrderExecutor.T list>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
             let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderProvider")
-            OrderExecutor.create okxHttp okxLogger
+            [ OrderExecutor.create okxHttp okxLogger ]
         )
         |> ignore
 

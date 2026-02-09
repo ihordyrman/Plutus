@@ -9,7 +9,6 @@ open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 open Plutus.Core.Pipelines.Core
-open Plutus.Core.Pipelines.Trading
 open Plutus.Core.Repositories
 
 module Orchestrator =

@@ -129,3 +129,20 @@ create table execution_logs
     start_time    timestamp    not null,
     end_time      timestamp    not null
 );
+
+create index ix_execution_logs_pipeline_id on execution_logs (pipeline_id);
+
+create table instruments
+(
+    id              serial primary key,
+    instrument_id   varchar(50) not null,
+    instrument_type varchar(20) not null,
+    base_currency   varchar(20) not null,
+    quote_currency  varchar(20) not null,
+    market_type     int         not null,
+    synced_at       timestamp   not null,
+    created_at      timestamp   not null
+);
+
+create unique index ix_instruments_market_instrument on instruments (market_type, instrument_id);
+create index ix_instruments_base_quote on instruments (market_type, instrument_type, base_currency, quote_currency);

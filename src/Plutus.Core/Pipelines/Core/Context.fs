@@ -24,7 +24,6 @@ type TradingContext =
 
 module TradingContext =
     open System.Text.Json
-    open System.Text.Json.Serialization
 
     // see no reason to save whole guid, just need some random string to identify execution in logs
     let private getRandomExecutionId = fun () -> System.Guid.CreateVersion7().ToString().Substring(24, 12)

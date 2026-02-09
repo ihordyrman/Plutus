@@ -1,6 +1,7 @@
 namespace Plutus.Core.Markets.Exchanges.Okx
 
 open System
+open System.Collections.Generic
 open System.Net.Http
 open System.Text
 open System.Text.Json
@@ -114,6 +115,62 @@ module Http =
                 clearAuthHeaders client
         }
 
+    type private RateLimitCounter =
+        { Limit: int; Window: TimeSpan; Semaphore: SemaphoreSlim; TimeStamps: Queue<DateTime> }
+
+    let private rateLimits =
+        let defaultWindow = TimeSpan.FromSeconds(1.0)
+
+        let create limit =
+            { Limit = limit
+              Window = defaultWindow
+              Semaphore = new SemaphoreSlim(1, 1)
+              TimeStamps = Queue<DateTime>() }
+
+        Map<string, RateLimitCounter>(
+            [ ("/api/v5/public/instruments", create 20)
+              ("/api/v5/market/candles", create 40)
+              ("/api/v5/asset/asset-valuation", create 1)
+              ("/api/v5/account/balance", create 10)
+              ("/api/v5/asset/balances", create 10)
+              ("/api/v5/trade/order", create 60) ]
+        )
+
+    let private checkRateLimit (req: Request) (logger: ILogger) =
+        match rateLimits.TryFind req.Endpoint with
+        | Some counter ->
+            task {
+                do! counter.Semaphore.WaitAsync()
+
+                try
+                    let now = DateTime.UtcNow
+
+                    while counter.TimeStamps.Count > 0 && now - counter.TimeStamps.Peek() > counter.Window do
+                        counter.TimeStamps.Dequeue() |> ignore
+
+                    if counter.TimeStamps.Count >= counter.Limit then
+                        let waitTime = counter.Window - (now - counter.TimeStamps.Peek())
+
+                        logger.LogWarning(
+                            "Rate limit hit for {Endpoint}. Waiting for {WaitTime} ms before retrying.",
+                            req.Endpoint,
+                            waitTime.TotalMilliseconds
+                        )
+
+                        do! Task.Delay(waitTime)
+
+                        let now = DateTime.UtcNow
+
+                        while counter.TimeStamps.Count > 0 && now - counter.TimeStamps.Peek() > counter.Window do
+                            counter.TimeStamps.Dequeue() |> ignore
+
+                    counter.TimeStamps.Enqueue(DateTime.UtcNow)
+                finally
+                    counter.Semaphore.Release() |> ignore
+            }
+        | None -> Task.FromResult<unit>(())
+
+
     let private exec<'T>
         (httpClient: HttpClient)
         (jsonOpts: JsonSerializerOptions)
@@ -124,6 +181,7 @@ module Http =
         =
         task {
             try
+                do! checkRateLimit req logger
                 return! execute<'T> httpClient jsonOpts credentials req
             with ex ->
                 logger.LogError(ex, "Request failed: {Endpoint}", req.Endpoint)

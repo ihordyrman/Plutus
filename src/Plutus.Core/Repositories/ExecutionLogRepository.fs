@@ -4,7 +4,6 @@ open System
 open System.Data
 open System.Threading
 open Dapper
-open Plutus.Core.Infrastructure
 open Plutus.Core.Shared.Errors
 
 [<CLIMutable>]
