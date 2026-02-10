@@ -36,6 +36,7 @@ module Http =
           getAccountBalance: string option -> Task<Result<OkxAccountBalance[], ServiceError>>
           getAssetsValuation: string option -> Task<Result<OkxAssetsValuation[], ServiceError>>
           getCandlesticks: string -> CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>
+          getHistoryCandlesticks: string -> CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>
           placeOrder: OkxPlaceOrderRequest -> Task<Result<OkxPlaceOrderResponse[], ServiceError>>
           getOrder: string -> string -> Task<Result<OkxOrderDetail[], ServiceError>>
           getInstruments: InstrumentType -> Task<Result<OkxInstrument[], ServiceError>> }
@@ -131,6 +132,7 @@ module Http =
         Map<string, RateLimitCounter>(
             [ ("/api/v5/public/instruments", create 20)
               ("/api/v5/market/candles", create 40)
+              ("/api/v5/market/history-candles", { create 20 with Window = TimeSpan.FromSeconds(2.0) })
               ("/api/v5/asset/asset-valuation", { create 1 with Window = TimeSpan.FromSeconds(2.0) })
               ("/api/v5/account/balance", create 10)
               ("/api/v5/asset/balances", create 10)
@@ -216,6 +218,16 @@ module Http =
           getCandlesticks =
             fun instId p ->
                 get "/api/v5/market/candles"
+                |> withParam "instId" instId
+                |> withParamOpt "bar" p.Bar
+                |> withParamOpt "after" p.After
+                |> withParamOpt "before" p.Before
+                |> withParamOpt "limit" (p.Limit |> Option.map string)
+                |> run
+
+          getHistoryCandlesticks =
+            fun instId p ->
+                get "/api/v5/market/history-candles"
                 |> withParam "instId" instId
                 |> withParamOpt "bar" p.Bar
                 |> withParamOpt "after" p.After

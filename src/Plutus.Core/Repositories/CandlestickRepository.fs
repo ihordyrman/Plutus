@@ -7,6 +7,9 @@ open Dapper
 open Plutus.Core.Domain
 open Plutus.Core.Shared.Errors
 
+[<CLIMutable>]
+type Gap = { GapStart: DateTime; GapEnd: DateTime }
+
 [<RequireQualifiedAccess>]
 module CandlestickRepository =
 
@@ -53,6 +56,65 @@ module CandlestickRepository =
                 match results |> Seq.tryHead with
                 | Some entity -> return Ok(Some entity)
                 | None -> return Ok None
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
+    let getOldest
+        (db: IDbConnection)
+        (symbol: string)
+        (marketType: MarketType)
+        (timeframe: string)
+        (token: CancellationToken)
+        =
+        task {
+            try
+                let! results =
+                    db.QueryAsync<Candlestick>(
+                        CommandDefinition(
+                            """SELECT * FROM candlesticks
+                           WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe
+                           ORDER BY timestamp ASC
+                           LIMIT 1""",
+                            {| Symbol = symbol; MarketType = int marketType; Timeframe = timeframe |},
+                            cancellationToken = token
+                        )
+                    )
+
+                match results |> Seq.tryHead with
+                | Some entity -> return Ok(Some entity)
+                | None -> return Ok None
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
+    let findGaps
+        (db: IDbConnection)
+        (symbol: string)
+        (marketType: MarketType)
+        (timeframe: string)
+        (token: CancellationToken)
+        =
+        task {
+            try
+                let! results =
+                    db.QueryAsync<Gap>(
+                        CommandDefinition(
+                            """WITH ordered AS (
+                                SELECT timestamp, LEAD(timestamp) OVER (ORDER BY timestamp) as next_ts
+                                FROM candlesticks
+                                WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe
+                            )
+                            SELECT timestamp + interval '1 minute' as gap_start,
+                                   next_ts - interval '1 minute' as gap_end
+                            FROM ordered
+                            WHERE next_ts - timestamp > interval '2 minutes'""",
+                            {| Symbol = symbol; MarketType = int marketType; Timeframe = timeframe |},
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok(results |> Seq.toList)
             with ex ->
                 return Error(Unexpected ex)
         }
