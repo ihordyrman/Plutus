@@ -37,11 +37,12 @@ module Http =
           getAssetsValuation: string option -> Task<Result<OkxAssetsValuation[], ServiceError>>
           getCandlesticks: string -> CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>
           placeOrder: OkxPlaceOrderRequest -> Task<Result<OkxPlaceOrderResponse[], ServiceError>>
+          getOrder: string -> string -> Task<Result<OkxOrderDetail[], ServiceError>>
           getInstruments: InstrumentType -> Task<Result<OkxInstrument[], ServiceError>> }
 
     let get endpoint = { Endpoint = endpoint; Method = Get; Parameters = Map.empty; Body = None }
     let post endpoint body = { Endpoint = endpoint; Method = Post; Parameters = Map.empty; Body = Some body }
-    let withParam key value req = { req with Parameters = Map.add key value req.Parameters }
+    let withParam key value (req: Request) = { req with Parameters = Map.add key value req.Parameters }
     let withParamOpt key valueOpt req = valueOpt |> Option.map (fun x -> withParam key x req) |> Option.defaultValue req
 
     let private buildPath req =
@@ -130,7 +131,7 @@ module Http =
         Map<string, RateLimitCounter>(
             [ ("/api/v5/public/instruments", create 20)
               ("/api/v5/market/candles", create 40)
-              ("/api/v5/asset/asset-valuation", create 1)
+              ("/api/v5/asset/asset-valuation", { create 1 with Window = TimeSpan.FromSeconds(2.0) })
               ("/api/v5/account/balance", create 10)
               ("/api/v5/asset/balances", create 10)
               ("/api/v5/trade/order", create 60) ]
@@ -223,6 +224,8 @@ module Http =
                 |> run
 
           placeOrder = fun order -> post "/api/v5/trade/order" order |> run
+          getOrder =
+            fun instId ordId -> get "/api/v5/trade/order" |> withParam "instId" instId |> withParam "ordId" ordId |> run
           getInstruments =
             fun instType ->
                 match instType with

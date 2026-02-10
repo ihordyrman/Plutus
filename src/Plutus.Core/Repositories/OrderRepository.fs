@@ -84,6 +84,28 @@ module OrderRepository =
                 return Error(Unexpected ex)
         }
 
+    let getActive (db: IDbConnection) (token: CancellationToken) =
+        task {
+            try
+                let! orders =
+                    db.QueryAsync<Order>(
+                        CommandDefinition(
+                            """SELECT * FROM orders
+                               WHERE status IN (@Placed, @PartiallyFilled)
+                               AND exchange_order_id IS NOT NULL
+                               AND exchange_order_id <> ''
+                               ORDER BY created_at ASC""",
+                            {| Placed = int OrderStatus.Placed
+                               PartiallyFilled = int OrderStatus.PartiallyFilled |},
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok(orders |> Seq.toList)
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
     let getHistory (db: IDbConnection) (skip: int) (take: int) (token: CancellationToken) =
         task {
             try

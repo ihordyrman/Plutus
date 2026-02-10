@@ -327,6 +327,43 @@ type OkxPlaceOrderResponse =
 
     member x.IsSuccess = x.StatusCode = "0"
 
+[<CLIMutable>]
+type OkxOrderDetail =
+    { [<JsonPropertyName("ordId")>]
+      OrderId: string
+      [<JsonPropertyName("clOrdId")>]
+      ClientOrderId: string
+      [<JsonPropertyName("instId")>]
+      InstrumentId: string
+      [<JsonPropertyName("state")>]
+      State: string
+      [<JsonPropertyName("avgPx")>]
+      AveragePrice: string
+      [<JsonPropertyName("accFillSz")>]
+      AccumulatedFillSize: string
+      [<JsonPropertyName("fee")>]
+      Fee: string
+      [<JsonPropertyName("feeCcy")>]
+      FeeCurrency: string
+      [<JsonPropertyName("fillPx")>]
+      LastFillPrice: string
+      [<JsonPropertyName("fillSz")>]
+      LastFillSize: string
+      [<JsonPropertyName("fillTime")>]
+      LastFillTime: string
+      [<JsonPropertyName("side")>]
+      Side: string
+      [<JsonPropertyName("sz")>]
+      Size: string
+      [<JsonPropertyName("px")>]
+      Price: string
+      [<JsonPropertyName("ordType")>]
+      OrderType: string
+      [<JsonPropertyName("uTime")>]
+      UpdateTime: string
+      [<JsonPropertyName("cTime")>]
+      CreateTime: string }
+
 type OkxInstrument =
     { [<JsonPropertyName("instId")>]
       InstrumentId: string

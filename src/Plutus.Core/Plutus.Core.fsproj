@@ -34,6 +34,7 @@
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\BalanceProvider.fs" />
         <Compile Include="Markets\Abstractions\OrderExecutor.fs" />
+        <Compile Include="Markets\Abstractions\OrderSyncer.fs" />
 
         <Compile Include="Markets\Stores\CredentialsStore.fs" />
 
@@ -42,6 +43,7 @@
         <Compile Include="Markets\Exchanges\Okx\Http.fs" />
         <Compile Include="Markets\Exchanges\Okx\BalanceProvider.fs" />
         <Compile Include="Markets\Exchanges\Okx\OrderExecutor.fs" />
+        <Compile Include="Markets\Exchanges\Okx\OrderSyncer.fs" />
 
         <Compile Include="Markets\Services\BalanceManager.fs" />
         <Compile Include="Pipelines\Core\Context.fs" />
@@ -66,6 +68,7 @@
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />
 
         <Compile Include="Workers\InstrumentSync.fs" />
+        <Compile Include="Workers\OrderSync.fs" />
         <Compile Include="Workers\Synchronization.fs" />
         <Compile Include="Composition\CoreServices.fs" />
 

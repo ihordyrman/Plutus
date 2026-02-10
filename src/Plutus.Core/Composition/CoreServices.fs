@@ -82,11 +82,21 @@ module CoreServices =
     let private instrumentSyncWorker (services: IServiceCollection) =
         services.AddHostedService<InstrumentSyncWorker>() |> ignore
 
+    let private orderSyncWorker (services: IServiceCollection) = services.AddHostedService<OrderSyncWorker>() |> ignore
+
     let private orderExecutor (services: IServiceCollection) =
         services.AddScoped<OrderExecutor.T list>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
             let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderProvider")
             [ OrderExecutor.create okxHttp okxLogger ]
+        )
+        |> ignore
+
+    let private orderSyncer (services: IServiceCollection) =
+        services.AddScoped<OrderSyncer.T list>(fun provider ->
+            let okxHttp = provider.GetRequiredService<Http.T>()
+            let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderSyncer")
+            [ OrderSyncer.create okxHttp okxLogger ]
         )
         |> ignore
 
@@ -179,6 +189,8 @@ module CoreServices =
           instrumentSyncWorker
           okxWorker
           orderExecutor
+          orderSyncer
+          orderSyncWorker
           pipelineOrchestrator ]
         |> List.iter (fun addService -> addService services)
 
