@@ -105,8 +105,10 @@ create table orders
     updated_at        timestamp       not null
 );
 
-create index ix_orders_pipeline_id on orders (pipeline_id);
+create index ix_orders_pipeline_id on orders (pipeline_id, created_at desc);
 create index ix_orders_symbol on orders (symbol);
+create index ix_orders_exchange_id_market on orders (exchange_order_id, market_type);
+create index ix_orders_status on orders (status);
 
 create table users
 (
@@ -131,6 +133,7 @@ create table execution_logs
 );
 
 create index ix_execution_logs_pipeline_id on execution_logs (pipeline_id);
+create index ix_execution_logs_execution_id on execution_logs (execution_id);
 
 create table instruments
 (

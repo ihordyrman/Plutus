@@ -103,6 +103,9 @@ type OrderSyncWorker(scopeFactory: IServiceScopeFactory, logger: ILogger<OrderSy
             use timer = new PeriodicTimer(TimeSpan.FromSeconds 10.0)
 
             while not ct.IsCancellationRequested do
-                let! _ = timer.WaitForNextTickAsync(ct)
-                do! OrderSync.syncAll scopeFactory logger ct
+                try
+                    let! _ = timer.WaitForNextTickAsync(ct)
+                    do! OrderSync.syncAll scopeFactory logger ct
+                with ex ->
+                    logger.LogCritical(ex, "Error in OrderSyncWorker loop")
         }
