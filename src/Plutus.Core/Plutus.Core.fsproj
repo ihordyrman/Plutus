@@ -70,6 +70,7 @@
         <Compile Include="Workers\InstrumentSync.fs" />
         <Compile Include="Workers\OrderSync.fs" />
         <Compile Include="Workers\Synchronization.fs" />
+        <Compile Include="Workers\SyncJobManager.fs" />
         <Compile Include="Composition\CoreServices.fs" />
 
         <Compile Include="Queries\DashboardQueries.fs" />

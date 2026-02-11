@@ -137,6 +137,24 @@ let pipelines =
               PipelineEdit.Handler.saveStep pipelineId stepId ctx
           )) ]
 
+let candlestickSync =
+    [ get "/candlestick-sync/modal" (requireAuth CandlestickSync.Handler.modal)
+      get "/candlestick-sync/modal/close" (requireAuth CandlestickSync.Handler.closeModal)
+      post "/candlestick-sync/start" (requireAuth CandlestickSync.Handler.start)
+      get "/candlestick-sync/jobs" (requireAuth CandlestickSync.Handler.jobs)
+      mapPost
+          "/candlestick-sync/jobs/{jobId:int}/pause"
+          _.GetInt("jobId")
+          (fun jobId -> requireAuth (CandlestickSync.Handler.pause jobId))
+      mapPost
+          "/candlestick-sync/jobs/{jobId:int}/resume"
+          _.GetInt("jobId")
+          (fun jobId -> requireAuth (CandlestickSync.Handler.resume jobId))
+      mapPost
+          "/candlestick-sync/jobs/{jobId:int}/stop"
+          _.GetInt("jobId")
+          (fun jobId -> requireAuth (CandlestickSync.Handler.stop jobId)) ]
+
 let webapp = WebApplication.CreateBuilder()
 
 webapp.Host.UseSerilog(fun context services configuration ->
@@ -179,4 +197,4 @@ app.UseRouting() |> ignore
 app.UseAuthentication() |> ignore
 app.UseAuthorization() |> ignore
 app.UseDefaultFiles().UseStaticFiles() |> ignore
-app.UseFalco(auth @ general @ instruments @ balances @ markets @ accounts @ pipelines @ orders).Run(Response.ofPlainText "Not found")
+app.UseFalco(auth @ general @ instruments @ balances @ markets @ accounts @ pipelines @ orders @ candlestickSync).Run(Response.ofPlainText "Not found")

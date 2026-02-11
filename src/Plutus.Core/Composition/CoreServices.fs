@@ -76,6 +76,14 @@ module CoreServices =
         )
         |> ignore
 
+    let private syncJobManager (services: IServiceCollection) =
+        services.AddSingleton<SyncJobManager.T>(fun provider ->
+            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
+            let logger = provider.GetRequiredService<ILogger<SyncJobManager.T>>()
+            SyncJobManager.create scopeFactory logger
+        )
+        |> ignore
+
     let private okxWorker (services: IServiceCollection) =
         services.AddHostedService<OkxSynchronizationWorker>() |> ignore
 
@@ -191,7 +199,8 @@ module CoreServices =
           orderExecutor
           orderSyncer
           orderSyncWorker
-          pipelineOrchestrator ]
+          pipelineOrchestrator
+          syncJobManager ]
         |> List.iter (fun addService -> addService services)
 
     let registerSlim (services: IServiceCollection) (configuration: IConfiguration) =

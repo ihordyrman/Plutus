@@ -101,6 +101,36 @@ let private ordersSection =
         ]
     ]
 
+let private syncSection =
+    _section [ _class_ "mt-10" ] [
+        _div [ _class_ "flex justify-between items-center mb-4" ] [
+            _div [] [
+                _h2 [ _class_ "text-lg font-semibold text-slate-900" ] [ Text.raw "Candlestick Sync" ]
+                _p [ _class_ "text-slate-400 text-sm mt-1" ] [
+                    Text.raw "Download historical data for backtesting"
+                ]
+            ]
+            _button [
+                _type_ "button"
+                _class_
+                    "inline-flex items-center px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm rounded-md transition-colors"
+                Hx.get "/candlestick-sync/modal"
+                Hx.targetCss "#modal-container"
+                Hx.swapInnerHtml
+            ] [ _i [ _class_ "fas fa-download mr-2 text-slate-400" ] []; Text.raw "New Sync" ]
+        ]
+        _div [
+            _id_ "sync-jobs-container"
+            Hx.get "/candlestick-sync/jobs"
+            Hx.trigger Load
+            Hx.swapInnerHtml
+        ] [
+            _div [ _class_ "flex justify-center py-4" ] [
+                _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] []
+            ]
+        ]
+    ]
+
 let get: HttpHandler =
     let html =
         _html [] [
@@ -137,6 +167,7 @@ let get: HttpHandler =
                     marketsSection
                     pipelinesSection
                     ordersSection
+                    syncSection
                 ]
 
                 _div [ _id_ "modal-container" ] []

@@ -7,22 +7,32 @@ open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Repositories
 
 module View =
+    let private renderOptions (items: (string * string * bool) list) =
+        let sb = System.Text.StringBuilder()
+
+        for (value, text, selected) in items do
+            let enc = System.Web.HttpUtility.HtmlEncode
+
+            if selected then
+                sb.Append($"<option value=\"{enc value}\" selected>{enc text}</option>")
+                |> ignore
+            else
+                sb.Append($"<option value=\"{enc value}\">{enc text}</option>") |> ignore
+
+        Text.raw (sb.ToString())
+
     let currencyOptions (currencies: string list) =
-        _select [] [
-            _option [ _value_ "" ] [ Text.raw "-- Select --" ]
-            for currency in currencies do
-                _option [ _value_ currency ] [ Text.raw currency ]
-        ]
+        let items =
+            ("", "-- Select --", false) :: (currencies |> List.map (fun c -> (c, c, false)))
+
+        renderOptions items
 
     let currencyOptionsPreselected (currencies: string list) (selected: string) =
-        _select [] [
-            _option [ _value_ "" ] [ Text.raw "-- Select --" ]
-            for currency in currencies do
-                if currency = selected then
-                    _option [ _value_ currency; Attr.create "selected" "selected" ] [ Text.raw currency ]
-                else
-                    _option [ _value_ currency ] [ Text.raw currency ]
-        ]
+        let items =
+            ("", "-- Select --", false)
+            :: (currencies |> List.map (fun c -> (c, c, c = selected)))
+
+        renderOptions items
 
 module Handler =
     let baseCurrencies: HttpHandler =
