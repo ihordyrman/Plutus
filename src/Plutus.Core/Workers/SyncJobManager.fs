@@ -21,6 +21,25 @@ module SyncJobManager =
         | Failed of string
         | Stopped
 
+    let private toDbStatus =
+        function
+        | Pending -> SyncJobStatus.Pending
+        | Running -> SyncJobStatus.Running
+        | Paused -> SyncJobStatus.Paused
+        | Completed -> SyncJobStatus.Completed
+        | Failed _ -> SyncJobStatus.Failed
+        | Stopped -> SyncJobStatus.Stopped
+
+    let private fromDbStatus (status: int) (errorMessage: string) =
+        match enum<SyncJobStatus> status with
+        | SyncJobStatus.Pending -> Pending
+        | SyncJobStatus.Running -> Running
+        | SyncJobStatus.Paused -> Paused
+        | SyncJobStatus.Completed -> Completed
+        | SyncJobStatus.Failed -> Failed(errorMessage |> Option.ofObj |> Option.defaultValue "Unknown error")
+        | SyncJobStatus.Stopped -> Stopped
+        | _ -> Stopped
+
     type JobProgress =
         { FetchedCount: int
           EstimatedTotal: int
@@ -39,15 +58,77 @@ module SyncJobManager =
           Progress: JobProgress
           CreatedAt: DateTime }
 
+    let private fromDbJob (job: SyncJob) : SyncJobState =
+        { Id = job.Id
+          Symbol = job.Symbol
+          MarketType = enum<MarketType> job.MarketType
+          Timeframe = job.Timeframe
+          FromDate = job.FromDate
+          ToDate = job.ToDate
+          Status = fromDbStatus job.Status job.ErrorMessage
+          Progress =
+            { FetchedCount = job.FetchedCount
+              EstimatedTotal = job.EstimatedTotal
+              CurrentTimestamp = job.CurrentCursor
+              StartedAt = job.StartedAt
+              LastUpdateAt = job.LastUpdateAt }
+          CreatedAt = job.CreatedAt }
+
     type private SyncMessage =
         | StartJob of string * MarketType * string * DateTimeOffset * DateTimeOffset * AsyncReplyChannel<int>
         | StopJob of int * AsyncReplyChannel<bool>
         | PauseJob of int * AsyncReplyChannel<bool>
         | ResumeJob of int * AsyncReplyChannel<bool>
+        | RemoveJob of int * AsyncReplyChannel<bool>
         | UpdateProgress of int * (SyncJobState -> SyncJobState)
         | GetJobs of AsyncReplyChannel<SyncJobState list>
 
-    let private historyBoundaryDays = 30
+    let private historyBoundaryDays = 1
+
+    let private withDb
+        (scopeFactory: IServiceScopeFactory)
+        (f: IDbConnection -> CancellationToken -> Task<Result<'a, ServiceError>>)
+        =
+        task {
+            use scope = scopeFactory.CreateScope()
+            use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            return! f db CancellationToken.None
+        }
+
+    let private persistStatus (scopeFactory: IServiceScopeFactory) (logger: ILogger) (jobId: int) (status: JobStatus) =
+        task {
+            let errorMsg =
+                match status with
+                | Failed msg -> Some msg
+                | _ -> None
+
+            let! result =
+                withDb
+                    scopeFactory
+                    (fun db ct -> SyncJobRepository.updateStatus db jobId (toDbStatus status) errorMsg ct)
+
+            match result with
+            | Error err ->
+                logger.LogError("Failed to persist status for job {JobId}: {Error}", jobId, serviceMessage err)
+            | _ -> ()
+        }
+
+    let private persistProgress
+        (scopeFactory: IServiceScopeFactory)
+        (logger: ILogger)
+        (jobId: int)
+        (fetchedCount: int)
+        (cursor: DateTimeOffset)
+        =
+        task {
+            let! result =
+                withDb scopeFactory (fun db ct -> SyncJobRepository.updateProgress db jobId fetchedCount cursor ct)
+
+            match result with
+            | Error err ->
+                logger.LogError("Failed to persist progress for job {JobId}: {Error}", jobId, serviceMessage err)
+            | _ -> ()
+        }
 
     let private runSyncLoop
         (scopeFactory: IServiceScopeFactory)
@@ -58,7 +139,8 @@ module SyncJobManager =
         (marketType: MarketType)
         (timeframe: string)
         (fromDate: DateTimeOffset)
-        (toDate: DateTimeOffset)
+        (startCursor: DateTimeOffset)
+        (startFetchedCount: int)
         (cts: CancellationTokenSource)
         (pauseEvent: ManualResetEventSlim)
         =
@@ -70,10 +152,14 @@ module SyncJobManager =
                     use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                     let ct = cts.Token
 
-                    let mutable cursor = toDate
+                    let mutable cursor = startCursor
+                    let mutable fetchedSoFar = startFetchedCount
                     let mutable keepGoing = true
+                    let mutable lastError: string option = None
 
-                    post (UpdateProgress(jobId, fun s -> { s with Status = Running }))
+                    let setRunning (s: SyncJobState) = { s with Status = Running }
+                    post (UpdateProgress(jobId, setRunning))
+                    do! persistStatus scopeFactory logger jobId Running
 
                     while keepGoing && not ct.IsCancellationRequested && cursor > fromDate do
                         pauseEvent.Wait(ct)
@@ -100,6 +186,8 @@ module SyncJobManager =
 
                             let! _ = CandlestickRepository.save db mapped ct
 
+                            let newCursor = cursor.AddMinutes(-100.0)
+
                             post (
                                 UpdateProgress(
                                     jobId,
@@ -108,24 +196,40 @@ module SyncJobManager =
                                             Progress =
                                                 { s.Progress with
                                                     FetchedCount = s.Progress.FetchedCount + candles.Length
-                                                    CurrentTimestamp = cursor
+                                                    CurrentTimestamp = newCursor
                                                     LastUpdateAt = DateTime.UtcNow } }
                                 )
                             )
 
-                            cursor <- cursor.AddMinutes(-100.0)
+                            fetchedSoFar <- fetchedSoFar + candles.Length
+                            do! persistProgress scopeFactory logger jobId fetchedSoFar newCursor
+                            cursor <- newCursor
                         | Ok _ -> keepGoing <- false
                         | Error err ->
                             logger.LogError("Sync job {JobId} fetch failed: {Error}", jobId, serviceMessage err)
+                            lastError <- Some(serviceMessage err)
                             keepGoing <- false
 
                     if not ct.IsCancellationRequested then
-                        post (UpdateProgress(jobId, fun s -> { s with Status = Completed }))
+                        match lastError with
+                        | Some errMsg ->
+                            let setFailed (s: SyncJobState) = { s with Status = Failed errMsg }
+                            post (UpdateProgress(jobId, setFailed))
+                            do! persistStatus scopeFactory logger jobId (Failed errMsg)
+                        | None ->
+                            let setCompleted (s: SyncJobState) = { s with Status = Completed }
+                            post (UpdateProgress(jobId, setCompleted))
+                            do! persistStatus scopeFactory logger jobId Completed
                 with
-                | :? OperationCanceledException -> post (UpdateProgress(jobId, fun s -> { s with Status = Stopped }))
+                | :? OperationCanceledException ->
+                    let setStopped (s: SyncJobState) = { s with Status = Stopped }
+                    post (UpdateProgress(jobId, setStopped))
+                    do! persistStatus scopeFactory logger jobId Stopped
                 | ex ->
                     logger.LogError(ex, "Sync job {JobId} failed", jobId)
-                    post (UpdateProgress(jobId, fun s -> { s with Status = Failed ex.Message }))
+                    let setFailed (s: SyncJobState) = { s with Status = Failed ex.Message }
+                    post (UpdateProgress(jobId, setFailed))
+                    do! persistStatus scopeFactory logger jobId (Failed ex.Message)
             }
             :> Task
         )
@@ -136,10 +240,64 @@ module SyncJobManager =
           stopJob: int -> bool
           pauseJob: int -> bool
           resumeJob: int -> bool
+          removeJob: int -> bool
           getJobs: unit -> SyncJobState list }
 
+    let private loadAndResume
+        (scopeFactory: IServiceScopeFactory)
+        (logger: ILogger)
+        : (Map<int, SyncJobState> * Map<int, CancellationTokenSource> * Map<int, ManualResetEventSlim>)
+        =
+        let result =
+            task {
+                let! activeResult = withDb scopeFactory (fun db ct -> SyncJobRepository.getActive db ct)
+
+                match activeResult with
+                | Ok activeJobs ->
+                    let mutable jobs = Map.empty
+                    let mutable ctss = Map.empty
+                    let mutable pauses = Map.empty
+
+                    for dbJob in activeJobs do
+                        let wasRunningOrPending =
+                            dbJob.Status = int SyncJobStatus.Running || dbJob.Status = int SyncJobStatus.Pending
+
+                        if wasRunningOrPending then
+                            let! _ =
+                                withDb
+                                    scopeFactory
+                                    (fun db ct ->
+                                        SyncJobRepository.updateStatus db dbJob.Id SyncJobStatus.Paused None ct
+                                    )
+
+                            ()
+
+                        let state = { fromDbJob dbJob with Status = Paused }
+
+                        let cts = new CancellationTokenSource()
+                        let pauseEvent = new ManualResetEventSlim(false)
+
+                        jobs <- Map.add dbJob.Id state jobs
+                        ctss <- Map.add dbJob.Id cts ctss
+                        pauses <- Map.add dbJob.Id pauseEvent pauses
+
+                        logger.LogInformation(
+                            "Loaded sync job {JobId} for {Symbol} as Paused (was {OriginalStatus})",
+                            dbJob.Id,
+                            dbJob.Symbol,
+                            enum<SyncJobStatus> dbJob.Status
+                        )
+
+                    return (jobs, ctss, pauses)
+                | Error err ->
+                    logger.LogError("Failed to load active sync jobs: {Error}", serviceMessage err)
+                    return (Map.empty, Map.empty, Map.empty)
+            }
+
+        result |> Async.AwaitTask |> Async.RunSynchronously
+
     let create (scopeFactory: IServiceScopeFactory) (logger: ILogger) : T =
-        let mutable nextId = 1
+        let (initialJobs, initialCtss, initialPauses) = loadAndResume scopeFactory logger
 
         let agent =
             MailboxProcessor<SyncMessage>.Start(fun inbox ->
@@ -153,47 +311,73 @@ module SyncJobManager =
 
                         match msg with
                         | StartJob(symbol, marketType, timeframe, fromDate, toDate, reply) ->
-                            let id = nextId
-                            nextId <- nextId + 1
-
                             let now = DateTime.UtcNow
                             let estimatedMinutes = int (toDate - fromDate).TotalMinutes
 
-                            let job =
-                                { Id = id
+                            let dbJob: SyncJob =
+                                { Id = 0
                                   Symbol = symbol
-                                  MarketType = marketType
+                                  MarketType = int marketType
                                   Timeframe = timeframe
                                   FromDate = fromDate
                                   ToDate = toDate
-                                  Status = Pending
-                                  Progress =
-                                    { FetchedCount = 0
-                                      EstimatedTotal = estimatedMinutes
-                                      CurrentTimestamp = toDate
-                                      StartedAt = now
-                                      LastUpdateAt = now }
+                                  Status = int SyncJobStatus.Pending
+                                  ErrorMessage = null
+                                  FetchedCount = 0
+                                  EstimatedTotal = estimatedMinutes
+                                  CurrentCursor = toDate
+                                  StartedAt = now
+                                  LastUpdateAt = now
                                   CreatedAt = now }
 
-                            let cts = new CancellationTokenSource()
-                            let pauseEvent = new ManualResetEventSlim(true)
+                            let! createResult =
+                                withDb scopeFactory (fun db ct -> SyncJobRepository.create db dbJob ct)
+                                |> Async.AwaitTask
 
-                            runSyncLoop
-                                scopeFactory
-                                logger
-                                inbox.Post
-                                id
-                                symbol
-                                marketType
-                                timeframe
-                                fromDate
-                                toDate
-                                cts
-                                pauseEvent
+                            match createResult with
+                            | Ok saved ->
+                                let id = saved.Id
 
-                            reply.Reply id
+                                let job: SyncJobState =
+                                    { Id = id
+                                      Symbol = symbol
+                                      MarketType = marketType
+                                      Timeframe = timeframe
+                                      FromDate = fromDate
+                                      ToDate = toDate
+                                      Status = Pending
+                                      Progress =
+                                        { FetchedCount = 0
+                                          EstimatedTotal = estimatedMinutes
+                                          CurrentTimestamp = toDate
+                                          StartedAt = now
+                                          LastUpdateAt = now }
+                                      CreatedAt = now }
 
-                            return! loop (Map.add id job jobs) (Map.add id cts ctss) (Map.add id pauseEvent pauses)
+                                let cts = new CancellationTokenSource()
+                                let pauseEvent = new ManualResetEventSlim(true)
+
+                                runSyncLoop
+                                    scopeFactory
+                                    logger
+                                    inbox.Post
+                                    id
+                                    symbol
+                                    marketType
+                                    timeframe
+                                    fromDate
+                                    toDate
+                                    0
+                                    cts
+                                    pauseEvent
+
+                                reply.Reply id
+                                return! loop (Map.add id job jobs) (Map.add id cts ctss) (Map.add id pauseEvent pauses)
+
+                            | Error err ->
+                                logger.LogError("Failed to create sync job in DB: {Error}", serviceMessage err)
+                                reply.Reply -1
+                                return! loop jobs ctss pauses
 
                         | StopJob(id, reply) ->
                             match Map.tryFind id ctss, Map.tryFind id pauses with
@@ -210,9 +394,8 @@ module SyncJobManager =
                             match Map.tryFind id pauses, Map.tryFind id jobs with
                             | Some pause, Some job when job.Status = Running ->
                                 pause.Reset()
-
                                 let jobs = Map.add id { job with Status = Paused } jobs
-
+                                persistStatus scopeFactory logger id Paused |> ignore
                                 reply.Reply true
                                 return! loop jobs ctss pauses
                             | _ ->
@@ -222,32 +405,100 @@ module SyncJobManager =
                         | ResumeJob(id, reply) ->
                             match Map.tryFind id pauses, Map.tryFind id jobs with
                             | Some pause, Some job when job.Status = Paused ->
-                                pause.Set()
+                                let hasRunningLoop = Map.containsKey id ctss
 
-                                let jobs = Map.add id { job with Status = Running } jobs
+                                if hasRunningLoop then
+                                    pause.Set()
+                                    let jobs = Map.add id { job with Status = Running } jobs
+                                    persistStatus scopeFactory logger id Running |> ignore
+                                    reply.Reply true
+                                    return! loop jobs ctss pauses
+                                else
+                                    let cts = new CancellationTokenSource()
+                                    let newPause = new ManualResetEventSlim(true)
 
-                                reply.Reply true
-                                return! loop jobs ctss pauses
+                                    runSyncLoop
+                                        scopeFactory
+                                        logger
+                                        inbox.Post
+                                        id
+                                        job.Symbol
+                                        job.MarketType
+                                        job.Timeframe
+                                        job.FromDate
+                                        job.Progress.CurrentTimestamp
+                                        job.Progress.FetchedCount
+                                        cts
+                                        newPause
+
+                                    let jobs = Map.add id { job with Status = Running } jobs
+                                    persistStatus scopeFactory logger id Running |> ignore
+                                    reply.Reply true
+
+                                    return! loop jobs (Map.add id cts ctss) (Map.add id newPause pauses)
                             | _ ->
                                 reply.Reply false
                                 return! loop jobs ctss pauses
 
+                        | RemoveJob(id, reply) ->
+                            match Map.tryFind id ctss, Map.tryFind id pauses with
+                            | Some cts, Some pause ->
+                                pause.Set()
+                                cts.Cancel()
+                            | _ -> ()
+
+                            let! _ =
+                                withDb scopeFactory (fun db ct -> SyncJobRepository.delete db id ct) |> Async.AwaitTask
+
+                            reply.Reply true
+
+                            return! loop (Map.remove id jobs) (Map.remove id ctss) (Map.remove id pauses)
+
                         | UpdateProgress(id, updater) ->
                             let jobs =
                                 match Map.tryFind id jobs with
-                                | Some job -> Map.add id (updater job) jobs
+                                | Some job ->
+                                    let updated = updater job
+
+                                    match updated.Status with
+                                    | Completed
+                                    | Stopped
+                                    | Failed _ ->
+                                        persistProgress
+                                            scopeFactory
+                                            logger
+                                            id
+                                            updated.Progress.FetchedCount
+                                            updated.Progress.CurrentTimestamp
+                                        |> ignore
+                                    | _ -> ()
+
+                                    Map.add id updated jobs
                                 | None -> jobs
 
                             return! loop jobs ctss pauses
 
                         | GetJobs reply ->
-                            let sorted = jobs |> Map.values |> Seq.sortByDescending _.CreatedAt |> Seq.toList
+                            let! dbResult =
+                                withDb scopeFactory (fun db ct -> SyncJobRepository.getAll db ct) |> Async.AwaitTask
 
+                            let allJobs =
+                                match dbResult with
+                                | Ok dbJobs ->
+                                    dbJobs
+                                    |> List.map (fun dbJob ->
+                                        match Map.tryFind dbJob.Id jobs with
+                                        | Some inMemory -> inMemory
+                                        | None -> fromDbJob dbJob
+                                    )
+                                | Error _ -> jobs |> Map.values |> Seq.toList
+
+                            let sorted = allJobs |> List.sortByDescending _.CreatedAt
                             reply.Reply sorted
                             return! loop jobs ctss pauses
                     }
 
-                loop Map.empty Map.empty Map.empty
+                loop initialJobs initialCtss initialPauses
             )
 
         { startJob =
@@ -256,4 +507,5 @@ module SyncJobManager =
           stopJob = fun id -> agent.PostAndReply(fun reply -> StopJob(id, reply))
           pauseJob = fun id -> agent.PostAndReply(fun reply -> PauseJob(id, reply))
           resumeJob = fun id -> agent.PostAndReply(fun reply -> ResumeJob(id, reply))
+          removeJob = fun id -> agent.PostAndReply(fun reply -> RemoveJob(id, reply))
           getJobs = fun () -> agent.PostAndReply(fun reply -> GetJobs reply) }

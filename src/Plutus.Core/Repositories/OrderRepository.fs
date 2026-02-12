@@ -95,8 +95,7 @@ module OrderRepository =
                                AND exchange_order_id IS NOT NULL
                                AND exchange_order_id <> ''
                                ORDER BY created_at ASC""",
-                            {| Placed = int OrderStatus.Placed
-                               PartiallyFilled = int OrderStatus.PartiallyFilled |},
+                            {| Placed = int OrderStatus.Placed; PartiallyFilled = int OrderStatus.PartiallyFilled |},
                             cancellationToken = token
                         )
                     )

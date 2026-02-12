@@ -153,7 +153,11 @@ let candlestickSync =
       mapPost
           "/candlestick-sync/jobs/{jobId:int}/stop"
           _.GetInt("jobId")
-          (fun jobId -> requireAuth (CandlestickSync.Handler.stop jobId)) ]
+          (fun jobId -> requireAuth (CandlestickSync.Handler.stop jobId))
+      mapDelete
+          "/candlestick-sync/jobs/{jobId:int}"
+          _.GetInt("jobId")
+          (fun jobId -> requireAuth (CandlestickSync.Handler.remove jobId)) ]
 
 let webapp = WebApplication.CreateBuilder()
 
@@ -197,4 +201,7 @@ app.UseRouting() |> ignore
 app.UseAuthentication() |> ignore
 app.UseAuthorization() |> ignore
 app.UseDefaultFiles().UseStaticFiles() |> ignore
-app.UseFalco(auth @ general @ instruments @ balances @ markets @ accounts @ pipelines @ orders @ candlestickSync).Run(Response.ofPlainText "Not found")
+
+app
+    .UseFalco(auth @ general @ instruments @ balances @ markets @ accounts @ pipelines @ orders @ candlestickSync)
+    .Run(Response.ofPlainText "Not found")

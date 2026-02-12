@@ -20,11 +20,7 @@ type ExecutionLogRow =
 
 [<CLIMutable>]
 type ExecutionSummaryRow =
-    { ExecutionId: string
-      StartTime: DateTime
-      EndTime: DateTime
-      StepCount: int
-      WorstOutcome: int }
+    { ExecutionId: string; StartTime: DateTime; EndTime: DateTime; StepCount: int; WorstOutcome: int }
 
 [<RequireQualifiedAccess>]
 module ExecutionLogRepository =
@@ -48,13 +44,7 @@ module ExecutionLogRepository =
                 return Error(Unexpected ex)
         }
 
-    let getByPipelineId
-        (db: IDbConnection)
-        (pipelineId: int)
-        (skip: int)
-        (take: int)
-        (token: CancellationToken)
-        =
+    let getByPipelineId (db: IDbConnection) (pipelineId: int) (skip: int) (take: int) (token: CancellationToken) =
         task {
             try
                 let! logs =
@@ -66,9 +56,7 @@ module ExecutionLogRepository =
                                WHERE pipeline_id = @PipelineId
                                ORDER BY id DESC
                                OFFSET @Skip LIMIT @Take""",
-                            {| PipelineId = pipelineId
-                               Skip = skip
-                               Take = take |},
+                            {| PipelineId = pipelineId; Skip = skip; Take = take |},
                             cancellationToken = token
                         )
                     )
@@ -95,9 +83,7 @@ module ExecutionLogRepository =
                                FROM execution_logs WHERE pipeline_id = @PipelineId
                                GROUP BY execution_id ORDER BY MIN(start_time) DESC
                                OFFSET @Skip LIMIT @Take""",
-                            {| PipelineId = pipelineId
-                               Skip = skip
-                               Take = take |},
+                            {| PipelineId = pipelineId; Skip = skip; Take = take |},
                             cancellationToken = token
                         )
                     )

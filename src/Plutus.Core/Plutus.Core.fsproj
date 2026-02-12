@@ -30,6 +30,7 @@
         <Compile Include="Repositories\UserRepository.fs" />
         <Compile Include="Repositories\InstrumentRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
+        <Compile Include="Repositories\SyncJobRepository.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\BalanceProvider.fs" />

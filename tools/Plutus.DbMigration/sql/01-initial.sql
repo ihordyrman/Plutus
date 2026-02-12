@@ -149,3 +149,21 @@ create table instruments
 
 create unique index ix_instruments_market_instrument on instruments (market_type, instrument_id);
 create index ix_instruments_base_quote on instruments (market_type, instrument_type, base_currency, quote_currency);
+
+create table candlestick_sync_jobs
+(
+    id              serial primary key,
+    symbol          varchar(20) not null,
+    market_type     int         not null,
+    timeframe       varchar(10) not null,
+    from_date       timestamptz not null,
+    to_date         timestamptz not null,
+    status          int         not null default 0,
+    error_message   text,
+    fetched_count   int         not null default 0,
+    estimated_total int         not null default 0,
+    current_cursor  timestamptz not null,
+    started_at      timestamp   not null,
+    last_update_at  timestamp   not null,
+    created_at      timestamp   not null
+)

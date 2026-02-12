@@ -17,8 +17,7 @@ module View =
         _div
             []
             [ _label
-                  [ _for_ "marketType"
-                    _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                  [ _for_ "marketType"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
                   [ Text.raw "Exchange "; _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
               _select
                   [ _id_ "marketType"
@@ -36,8 +35,7 @@ module View =
             [ _div
                   []
                   [ _label
-                        [ _for_ "syncBaseCurrency"
-                          _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                        [ _for_ "syncBaseCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
                         [ Text.raw "Base Currency "; _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
                     _select
                         [ _id_ "syncBaseCurrency"
@@ -55,10 +53,8 @@ module View =
               _div
                   []
                   [ _label
-                        [ _for_ "syncQuoteCurrency"
-                          _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
-                        [ Text.raw "Quote Currency "
-                          _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
+                        [ _for_ "syncQuoteCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                        [ Text.raw "Quote Currency "; _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
                     _select
                         [ _id_ "syncQuoteCurrency"
                           _name_ "quoteCurrency"
@@ -267,10 +263,7 @@ module View =
 
         _div
             [ _class_ "w-full bg-slate-100 rounded-full h-1.5" ]
-            [ _div
-                  [ _class_ "bg-blue-500 h-1.5 rounded-full transition-all"
-                    Attr.create "style" $"width: {pct}%%" ]
-                  [] ]
+            [ _div [ _class_ "bg-blue-500 h-1.5 rounded-full transition-all"; Attr.create "style" $"width: {pct}%%" ] [] ]
 
     let private jobActions (job: SyncJobManager.SyncJobState) =
         let btnClass = "px-2 py-1 text-xs font-medium rounded border transition-colors"
@@ -306,7 +299,15 @@ module View =
                         Hx.targetCss "#sync-jobs-container"
                         Hx.swapInnerHtml ]
                       [ _i [ _class_ "fas fa-stop mr-1" ] []; Text.raw "Stop" ] ]
-        | _ -> _div [] []
+        | _ ->
+            _div
+                [ _class_ "flex gap-1" ]
+                [ _button
+                      [ _class_ $"{btnClass} border-slate-200 text-slate-500 hover:bg-slate-50"
+                        Hx.delete $"/candlestick-sync/jobs/{job.Id}"
+                        Hx.targetCss "#sync-jobs-container"
+                        Hx.swapInnerHtml ]
+                      [ _i [ _class_ "fas fa-trash-alt mr-1" ] []; Text.raw "Remove" ] ]
 
     let private jobRow (job: SyncJobManager.SyncJobState) =
         let pct = progressPercent job.Progress
@@ -374,8 +375,10 @@ module Handler =
                     let toDateStr = form.TryGetString "toDate" |> Option.defaultValue ""
 
                     let symbol =
-                        if String.IsNullOrWhiteSpace baseCurrency || String.IsNullOrWhiteSpace quoteCurrency then ""
-                        else $"{baseCurrency}-{quoteCurrency}"
+                        if String.IsNullOrWhiteSpace baseCurrency || String.IsNullOrWhiteSpace quoteCurrency then
+                            ""
+                        else
+                            $"{baseCurrency}-{quoteCurrency}"
 
                     if String.IsNullOrWhiteSpace symbol then
                         return! Response.ofHtml (View.errorResponse "Base and quote currencies are required") ctx
@@ -424,6 +427,15 @@ module Handler =
             task {
                 let manager = ctx.Plug<SyncJobManager.T>()
                 let _ = manager.stopJob jobId
+                let jobs = manager.getJobs ()
+                return! Response.ofHtml (View.jobsSection jobs) ctx
+            }
+
+    let remove (jobId: int) : HttpHandler =
+        fun ctx ->
+            task {
+                let manager = ctx.Plug<SyncJobManager.T>()
+                let _ = manager.removeJob jobId
                 let jobs = manager.getJobs ()
                 return! Response.ofHtml (View.jobsSection jobs) ctx
             }

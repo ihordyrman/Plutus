@@ -36,12 +36,7 @@ module InstrumentRepository =
                     return Error(Unexpected ex)
         }
 
-    let getBaseCurrencies
-        (db: IDbConnection)
-        (marketType: int)
-        (instrumentType: string)
-        (token: CancellationToken)
-        =
+    let getBaseCurrencies (db: IDbConnection) (marketType: int) (instrumentType: string) (token: CancellationToken) =
         task {
             try
                 let! results =
@@ -79,9 +74,7 @@ module InstrumentRepository =
                                  AND instrument_type = @InstrumentType
                                  AND base_currency = @BaseCurrency
                                ORDER BY quote_currency""",
-                            {| MarketType = marketType
-                               InstrumentType = instrumentType
-                               BaseCurrency = baseCurrency |},
+                            {| MarketType = marketType; InstrumentType = instrumentType; BaseCurrency = baseCurrency |},
                             cancellationToken = token
                         )
                     )

@@ -14,23 +14,19 @@ module View =
             let enc = System.Web.HttpUtility.HtmlEncode
 
             if selected then
-                sb.Append($"<option value=\"{enc value}\" selected>{enc text}</option>")
-                |> ignore
+                sb.Append($"<option value=\"{enc value}\" selected>{enc text}</option>") |> ignore
             else
                 sb.Append($"<option value=\"{enc value}\">{enc text}</option>") |> ignore
 
         Text.raw (sb.ToString())
 
     let currencyOptions (currencies: string list) =
-        let items =
-            ("", "-- Select --", false) :: (currencies |> List.map (fun c -> (c, c, false)))
+        let items = ("", "-- Select --", false) :: (currencies |> List.map (fun c -> (c, c, false)))
 
         renderOptions items
 
     let currencyOptionsPreselected (currencies: string list) (selected: string) =
-        let items =
-            ("", "-- Select --", false)
-            :: (currencies |> List.map (fun c -> (c, c, c = selected)))
+        let items = ("", "-- Select --", false) :: (currencies |> List.map (fun c -> (c, c, c = selected)))
 
         renderOptions items
 

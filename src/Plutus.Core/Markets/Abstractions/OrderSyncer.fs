@@ -27,5 +27,4 @@ module OrderSyncer =
         match syncer with
         | Okx get -> get order ct
 
-    let tryFind (market: MarketType) (syncers: T list) =
-        syncers |> List.tryFind (fun x -> marketType x = market)
+    let tryFind (market: MarketType) (syncers: T list) = syncers |> List.tryFind (fun x -> marketType x = market)

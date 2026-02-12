@@ -48,25 +48,23 @@ module View =
     let statusBadge (status: Status) =
         let text, badgeClass, dotClass = statusConfig status
 
-        _span [
-            _id_ "system-status"
-            _class_ $"inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium {badgeClass}"
-            Hx.get "/system-status"
-            Hx.trigger "every 30s"
-            Hx.swapOuterHtml
-        ] [ _span [ _class_ $"w-2 h-2 rounded-full mr-1.5 {dotClass}" ] []; Text.raw text ]
+        _span
+            [ _id_ "system-status"
+              _class_ $"inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium {badgeClass}"
+              Hx.get "/system-status"
+              Hx.trigger "every 30s"
+              Hx.swapOuterHtml ]
+            [ _span [ _class_ $"w-2 h-2 rounded-full mr-1.5 {dotClass}" ] []; Text.raw text ]
 
     let statusPlaceholder =
-        _span [
-            _id_ "system-status"
-            _class_ "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-slate-50 text-slate-500"
-            Hx.get "/system-status"
-            Hx.trigger "load, every 30s"
-            Hx.swapOuterHtml
-        ] [
-            _span [ _class_ "w-2 h-2 rounded-full mr-1.5 bg-slate-400 animate-pulse" ] []
-            Text.raw "Loading..."
-        ]
+        _span
+            [ _id_ "system-status"
+              _class_ "inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-slate-50 text-slate-500"
+              Hx.get "/system-status"
+              Hx.trigger "load, every 30s"
+              Hx.swapOuterHtml ]
+            [ _span [ _class_ "w-2 h-2 rounded-full mr-1.5 bg-slate-400 animate-pulse" ] []
+              Text.raw "Loading..." ]
 
 module Handler =
     let status: HttpHandler =

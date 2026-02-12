@@ -134,88 +134,88 @@ module Data =
 
 module View =
     let private filterSelect name label options =
-        _div [ _class_ "min-w-[120px]" ] [
-            _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw label ]
-            _select [
-                _name_ name
-                _class_
-                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-            ] [
-                yield _option [ _value_ "" ] [ Text.raw $"All" ]
-                for (value, text) in options do
-                    yield _option [ _value_ value ] [ Text.raw text ]
-            ]
-        ]
+        _div
+            [ _class_ "min-w-[120px]" ]
+            [ _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw label ]
+              _select
+                  [ _name_ name
+                    _class_
+                        "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
+                  [ yield _option [ _value_ "" ] [ Text.raw $"All" ]
+                    for (value, text) in options do
+                        yield _option [ _value_ value ] [ Text.raw text ] ] ]
 
     let private sectionHeader =
-        _div [ _class_ "flex justify-between items-center mb-6" ] [
-            _div [] [
-                _h1 [ _class_ "text-lg font-semibold text-slate-900" ] [ Text.raw "Orders History" ]
-                _p [ _class_ "text-slate-400 text-sm" ] [ Text.raw "View and filter your trading orders" ]
-            ]
-        ]
+        _div
+            [ _class_ "flex justify-between items-center mb-6" ]
+            [ _div
+                  []
+                  [ _h1 [ _class_ "text-lg font-semibold text-slate-900" ] [ Text.raw "Orders History" ]
+                    _p [ _class_ "text-slate-400 text-sm" ] [ Text.raw "View and filter your trading orders" ] ] ]
 
     let private filterBar =
-        _div [ _id_ "orders-filter-form"; _class_ "card mb-6" ] [
-            _form [
-                Hx.get "/orders/table"
-                Hx.targetCss "#orders-table-container"
-                Hx.trigger "change, keyup delay:300ms from:input"
-                Hx.swapOuterHtml
-                Hx.includeThis
-            ] [
-                _input [ _type_ "hidden"; _name_ "page"; _value_ "1" ]
-                _div [ _class_ "flex flex-wrap gap-4" ] [
-                    _div [ _class_ "flex-1 min-w-[200px]" ] [
-                        _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw "Search Symbol" ]
-                        _input [
-                            _type_ "text"
-                            _name_ "searchTerm"
-                            Attr.create "placeholder" "Search by symbol..."
-                            _class_
-                                "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                        ]
-                    ]
-                    filterSelect "filterSide" "Side" [ ("buy", "Buy"); ("sell", "Sell") ]
-                    filterSelect "filterStatus" "Status" [
-                        ("pending", "Pending")
-                        ("placed", "Placed")
-                        ("partially-filled", "Partially Filled")
-                        ("filled", "Filled")
-                        ("cancelled", "Cancelled")
-                        ("failed", "Failed")
-                    ]
-                    filterSelect "sortBy" "Sort By" [
-                        ("created-desc", "Newest First")
-                        ("created", "Oldest First")
-                        ("symbol", "Symbol A-Z")
-                        ("symbol-desc", "Symbol Z-A")
-                        ("quantity-desc", "Quantity High")
-                        ("quantity", "Quantity Low")
-                        ("status", "Status")
-                    ]
-                ]
-            ]
-        ]
+        _div
+            [ _id_ "orders-filter-form"; _class_ "card mb-6" ]
+            [ _form
+                  [ Hx.get "/orders/table"
+                    Hx.targetCss "#orders-table-container"
+                    Hx.trigger "change, keyup delay:300ms from:input"
+                    Hx.swapOuterHtml
+                    Hx.includeThis ]
+                  [ _input [ _type_ "hidden"; _name_ "page"; _value_ "1" ]
+                    _div
+                        [ _class_ "flex flex-wrap gap-4" ]
+                        [ _div
+                              [ _class_ "flex-1 min-w-[200px]" ]
+                              [ _label
+                                    [ _class_ "block text-xs font-medium text-slate-500 mb-1" ]
+                                    [ Text.raw "Search Symbol" ]
+                                _input
+                                    [ _type_ "text"
+                                      _name_ "searchTerm"
+                                      Attr.create "placeholder" "Search by symbol..."
+                                      _class_
+                                          "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ] ]
+                          filterSelect "filterSide" "Side" [ ("buy", "Buy"); ("sell", "Sell") ]
+                          filterSelect
+                              "filterStatus"
+                              "Status"
+                              [ ("pending", "Pending")
+                                ("placed", "Placed")
+                                ("partially-filled", "Partially Filled")
+                                ("filled", "Filled")
+                                ("cancelled", "Cancelled")
+                                ("failed", "Failed") ]
+                          filterSelect
+                              "sortBy"
+                              "Sort By"
+                              [ ("created-desc", "Newest First")
+                                ("created", "Oldest First")
+                                ("symbol", "Symbol A-Z")
+                                ("symbol-desc", "Symbol Z-A")
+                                ("quantity-desc", "Quantity High")
+                                ("quantity", "Quantity Low")
+                                ("status", "Status") ] ] ] ]
 
     let private tableHeader =
-        _thead [] [
-            _tr [] [
-                for (text, align) in
-                    [ "ID", "left"
-                      "Pipeline", "left"
-                      "Symbol", "left"
-                      "Side", "left"
-                      "Status", "left"
-                      "Quantity", "right"
-                      "Price", "right"
-                      "Fee", "right"
-                      "Created", "left" ] do
-                    _th [ _class_ $"px-4 py-3 text-{align} text-xs font-medium text-slate-400 uppercase tracking-wider" ] [
-                        Text.raw text
-                    ]
-            ]
-        ]
+        _thead
+            []
+            [ _tr
+                  []
+                  [ for (text, align) in
+                        [ "ID", "left"
+                          "Pipeline", "left"
+                          "Symbol", "left"
+                          "Side", "left"
+                          "Status", "left"
+                          "Quantity", "right"
+                          "Price", "right"
+                          "Fee", "right"
+                          "Created", "left" ] do
+                        _th
+                            [ _class_
+                                  $"px-4 py-3 text-{align} text-xs font-medium text-slate-400 uppercase tracking-wider" ]
+                            [ Text.raw text ] ] ]
 
     let private statusBadge (status: OrderStatus) =
         let (bgClass, textClass, label) =
@@ -250,48 +250,48 @@ module View =
         | None -> "-"
 
     let orderRow (order: OrderListItem) =
-        _tr [ _id_ $"order-{order.Id}"; _class_ "hover:bg-slate-50" ] [
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [ Text.raw (string order.Id) ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [
-                Text.raw (formatPipelineId order.PipelineId)
-            ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [
-                _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw order.Symbol ]
-            ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ sideBadge order.Side ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ statusBadge order.Status ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-900" ] [
-                Text.raw (order.Quantity.ToString("N4"))
-            ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-500" ] [
-                Text.raw (formatDecimal order.Price)
-            ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-500" ] [
-                Text.raw (formatDecimal order.Fee)
-            ]
-            _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [
-                Text.raw (order.CreatedAt.ToString("MMM dd, HH:mm"))
-            ]
-        ]
+        _tr
+            [ _id_ $"order-{order.Id}"; _class_ "hover:bg-slate-50" ]
+            [ _td [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ] [ Text.raw (string order.Id) ]
+              _td
+                  [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ]
+                  [ Text.raw (formatPipelineId order.PipelineId) ]
+              _td
+                  [ _class_ "px-4 py-3 whitespace-nowrap" ]
+                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw order.Symbol ] ]
+              _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ sideBadge order.Side ]
+              _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ statusBadge order.Status ]
+              _td
+                  [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-900" ]
+                  [ Text.raw (order.Quantity.ToString("N4")) ]
+              _td
+                  [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-500" ]
+                  [ Text.raw (formatDecimal order.Price) ]
+              _td
+                  [ _class_ "px-4 py-3 whitespace-nowrap text-right text-sm text-slate-500" ]
+                  [ Text.raw (formatDecimal order.Fee) ]
+              _td
+                  [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ]
+                  [ Text.raw (order.CreatedAt.ToString("MMM dd, HH:mm")) ] ]
 
     let emptyState =
-        _tr [] [
-            _td [ Attr.create "colspan" "9"; _class_ "px-4 py-12 text-center" ] [
-                _div [ _class_ "text-slate-400" ] [
-                    _i [ _class_ "fas fa-receipt text-3xl mb-3" ] []
-                    _p [ _class_ "text-sm font-medium" ] [ Text.raw "No orders found" ]
-                    _p [ _class_ "text-xs" ] [ Text.raw "Orders will appear here when you start trading" ]
-                ]
-            ]
-        ]
+        _tr
+            []
+            [ _td
+                  [ Attr.create "colspan" "9"; _class_ "px-4 py-12 text-center" ]
+                  [ _div
+                        [ _class_ "text-slate-400" ]
+                        [ _i [ _class_ "fas fa-receipt text-3xl mb-3" ] []
+                          _p [ _class_ "text-sm font-medium" ] [ Text.raw "No orders found" ]
+                          _p [ _class_ "text-xs" ] [ Text.raw "Orders will appear here when you start trading" ] ] ] ]
 
     let loadingState =
-        _tr [] [
-            _td [ Attr.create "colspan" "9"; _class_ "px-4 py-8 text-center text-slate-400" ] [
-                _i [ _class_ "fas fa-spinner fa-spin text-lg mb-2" ] []
-                _p [ _class_ "text-sm" ] [ Text.raw "Loading orders..." ]
-            ]
-        ]
+        _tr
+            []
+            [ _td
+                  [ Attr.create "colspan" "9"; _class_ "px-4 py-8 text-center text-slate-400" ]
+                  [ _i [ _class_ "fas fa-spinner fa-spin text-lg mb-2" ] []
+                    _p [ _class_ "text-sm" ] [ Text.raw "Loading orders..." ] ] ]
 
     let private paginationControls (data: OrdersGridData) =
         let totalPages = int (Math.Ceiling(float data.TotalCount / float data.PageSize))
@@ -305,36 +305,38 @@ module View =
         let prevBtnClass = if hasPrev then enabledBtnClass else disabledBtnClass
         let nextBtnClass = if hasNext then enabledBtnClass else disabledBtnClass
 
-        _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ] [
-            _div [ _class_ "text-xs text-slate-400" ] [
-                Text.raw $"Showing {startRecord} to {endRecord} of {data.TotalCount} orders"
-            ]
-            _div [ _class_ "flex gap-2" ] [
-                _button [
-                    _type_ "button"
-                    _class_ $"px-3 py-1 text-xs font-medium rounded-md {prevBtnClass}"
-                    if hasPrev then
-                        Hx.get $"/orders/table?page={data.Page - 1}"
-                        Hx.targetCss "#orders-table-container"
-                        Hx.swapOuterHtml
-                        Attr.create "hx-include" "#orders-filter-form form"
-                    else
-                        Attr.create "disabled" "disabled"
-                ] [ Text.raw "Previous" ]
-                _span [ _class_ "px-3 py-1 text-xs text-slate-400" ] [ Text.raw $"Page {data.Page} of {totalPages}" ]
-                _button [
-                    _type_ "button"
-                    _class_ $"px-3 py-1 text-xs font-medium rounded-md {nextBtnClass}"
-                    if hasNext then
-                        Hx.get $"/orders/table?page={data.Page + 1}"
-                        Hx.targetCss "#orders-table-container"
-                        Hx.swapOuterHtml
-                        Attr.create "hx-include" "#orders-filter-form form"
-                    else
-                        Attr.create "disabled" "disabled"
-                ] [ Text.raw "Next" ]
-            ]
-        ]
+        _div
+            [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ]
+            [ _div
+                  [ _class_ "text-xs text-slate-400" ]
+                  [ Text.raw $"Showing {startRecord} to {endRecord} of {data.TotalCount} orders" ]
+              _div
+                  [ _class_ "flex gap-2" ]
+                  [ _button
+                        [ _type_ "button"
+                          _class_ $"px-3 py-1 text-xs font-medium rounded-md {prevBtnClass}"
+                          if hasPrev then
+                              Hx.get $"/orders/table?page={data.Page - 1}"
+                              Hx.targetCss "#orders-table-container"
+                              Hx.swapOuterHtml
+                              Attr.create "hx-include" "#orders-filter-form form"
+                          else
+                              Attr.create "disabled" "disabled" ]
+                        [ Text.raw "Previous" ]
+                    _span
+                        [ _class_ "px-3 py-1 text-xs text-slate-400" ]
+                        [ Text.raw $"Page {data.Page} of {totalPages}" ]
+                    _button
+                        [ _type_ "button"
+                          _class_ $"px-3 py-1 text-xs font-medium rounded-md {nextBtnClass}"
+                          if hasNext then
+                              Hx.get $"/orders/table?page={data.Page + 1}"
+                              Hx.targetCss "#orders-table-container"
+                              Hx.swapOuterHtml
+                              Attr.create "hx-include" "#orders-filter-form form"
+                          else
+                              Attr.create "disabled" "disabled" ]
+                        [ Text.raw "Next" ] ] ]
 
     let tableBody (data: OrdersGridData) =
         let rows =
@@ -342,27 +344,25 @@ module View =
             | [] -> [ emptyState ]
             | orders -> orders |> List.map orderRow
 
-        _div [ _id_ "orders-table-container" ] [
-            _div [ _class_ "overflow-x-auto" ] [
-                _table [ _class_ "min-w-full divide-y divide-slate-100" ] [
-                    tableHeader
-                    _tbody [ _class_ "bg-white divide-y divide-slate-100" ] rows
-                ]
-            ]
-            paginationControls data
-        ]
+        _div
+            [ _id_ "orders-table-container" ]
+            [ _div
+                  [ _class_ "overflow-x-auto" ]
+                  [ _table
+                        [ _class_ "min-w-full divide-y divide-slate-100" ]
+                        [ tableHeader; _tbody [ _class_ "bg-white divide-y divide-slate-100" ] rows ] ]
+              paginationControls data ]
 
     let private ordersTable =
-        _div [ _class_ "card overflow-hidden" ] [
-            _div [ _id_ "orders-table-container"; Hx.get "/orders/table"; Hx.trigger "load"; Hx.swapOuterHtml ] [
-                _div [ _class_ "overflow-x-auto" ] [
-                    _table [ _class_ "min-w-full divide-y divide-slate-100" ] [
-                        tableHeader
-                        _tbody [ _class_ "bg-white divide-y divide-slate-100" ] [ loadingState ]
-                    ]
-                ]
-            ]
-        ]
+        _div
+            [ _class_ "card overflow-hidden" ]
+            [ _div
+                  [ _id_ "orders-table-container"; Hx.get "/orders/table"; Hx.trigger "load"; Hx.swapOuterHtml ]
+                  [ _div
+                        [ _class_ "overflow-x-auto" ]
+                        [ _table
+                              [ _class_ "min-w-full divide-y divide-slate-100" ]
+                              [ tableHeader; _tbody [ _class_ "bg-white divide-y divide-slate-100" ] [ loadingState ] ] ] ] ]
 
     let section = _section [] [ sectionHeader; filterBar; ordersTable ]
 

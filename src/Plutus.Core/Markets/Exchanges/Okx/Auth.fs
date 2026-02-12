@@ -14,4 +14,3 @@ module Auth =
 
         let key = Encoding.UTF8.GetBytes(secretKey)
         using (new HMACSHA256(key)) (fun hmac -> hmac.ComputeHash(sign) |> Convert.ToBase64String)
-

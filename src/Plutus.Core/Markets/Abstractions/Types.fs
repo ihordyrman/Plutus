@@ -30,4 +30,3 @@ type BalanceSnapshot =
       Funding: Map<string, Balance>
       mutable AccountSummary: AccountBalance option
       Timestamp: DateTime }
-

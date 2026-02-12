@@ -12,7 +12,8 @@ open Plutus.Core.Domain
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
 
-type InstrumentSyncWorker(scopeFactory: IServiceScopeFactory, httpFactory: IHttpClientFactory, logger: ILogger<InstrumentSyncWorker>) =
+type InstrumentSyncWorker
+    (scopeFactory: IServiceScopeFactory, httpFactory: IHttpClientFactory, logger: ILogger<InstrumentSyncWorker>) =
     inherit BackgroundService()
 
     let jsonOpts = JsonSerializerOptions(PropertyNameCaseInsensitive = true)
@@ -52,8 +53,7 @@ type InstrumentSyncWorker(scopeFactory: IServiceScopeFactory, httpFactory: IHttp
                         match result with
                         | Ok count -> logger.LogInformation("Synced {Count} OKX SPOT instruments", count)
                         | Error err -> logger.LogError("Failed to upsert instruments: {Error}", err)
-                    | None ->
-                        logger.LogWarning("OKX instruments response had no data: {Message}", parsed.Message)
+                    | None -> logger.LogWarning("OKX instruments response had no data: {Message}", parsed.Message)
                 else
                     logger.LogWarning("OKX instruments API returned {StatusCode}", int response.StatusCode)
             with ex ->

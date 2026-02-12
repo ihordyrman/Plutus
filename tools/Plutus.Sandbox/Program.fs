@@ -21,9 +21,6 @@ CoreServices.registerSlim serviceCollection configuration
 let serviceProvider = serviceCollection.BuildServiceProvider()
 let http = serviceProvider.GetRequiredService<Http.T>()
 
-let instruments =
-    http.getInstruments InstrumentType.Spot
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
+let instruments = http.getInstruments InstrumentType.Spot |> Async.AwaitTask |> Async.RunSynchronously
 
 printfn $"%A{instruments}"

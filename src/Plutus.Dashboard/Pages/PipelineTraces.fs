@@ -22,11 +22,7 @@ type ExecutionSummary =
       Outcome: StepOutcome }
 
 type ExecutionListData =
-    { PipelineId: int
-      Executions: ExecutionSummary list
-      TotalCount: int
-      Page: int
-      PageSize: int }
+    { PipelineId: int; Executions: ExecutionSummary list; TotalCount: int; Page: int; PageSize: int }
 
 type StepTrace =
     { StepTypeKey: string
@@ -75,7 +71,8 @@ module Data =
                           StartTime = r.StartTime
                           Duration = r.EndTime - r.StartTime
                           StepCount = r.StepCount
-                          Outcome = mapOutcome r.WorstOutcome })
+                          Outcome = mapOutcome r.WorstOutcome }
+                    )
                 | Error _ -> []
 
             let totalCount =
@@ -116,18 +113,16 @@ module Data =
                           StartTime = l.StartTime
                           EndTime = l.EndTime
                           Duration = l.EndTime - l.StartTime
-                          ContextSnapshot = l.ContextSnapshot })
+                          ContextSnapshot = l.ContextSnapshot }
+                    )
 
                 let totalStart = steps |> List.map _.StartTime |> List.min
                 let totalEnd = steps |> List.map _.EndTime |> List.max
 
                 let overallOutcome =
-                    if steps |> List.exists (fun s -> s.Outcome = StepOutcome.Failed) then
-                        StepOutcome.Failed
-                    elif steps |> List.exists (fun s -> s.Outcome = StepOutcome.Stopped) then
-                        StepOutcome.Stopped
-                    else
-                        StepOutcome.Success
+                    if steps |> List.exists (fun s -> s.Outcome = StepOutcome.Failed) then StepOutcome.Failed
+                    elif steps |> List.exists (fun s -> s.Outcome = StepOutcome.Stopped) then StepOutcome.Stopped
+                    else StepOutcome.Success
 
                 return
                     Some
@@ -154,21 +149,21 @@ module View =
         else $"{int d.TotalMinutes}m {d.Seconds}s"
 
     let private closeModalButton =
-        _button [
-            _type_ "button"
-            _class_ "text-slate-400 hover:text-slate-600 transition-colors"
-            Hx.get "/pipelines/modal/close"
-            Hx.targetCss "#modal-container"
-            Hx.swapInnerHtml
-        ] [ _i [ _class_ "fas fa-times text-xl" ] [] ]
+        _button
+            [ _type_ "button"
+              _class_ "text-slate-400 hover:text-slate-600 transition-colors"
+              Hx.get "/pipelines/modal/close"
+              Hx.targetCss "#modal-container"
+              Hx.swapInnerHtml ]
+            [ _i [ _class_ "fas fa-times text-xl" ] [] ]
 
     let private modalBackdrop =
-        _div [
-            _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            Hx.get "/pipelines/modal/close"
-            Hx.targetCss "#modal-container"
-            Hx.swapInnerHtml
-        ] []
+        _div
+            [ _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              Hx.get "/pipelines/modal/close"
+              Hx.targetCss "#modal-container"
+              Hx.swapInnerHtml ]
+            []
 
     let private contextDiff (prev: string option) (current: string) =
         try
@@ -177,18 +172,21 @@ module View =
 
             match prev with
             | None ->
-                _pre [ _class_ "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ] [
-                    Text.raw (JsonSerializer.Serialize(currentDoc.RootElement, JsonSerializerOptions(WriteIndented = true)))
-                ]
+                _pre
+                    [ _class_
+                          "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ]
+                    [ Text.raw (
+                          JsonSerializer.Serialize(currentDoc.RootElement, JsonSerializerOptions(WriteIndented = true))
+                      ) ]
             | Some prevJson ->
                 let prevDoc = JsonDocument.Parse(prevJson)
+
                 let prevMap =
                     prevDoc.RootElement.EnumerateObject()
                     |> Seq.map (fun p -> p.Name, p.Value.GetRawText())
                     |> Map.ofSeq
 
-                let currentMap =
-                    currentProps |> List.map (fun p -> p.Name, p.Value.GetRawText()) |> Map.ofList
+                let currentMap = currentProps |> List.map (fun p -> p.Name, p.Value.GetRawText()) |> Map.ofList
 
                 let allKeys =
                     Set.union (prevMap |> Map.keys |> Set.ofSeq) (currentMap |> Map.keys |> Set.ofSeq)
@@ -201,233 +199,231 @@ module View =
                         match Map.tryFind key prevMap, Map.tryFind key currentMap with
                         | Some old, Some curr when old = curr -> None
                         | Some old, Some curr ->
-                            Some [
-                                _div [ _class_ "text-red-600" ] [ Text.raw $"- {key}: {old}" ]
-                                _div [ _class_ "text-green-600" ] [ Text.raw $"+ {key}: {curr}" ]
-                            ]
-                        | None, Some curr ->
-                            Some [ _div [ _class_ "text-green-600" ] [ Text.raw $"+ {key}: {curr}" ] ]
-                        | Some old, None ->
-                            Some [ _div [ _class_ "text-red-600" ] [ Text.raw $"- {key}: {old}" ] ]
-                        | None, None -> None)
+                            Some
+                                [ _div [ _class_ "text-red-600" ] [ Text.raw $"- {key}: {old}" ]
+                                  _div [ _class_ "text-green-600" ] [ Text.raw $"+ {key}: {curr}" ] ]
+                        | None, Some curr -> Some [ _div [ _class_ "text-green-600" ] [ Text.raw $"+ {key}: {curr}" ] ]
+                        | Some old, None -> Some [ _div [ _class_ "text-red-600" ] [ Text.raw $"- {key}: {old}" ] ]
+                        | None, None -> None
+                    )
                     |> List.concat
 
                 if lines.IsEmpty then
                     _div [ _class_ "text-xs text-slate-400 italic" ] [ Text.raw "No context changes" ]
                 else
-                    _pre [ _class_ "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 font-mono" ] lines
+                    _pre
+                        [ _class_
+                              "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 font-mono" ]
+                        lines
         with _ ->
-            _pre [ _class_ "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ] [
-                Text.raw current
-            ]
+            _pre
+                [ _class_
+                      "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ]
+                [ Text.raw current ]
 
     let executionList (data: ExecutionListData) =
         let totalPages = max 1 (int (Math.Ceiling(float data.TotalCount / float data.PageSize)))
         let hasPrev = data.Page > 1
         let hasNext = data.Page < totalPages
 
-        _div [ _id_ "traces-list" ] [
-            if data.Executions.IsEmpty then
-                _div [ _class_ "py-12 text-center text-slate-400" ] [
-                    _i [ _class_ "fas fa-search text-3xl mb-3" ] []
-                    _p [ _class_ "text-sm font-medium" ] [ Text.raw "No executions yet" ]
-                    _p [ _class_ "text-xs" ] [ Text.raw "This pipeline hasn't been executed" ]
-                ]
-            else
-                _div [ _class_ "space-y-1" ] [
-                    for exec in data.Executions do
-                        _div [
-                            _class_
-                                "px-4 py-3 border border-slate-200 rounded-md bg-white hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
-                            Hx.get $"/pipelines/{data.PipelineId}/traces/{exec.ExecutionId}"
-                            Hx.targetCss "#traces-content"
-                            Hx.swapInnerHtml
-                        ] [
-                            _div [ _class_ "flex items-center gap-3" ] [
-                                _span [ _class_ "font-mono text-sm font-medium text-slate-900" ] [
-                                    Text.raw (exec.ExecutionId.Substring(0, min 8 exec.ExecutionId.Length))
-                                ]
-                                _span [ _class_ "text-xs text-slate-400" ] [
-                                    Text.raw (exec.StartTime.ToString("MMM dd, HH:mm:ss"))
-                                ]
-                            ]
-                            _div [ _class_ "flex items-center gap-3" ] [
-                                _span [ _class_ "text-xs text-slate-400" ] [
-                                    _i [ _class_ "fas fa-layer-group mr-1" ] []
-                                    Text.raw $"{exec.StepCount} steps"
-                                ]
-                                _span [ _class_ "text-xs text-slate-400 font-mono" ] [
-                                    _i [ _class_ "fas fa-clock mr-1" ] []
-                                    Text.raw (formatDuration exec.Duration)
-                                ]
-                                outcomeBadge exec.Outcome
-                                _i [ _class_ "fas fa-chevron-right text-xs text-slate-300" ] []
-                            ]
-                        ]
-                ]
+        _div
+            [ _id_ "traces-list" ]
+            [ if data.Executions.IsEmpty then
+                  _div
+                      [ _class_ "py-12 text-center text-slate-400" ]
+                      [ _i [ _class_ "fas fa-search text-3xl mb-3" ] []
+                        _p [ _class_ "text-sm font-medium" ] [ Text.raw "No executions yet" ]
+                        _p [ _class_ "text-xs" ] [ Text.raw "This pipeline hasn't been executed" ] ]
+              else
+                  _div
+                      [ _class_ "space-y-1" ]
+                      [ for exec in data.Executions do
+                            _div
+                                [ _class_
+                                      "px-4 py-3 border border-slate-200 rounded-md bg-white hover:bg-slate-50 cursor-pointer flex items-center justify-between transition-colors"
+                                  Hx.get $"/pipelines/{data.PipelineId}/traces/{exec.ExecutionId}"
+                                  Hx.targetCss "#traces-content"
+                                  Hx.swapInnerHtml ]
+                                [ _div
+                                      [ _class_ "flex items-center gap-3" ]
+                                      [ _span
+                                            [ _class_ "font-mono text-sm font-medium text-slate-900" ]
+                                            [ Text.raw (exec.ExecutionId.Substring(0, min 8 exec.ExecutionId.Length)) ]
+                                        _span
+                                            [ _class_ "text-xs text-slate-400" ]
+                                            [ Text.raw (exec.StartTime.ToString("MMM dd, HH:mm:ss")) ] ]
+                                  _div
+                                      [ _class_ "flex items-center gap-3" ]
+                                      [ _span
+                                            [ _class_ "text-xs text-slate-400" ]
+                                            [ _i [ _class_ "fas fa-layer-group mr-1" ] []
+                                              Text.raw $"{exec.StepCount} steps" ]
+                                        _span
+                                            [ _class_ "text-xs text-slate-400 font-mono" ]
+                                            [ _i [ _class_ "fas fa-clock mr-1" ] []
+                                              Text.raw (formatDuration exec.Duration) ]
+                                        outcomeBadge exec.Outcome
+                                        _i [ _class_ "fas fa-chevron-right text-xs text-slate-300" ] [] ] ] ]
 
-                let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
-                let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
+                  let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+                  let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
 
-                _div [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ] [
-                    _div [ _class_ "text-xs text-slate-400" ] [
-                        Text.raw $"{data.TotalCount} execution(s)"
-                    ]
-                    _div [ _class_ "flex gap-2" ] [
-                        _button [
-                            _type_ "button"
-                            _class_
-                                $"px-3 py-1 text-xs font-medium rounded-md {if hasPrev then enabledBtnClass else disabledBtnClass}"
-                            if hasPrev then
-                                Hx.get $"/pipelines/{data.PipelineId}/traces/list?page={data.Page - 1}"
-                                Hx.targetCss "#traces-list"
-                                Hx.swapOuterHtml
-                            else
-                                Attr.create "disabled" "disabled"
-                        ] [ Text.raw "Previous" ]
-                        _span [ _class_ "px-3 py-1 text-xs text-slate-400" ] [
-                            Text.raw $"Page {data.Page} of {totalPages}"
-                        ]
-                        _button [
-                            _type_ "button"
-                            _class_
-                                $"px-3 py-1 text-xs font-medium rounded-md {if hasNext then enabledBtnClass else disabledBtnClass}"
-                            if hasNext then
-                                Hx.get $"/pipelines/{data.PipelineId}/traces/list?page={data.Page + 1}"
-                                Hx.targetCss "#traces-list"
-                                Hx.swapOuterHtml
-                            else
-                                Attr.create "disabled" "disabled"
-                        ] [ Text.raw "Next" ]
-                    ]
-                ]
-        ]
+                  _div
+                      [ _class_ "flex items-center justify-between px-4 py-3 border-t border-slate-100" ]
+                      [ _div [ _class_ "text-xs text-slate-400" ] [ Text.raw $"{data.TotalCount} execution(s)" ]
+                        _div
+                            [ _class_ "flex gap-2" ]
+                            [ _button
+                                  [ _type_ "button"
+                                    _class_
+                                        $"px-3 py-1 text-xs font-medium rounded-md {if hasPrev then enabledBtnClass else disabledBtnClass}"
+                                    if hasPrev then
+                                        Hx.get $"/pipelines/{data.PipelineId}/traces/list?page={data.Page - 1}"
+                                        Hx.targetCss "#traces-list"
+                                        Hx.swapOuterHtml
+                                    else
+                                        Attr.create "disabled" "disabled" ]
+                                  [ Text.raw "Previous" ]
+                              _span
+                                  [ _class_ "px-3 py-1 text-xs text-slate-400" ]
+                                  [ Text.raw $"Page {data.Page} of {totalPages}" ]
+                              _button
+                                  [ _type_ "button"
+                                    _class_
+                                        $"px-3 py-1 text-xs font-medium rounded-md {if hasNext then enabledBtnClass else disabledBtnClass}"
+                                    if hasNext then
+                                        Hx.get $"/pipelines/{data.PipelineId}/traces/list?page={data.Page + 1}"
+                                        Hx.targetCss "#traces-list"
+                                        Hx.swapOuterHtml
+                                    else
+                                        Attr.create "disabled" "disabled" ]
+                                  [ Text.raw "Next" ] ] ] ]
 
     let executionDetail (detail: ExecutionDetail) =
         let totalMs = detail.TotalDuration.TotalMilliseconds
-        let executionStart = if detail.Steps.IsEmpty then DateTime.MinValue else (detail.Steps |> List.map _.StartTime |> List.min)
 
-        _div [] [
-            _div [ _class_ "flex items-center gap-3 pb-4 mb-4 border-b border-slate-100" ] [
-                _button [
-                    _type_ "button"
-                    _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
-                    Hx.get $"/pipelines/{detail.PipelineId}/traces/modal"
-                    Hx.targetCss "#modal-container"
-                    Hx.swapInnerHtml
-                ] [ _i [ _class_ "fas fa-arrow-left" ] [] ]
-                _div [ _class_ "flex items-center gap-2" ] [
-                    _span [ _class_ "font-mono text-sm font-medium text-slate-900" ] [ Text.raw detail.ExecutionId ]
-                    outcomeBadge detail.OverallOutcome
-                ]
-                _span [ _class_ "text-xs text-slate-400 ml-auto" ] [
-                    _i [ _class_ "fas fa-clock mr-1" ] []
-                    Text.raw (formatDuration detail.TotalDuration)
-                ]
-            ]
+        let executionStart =
+            if detail.Steps.IsEmpty then
+                DateTime.MinValue
+            else
+                (detail.Steps |> List.map _.StartTime |> List.min)
 
-            _div [ _class_ "space-y-2" ] [
-                for i, step in detail.Steps |> List.indexed do
-                    let barColor =
-                        match step.Outcome with
-                        | StepOutcome.Success -> "bg-emerald-400"
-                        | StepOutcome.Stopped -> "bg-amber-400"
-                        | StepOutcome.Failed -> "bg-red-400"
+        _div
+            []
+            [ _div
+                  [ _class_ "flex items-center gap-3 pb-4 mb-4 border-b border-slate-100" ]
+                  [ _button
+                        [ _type_ "button"
+                          _class_
+                              "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
+                          Hx.get $"/pipelines/{detail.PipelineId}/traces/modal"
+                          Hx.targetCss "#modal-container"
+                          Hx.swapInnerHtml ]
+                        [ _i [ _class_ "fas fa-arrow-left" ] [] ]
+                    _div
+                        [ _class_ "flex items-center gap-2" ]
+                        [ _span
+                              [ _class_ "font-mono text-sm font-medium text-slate-900" ]
+                              [ Text.raw detail.ExecutionId ]
+                          outcomeBadge detail.OverallOutcome ]
+                    _span
+                        [ _class_ "text-xs text-slate-400 ml-auto" ]
+                        [ _i [ _class_ "fas fa-clock mr-1" ] []; Text.raw (formatDuration detail.TotalDuration) ] ]
 
-                    let offsetPct =
-                        if totalMs > 0.0 then
-                            (step.StartTime - executionStart).TotalMilliseconds / totalMs * 100.0
-                        else
-                            0.0
+              _div
+                  [ _class_ "space-y-2" ]
+                  [ for i, step in detail.Steps |> List.indexed do
+                        let barColor =
+                            match step.Outcome with
+                            | StepOutcome.Success -> "bg-emerald-400"
+                            | StepOutcome.Stopped -> "bg-amber-400"
+                            | StepOutcome.Failed -> "bg-red-400"
 
-                    let widthPct =
-                        if totalMs > 0.0 then
-                            max 0.5 (step.Duration.TotalMilliseconds / totalMs * 100.0)
-                        else
-                            100.0
+                        let offsetPct =
+                            if totalMs > 0.0 then
+                                (step.StartTime - executionStart).TotalMilliseconds / totalMs * 100.0
+                            else
+                                0.0
 
-                    let prevSnapshot =
-                        if i > 0 then Some detail.Steps.[i - 1].ContextSnapshot else None
+                        let widthPct =
+                            if totalMs > 0.0 then max 0.5 (step.Duration.TotalMilliseconds / totalMs * 100.0) else 100.0
 
-                    let stepId = $"step-detail-{i}"
-                    let chevronId = $"step-chevron-{i}"
+                        let prevSnapshot = if i > 0 then Some detail.Steps.[i - 1].ContextSnapshot else None
 
-                    _div [ _class_ "border border-slate-200 rounded-md bg-white transition-colors" ] [
-                        _div [
-                            _class_ "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
-                            Attr.create
-                                "onclick"
-                                $"document.getElementById('{stepId}').classList.toggle('hidden');document.getElementById('{chevronId}').classList.toggle('rotate-90')"
-                        ] [
-                            _i [
-                                _id_ chevronId
-                                _class_ "fas fa-chevron-right text-xs text-slate-300 transition-transform"
-                            ] []
-                            _span [ _class_ "w-44 truncate text-sm font-medium text-slate-900" ] [
-                                Text.raw step.StepTypeKey
-                            ]
-                            _div [ _class_ "flex-1 h-4 bg-slate-100 rounded-full relative overflow-hidden" ] [
-                                _div [
-                                    _class_ $"absolute top-0 h-full rounded-full {barColor}"
-                                    Attr.create "style" $"left:{offsetPct:F1}%%;width:{widthPct:F1}%%"
-                                ] []
-                            ]
-                            _span [ _class_ "w-16 text-xs text-slate-400 text-right font-mono" ] [
-                                Text.raw (formatDuration step.Duration)
-                            ]
-                            outcomeBadge step.Outcome
-                        ]
-                        _div [ _id_ stepId; _class_ "hidden border-t border-slate-100" ] [
-                            _div [ _class_ "px-4 py-3 space-y-3" ] [
-                                if not (String.IsNullOrWhiteSpace step.Message) then
-                                    _div [] [
-                                        _div [ _class_ "text-xs font-medium text-slate-400 uppercase tracking-wide mb-1" ] [
-                                            Text.raw "Message"
-                                        ]
-                                        _p [ _class_ "text-sm text-slate-700" ] [ Text.raw step.Message ]
-                                    ]
-                                _div [] [
-                                    _div [ _class_ "text-xs font-medium text-slate-400 uppercase tracking-wide mb-1" ] [
-                                        Text.raw "Context"
-                                    ]
-                                    contextDiff prevSnapshot step.ContextSnapshot
-                                ]
-                            ]
-                        ]
-                    ]
-            ]
-        ]
+                        let stepId = $"step-detail-{i}"
+                        let chevronId = $"step-chevron-{i}"
+
+                        _div
+                            [ _class_ "border border-slate-200 rounded-md bg-white transition-colors" ]
+                            [ _div
+                                  [ _class_
+                                        "flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 transition-colors"
+                                    Attr.create
+                                        "onclick"
+                                        $"document.getElementById('{stepId}').classList.toggle('hidden');document.getElementById('{chevronId}').classList.toggle('rotate-90')" ]
+                                  [ _i
+                                        [ _id_ chevronId
+                                          _class_ "fas fa-chevron-right text-xs text-slate-300 transition-transform" ]
+                                        []
+                                    _span
+                                        [ _class_ "w-44 truncate text-sm font-medium text-slate-900" ]
+                                        [ Text.raw step.StepTypeKey ]
+                                    _div
+                                        [ _class_ "flex-1 h-4 bg-slate-100 rounded-full relative overflow-hidden" ]
+                                        [ _div
+                                              [ _class_ $"absolute top-0 h-full rounded-full {barColor}"
+                                                Attr.create "style" $"left:{offsetPct:F1}%%;width:{widthPct:F1}%%" ]
+                                              [] ]
+                                    _span
+                                        [ _class_ "w-16 text-xs text-slate-400 text-right font-mono" ]
+                                        [ Text.raw (formatDuration step.Duration) ]
+                                    outcomeBadge step.Outcome ]
+                              _div
+                                  [ _id_ stepId; _class_ "hidden border-t border-slate-100" ]
+                                  [ _div
+                                        [ _class_ "px-4 py-3 space-y-3" ]
+                                        [ if not (String.IsNullOrWhiteSpace step.Message) then
+                                              _div
+                                                  []
+                                                  [ _div
+                                                        [ _class_
+                                                              "text-xs font-medium text-slate-400 uppercase tracking-wide mb-1" ]
+                                                        [ Text.raw "Message" ]
+                                                    _p [ _class_ "text-sm text-slate-700" ] [ Text.raw step.Message ] ]
+                                          _div
+                                              []
+                                              [ _div
+                                                    [ _class_
+                                                          "text-xs font-medium text-slate-400 uppercase tracking-wide mb-1" ]
+                                                    [ Text.raw "Context" ]
+                                                contextDiff prevSnapshot step.ContextSnapshot ] ] ] ] ] ]
 
     let modal (data: ExecutionListData) =
-        _div [
-            _id_ "pipeline-traces-modal"
-            _class_ "fixed inset-0 z-50 overflow-y-auto"
-            Attr.create "role" "dialog"
-            Attr.create "aria-modal" "true"
-        ] [
-            modalBackdrop
-            _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
-                _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
-                    _div [
-                        _class_
-                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-5xl"
-                    ] [
-                        _div [ _class_ "border-b border-slate-100 px-6 py-4" ] [
-                            _div [ _class_ "flex items-center justify-between" ] [
-                                _h3 [ _class_ "text-lg font-semibold text-slate-900" ] [
-                                    _i [ _class_ "fas fa-timeline mr-2 text-slate-400" ] []
-                                    Text.raw "Execution Traces"
-                                ]
-                                closeModalButton
-                            ]
-                        ]
-                        _div [ _id_ "traces-content"; _class_ "px-6 py-4 max-h-[75vh] overflow-y-auto" ] [
-                            executionList data
-                        ]
-                    ]
-                ]
-            ]
-        ]
+        _div
+            [ _id_ "pipeline-traces-modal"
+              _class_ "fixed inset-0 z-50 overflow-y-auto"
+              Attr.create "role" "dialog"
+              Attr.create "aria-modal" "true" ]
+            [ modalBackdrop
+              _div
+                  [ _class_ "fixed inset-0 z-10 overflow-y-auto" ]
+                  [ _div
+                        [ _class_ "flex min-h-full items-center justify-center p-4" ]
+                        [ _div
+                              [ _class_
+                                    "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-5xl" ]
+                              [ _div
+                                    [ _class_ "border-b border-slate-100 px-6 py-4" ]
+                                    [ _div
+                                          [ _class_ "flex items-center justify-between" ]
+                                          [ _h3
+                                                [ _class_ "text-lg font-semibold text-slate-900" ]
+                                                [ _i [ _class_ "fas fa-timeline mr-2 text-slate-400" ] []
+                                                  Text.raw "Execution Traces" ]
+                                            closeModalButton ] ]
+                                _div
+                                    [ _id_ "traces-content"; _class_ "px-6 py-4 max-h-[75vh] overflow-y-auto" ]
+                                    [ executionList data ] ] ] ] ]
 
 module Handler =
     let private tryGetQueryInt (query: IQueryCollection) (key: string) (defaultValue: int) =
@@ -449,12 +445,7 @@ module Handler =
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("PipelineTraces")
                     logger.LogError(ex, "Error loading traces for pipeline {PipelineId}", pipelineId)
 
-                    let empty =
-                        { PipelineId = pipelineId
-                          Executions = []
-                          TotalCount = 0
-                          Page = 1
-                          PageSize = 20 }
+                    let empty = { PipelineId = pipelineId; Executions = []; TotalCount = 0; Page = 1; PageSize = 20 }
 
                     return! Response.ofHtml (View.modal empty) ctx
             }
@@ -471,12 +462,7 @@ module Handler =
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("PipelineTraces")
                     logger.LogError(ex, "Error loading traces list for pipeline {PipelineId}", pipelineId)
 
-                    let empty =
-                        { PipelineId = pipelineId
-                          Executions = []
-                          TotalCount = 0
-                          Page = 1
-                          PageSize = 20 }
+                    let empty = { PipelineId = pipelineId; Executions = []; TotalCount = 0; Page = 1; PageSize = 20 }
 
                     return! Response.ofHtml (View.executionList empty) ctx
             }
@@ -493,9 +479,9 @@ module Handler =
                     | None ->
                         return!
                             Response.ofHtml
-                                (_div [ _class_ "py-8 text-center text-slate-400" ] [
-                                    _p [ _class_ "text-sm" ] [ Text.raw "Execution not found" ]
-                                ])
+                                (_div
+                                    [ _class_ "py-8 text-center text-slate-400" ]
+                                    [ _p [ _class_ "text-sm" ] [ Text.raw "Execution not found" ] ])
                                 ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("PipelineTraces")
@@ -503,8 +489,8 @@ module Handler =
 
                     return!
                         Response.ofHtml
-                            (_div [ _class_ "py-8 text-center text-red-400" ] [
-                                _p [ _class_ "text-sm" ] [ Text.raw "Error loading execution details" ]
-                            ])
+                            (_div
+                                [ _class_ "py-8 text-center text-red-400" ]
+                                [ _p [ _class_ "text-sm" ] [ Text.raw "Error loading execution details" ] ])
                             ctx
             }

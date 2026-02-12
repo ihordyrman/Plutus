@@ -178,8 +178,7 @@ module Data =
                     | [| b; q |] -> b, q
                     | _ -> pipeline.Symbol, ""
 
-                let! baseCurrencies =
-                    InstrumentRepository.getBaseCurrencies db (int pipeline.MarketType) "SPOT" ct
+                let! baseCurrencies = InstrumentRepository.getBaseCurrencies db (int pipeline.MarketType) "SPOT" ct
 
                 let baseCurrencies =
                     match baseCurrencies with
@@ -635,21 +634,21 @@ module Data =
 
 module View =
     let private closeModalButton =
-        _button [
-            _type_ "button"
-            _class_ "text-slate-400 hover:text-slate-600 transition-colors"
-            Hx.get "/pipelines/modal/close"
-            Hx.targetCss "#modal-container"
-            Hx.swapInnerHtml
-        ] [ _i [ _class_ "fas fa-times text-xl" ] [] ]
+        _button
+            [ _type_ "button"
+              _class_ "text-slate-400 hover:text-slate-600 transition-colors"
+              Hx.get "/pipelines/modal/close"
+              Hx.targetCss "#modal-container"
+              Hx.swapInnerHtml ]
+            [ _i [ _class_ "fas fa-times text-xl" ] [] ]
 
     let private modalBackdrop =
-        _div [
-            _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            Hx.get "/pipelines/modal/close"
-            Hx.targetCss "#modal-container"
-            Hx.swapInnerHtml
-        ] []
+        _div
+            [ _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              Hx.get "/pipelines/modal/close"
+              Hx.targetCss "#modal-container"
+              Hx.swapInnerHtml ]
+            []
 
     let stepItem (step: StepItemViewModel) =
         let statusClass, statusIcon =
@@ -658,165 +657,168 @@ module View =
             else
                 "bg-slate-50 text-slate-400", "fa-pause"
 
-        _div [
-            _id_ $"step-{step.Id}"
-            _class_ "border border-slate-200 rounded-md p-4 bg-white hover:bg-slate-50 transition-colors"
-        ] [
-            _div [ _class_ "flex items-start justify-between" ] [
-                _div [ _class_ "flex items-start space-x-3" ] [
-                    _div [ _class_ "flex-shrink-0 w-10 h-10 bg-slate-100 rounded-md flex items-center justify-center" ] [
-                        _i [ _class_ $"fas {step.Icon} text-slate-500" ] []
-                    ]
-                    _div [] [
-                        _div [ _class_ "flex items-center space-x-2" ] [
-                            _span [ _class_ "font-medium text-slate-900" ] [ Text.raw step.DisplayName ]
-                            _span [ _class_ $"px-2 py-0.5 rounded-full text-xs {statusClass}" ] [
-                                _i [ _class_ $"fas {statusIcon} mr-1" ] []
-                                Text.raw (if step.IsEnabled then "Enabled" else "Disabled")
-                            ]
-                        ]
-                        _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw step.Description ]
-                        if not (String.IsNullOrEmpty step.ParameterSummary) then
-                            _p [ _class_ "text-xs text-slate-400 mt-1 font-mono" ] [ Text.raw step.ParameterSummary ]
-                    ]
-                ]
+        _div
+            [ _id_ $"step-{step.Id}"
+              _class_ "border border-slate-200 rounded-md p-4 bg-white hover:bg-slate-50 transition-colors" ]
+            [ _div
+                  [ _class_ "flex items-start justify-between" ]
+                  [ _div
+                        [ _class_ "flex items-start space-x-3" ]
+                        [ _div
+                              [ _class_
+                                    "flex-shrink-0 w-10 h-10 bg-slate-100 rounded-md flex items-center justify-center" ]
+                              [ _i [ _class_ $"fas {step.Icon} text-slate-500" ] [] ]
+                          _div
+                              []
+                              [ _div
+                                    [ _class_ "flex items-center space-x-2" ]
+                                    [ _span [ _class_ "font-medium text-slate-900" ] [ Text.raw step.DisplayName ]
+                                      _span
+                                          [ _class_ $"px-2 py-0.5 rounded-full text-xs {statusClass}" ]
+                                          [ _i [ _class_ $"fas {statusIcon} mr-1" ] []
+                                            Text.raw (if step.IsEnabled then "Enabled" else "Disabled") ] ]
+                                _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw step.Description ]
+                                if not (String.IsNullOrEmpty step.ParameterSummary) then
+                                    _p
+                                        [ _class_ "text-xs text-slate-400 mt-1 font-mono" ]
+                                        [ Text.raw step.ParameterSummary ] ] ]
 
-                _div [ _class_ "flex items-center space-x-1" ] [
-                    // move up
-                    if not step.IsFirst then
-                        _button [
-                            _type_ "button"
-                            _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
-                            _title_ "Move up"
-                            Hx.post $"/pipelines/{step.PipelineId}/steps/{step.Id}/move?direction=up"
-                            Hx.targetCss "#steps-list"
-                            Hx.swapInnerHtml
-                        ] [ _i [ _class_ "fas fa-chevron-up" ] [] ]
+                    _div
+                        [ _class_ "flex items-center space-x-1" ]
+                        [
+                          // move up
+                          if not step.IsFirst then
+                              _button
+                                  [ _type_ "button"
+                                    _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                                    _title_ "Move up"
+                                    Hx.post $"/pipelines/{step.PipelineId}/steps/{step.Id}/move?direction=up"
+                                    Hx.targetCss "#steps-list"
+                                    Hx.swapInnerHtml ]
+                                  [ _i [ _class_ "fas fa-chevron-up" ] [] ]
 
-                    // move down
-                    if not step.IsLast then
-                        _button [
-                            _type_ "button"
-                            _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
-                            _title_ "Move down"
-                            Hx.post $"/pipelines/{step.PipelineId}/steps/{step.Id}/move?direction=down"
-                            Hx.targetCss "#steps-list"
-                            Hx.swapInnerHtml
-                        ] [ _i [ _class_ "fas fa-chevron-down" ] [] ]
+                          // move down
+                          if not step.IsLast then
+                              _button
+                                  [ _type_ "button"
+                                    _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                                    _title_ "Move down"
+                                    Hx.post $"/pipelines/{step.PipelineId}/steps/{step.Id}/move?direction=down"
+                                    Hx.targetCss "#steps-list"
+                                    Hx.swapInnerHtml ]
+                                  [ _i [ _class_ "fas fa-chevron-down" ] [] ]
 
-                    // edit
-                    _button [
-                        _type_ "button"
-                        _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
-                        _title_ "Edit parameters"
-                        Hx.get $"/pipelines/{step.PipelineId}/steps/{step.Id}/editor"
-                        Hx.targetCss "#step-editor-container"
-                        Hx.swapInnerHtml
-                    ] [ _i [ _class_ "fas fa-cog" ] [] ]
+                          // edit
+                          _button
+                              [ _type_ "button"
+                                _class_ "p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded"
+                                _title_ "Edit parameters"
+                                Hx.get $"/pipelines/{step.PipelineId}/steps/{step.Id}/editor"
+                                Hx.targetCss "#step-editor-container"
+                                Hx.swapInnerHtml ]
+                              [ _i [ _class_ "fas fa-cog" ] [] ]
 
-                    // toggle
-                    _button [
-                        _type_ "button"
-                        _class_ (
-                            if step.IsEnabled then
-                                "p-1.5 text-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 rounded"
-                            else
-                                "p-1.5 text-green-400 hover:text-green-600 hover:bg-green-50 rounded"
-                        )
-                        _title_ (if step.IsEnabled then "Disable" else "Enable")
-                        Hx.post $"/pipelines/{step.PipelineId}/steps/{step.Id}/toggle"
-                        Hx.targetCss $"#step-{step.Id}"
-                        Hx.swapOuterHtml
-                    ] [ _i [ _class_ (if step.IsEnabled then "fas fa-pause" else "fas fa-play") ] [] ]
+                          // toggle
+                          _button
+                              [ _type_ "button"
+                                _class_ (
+                                    if step.IsEnabled then
+                                        "p-1.5 text-yellow-400 hover:text-yellow-600 hover:bg-yellow-50 rounded"
+                                    else
+                                        "p-1.5 text-green-400 hover:text-green-600 hover:bg-green-50 rounded"
+                                )
+                                _title_ (if step.IsEnabled then "Disable" else "Enable")
+                                Hx.post $"/pipelines/{step.PipelineId}/steps/{step.Id}/toggle"
+                                Hx.targetCss $"#step-{step.Id}"
+                                Hx.swapOuterHtml ]
+                              [ _i [ _class_ (if step.IsEnabled then "fas fa-pause" else "fas fa-play") ] [] ]
 
-                    // delete
-                    _button [
-                        _type_ "button"
-                        _class_ "p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
-                        _title_ "Delete"
-                        Hx.delete $"/pipelines/{step.PipelineId}/steps/{step.Id}"
-                        Hx.targetCss $"#step-{step.Id}"
-                        Hx.swapOuterHtml
-                        Hx.confirm "Are you sure you want to delete this step?"
-                    ] [ _i [ _class_ "fas fa-trash" ] [] ]
-                ]
-            ]
-        ]
+                          // delete
+                          _button
+                              [ _type_ "button"
+                                _class_ "p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded"
+                                _title_ "Delete"
+                                Hx.delete $"/pipelines/{step.PipelineId}/steps/{step.Id}"
+                                Hx.targetCss $"#step-{step.Id}"
+                                Hx.swapOuterHtml
+                                Hx.confirm "Are you sure you want to delete this step?" ]
+                              [ _i [ _class_ "fas fa-trash" ] [] ] ] ] ]
 
     let stepsList (steps: StepItemViewModel list) =
-        _div [ _id_ "steps-list"; _class_ "space-y-3" ] [
-            if steps.IsEmpty then
-                _div [ _class_ "text-center py-8 text-slate-500" ] [
-                    _i [ _class_ "fas fa-layer-group text-3xl mb-2" ] []
-                    _p [] [ Text.raw "No steps configured" ]
-                    _p [ _class_ "text-sm" ] [ Text.raw "Add steps to define pipeline behavior" ]
-                ]
-            else
-                for step in steps do
-                    stepItem step
-        ]
+        _div
+            [ _id_ "steps-list"; _class_ "space-y-3" ]
+            [ if steps.IsEmpty then
+                  _div
+                      [ _class_ "text-center py-8 text-slate-500" ]
+                      [ _i [ _class_ "fas fa-layer-group text-3xl mb-2" ] []
+                        _p [] [ Text.raw "No steps configured" ]
+                        _p [ _class_ "text-sm" ] [ Text.raw "Add steps to define pipeline behavior" ] ]
+              else
+                  for step in steps do
+                      stepItem step ]
 
     let stepSelector (pipelineId: int) (definitions: StepDefinitionViewModel list) =
         let grouped = definitions |> List.groupBy _.Category
 
-        _div [ _class_ "p-4" ] [
-            _div [ _class_ "flex items-center justify-between mb-4 pb-4 border-b" ] [
-                _h3 [ _class_ "text-lg font-semibold text-slate-900" ] [
-                    _i [ _class_ "fas fa-plus-circle mr-2 text-slate-400" ] []
-                    Text.raw "Add Step"
-                ]
-                _button [
-                    _type_ "button"
-                    _class_ "text-slate-400 hover:text-slate-600"
-                    Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''"
-                ] [ _i [ _class_ "fas fa-times" ] [] ]
-            ]
+        _div
+            [ _class_ "p-4" ]
+            [ _div
+                  [ _class_ "flex items-center justify-between mb-4 pb-4 border-b" ]
+                  [ _h3
+                        [ _class_ "text-lg font-semibold text-slate-900" ]
+                        [ _i [ _class_ "fas fa-plus-circle mr-2 text-slate-400" ] []; Text.raw "Add Step" ]
+                    _button
+                        [ _type_ "button"
+                          _class_ "text-slate-400 hover:text-slate-600"
+                          Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''" ]
+                        [ _i [ _class_ "fas fa-times" ] [] ] ]
 
-            _div [ _class_ "space-y-4 max-h-[60vh] overflow-y-auto" ] [
-                for (category, items) in grouped do
-                    _div [] [
-                        _h4 [ _class_ "text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2" ] [
-                            Text.raw category
-                        ]
-                        _div [ _class_ "space-y-2" ] [
-                            for def in items do
-                                let isDisabled = def.IsAlreadyInPipeline
+              _div
+                  [ _class_ "space-y-4 max-h-[60vh] overflow-y-auto" ]
+                  [ for (category, items) in grouped do
+                        _div
+                            []
+                            [ _h4
+                                  [ _class_ "text-sm font-semibold text-slate-700 uppercase tracking-wide mb-2" ]
+                                  [ Text.raw category ]
+                              _div
+                                  [ _class_ "space-y-2" ]
+                                  [ for def in items do
+                                        let isDisabled = def.IsAlreadyInPipeline
 
-                                let buttonClass =
-                                    if isDisabled then
-                                        "w-full p-3 border rounded-md text-left bg-slate-50 cursor-not-allowed opacity-60"
-                                    else
-                                        "w-full p-3 border rounded-md text-left hover:border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
-
-                                _button [
-                                    _type_ "button"
-                                    _class_ buttonClass
-                                    if not isDisabled then
-                                        Hx.post $"/pipelines/{pipelineId}/steps/add?stepTypeKey={def.Key}"
-                                        Hx.targetCss "#steps-list"
-                                        Hx.swap HxSwap.BeforeEnd
-                                    if isDisabled then
-                                        Attr.create "disabled" "disabled"
-                                ] [
-                                    _div [ _class_ "flex items-start space-x-3" ] [
-                                        _div [
-                                            _class_
-                                                "flex-shrink-0 w-8 h-8 bg-slate-100 rounded flex items-center justify-center"
-                                        ] [ _i [ _class_ $"fas {def.Icon} text-slate-500 text-sm" ] [] ]
-                                        _div [] [
-                                            _span [ _class_ "font-medium text-slate-900" ] [ Text.raw def.Name ]
+                                        let buttonClass =
                                             if isDisabled then
-                                                _span [ _class_ "ml-2 text-xs text-slate-500" ] [
-                                                    Text.raw "(already added)"
-                                                ]
-                                            _p [ _class_ "text-sm text-slate-500" ] [ Text.raw def.Description ]
-                                        ]
-                                    ]
-                                ]
-                        ]
-                    ]
-            ]
-        ]
+                                                "w-full p-3 border rounded-md text-left bg-slate-50 cursor-not-allowed opacity-60"
+                                            else
+                                                "w-full p-3 border rounded-md text-left hover:border-slate-300 hover:bg-slate-50 transition-colors cursor-pointer"
+
+                                        _button
+                                            [ _type_ "button"
+                                              _class_ buttonClass
+                                              if not isDisabled then
+                                                  Hx.post $"/pipelines/{pipelineId}/steps/add?stepTypeKey={def.Key}"
+                                                  Hx.targetCss "#steps-list"
+                                                  Hx.swap HxSwap.BeforeEnd
+                                              if isDisabled then
+                                                  Attr.create "disabled" "disabled" ]
+                                            [ _div
+                                                  [ _class_ "flex items-start space-x-3" ]
+                                                  [ _div
+                                                        [ _class_
+                                                              "flex-shrink-0 w-8 h-8 bg-slate-100 rounded flex items-center justify-center" ]
+                                                        [ _i [ _class_ $"fas {def.Icon} text-slate-500 text-sm" ] [] ]
+                                                    _div
+                                                        []
+                                                        [ _span
+                                                              [ _class_ "font-medium text-slate-900" ]
+                                                              [ Text.raw def.Name ]
+                                                          if isDisabled then
+                                                              _span
+                                                                  [ _class_ "ml-2 text-xs text-slate-500" ]
+                                                                  [ Text.raw "(already added)" ]
+                                                          _p
+                                                              [ _class_ "text-sm text-slate-500" ]
+                                                              [ Text.raw def.Description ] ] ] ] ] ] ] ]
 
     let private paramValueToString (v: Parameters.ParamValue) =
         match v with
@@ -835,493 +837,484 @@ module View =
             |> Option.orElse (field.DefaultValue |> Option.map paramValueToString)
             |> Option.defaultValue ""
 
-        _div [ _class_ "space-y-1" ] [
-            _label [ _for_ inputId; _class_ "block text-sm font-medium text-slate-700" ] [
-                Text.raw field.DisplayName
-                if field.IsRequired then
-                    _span [ _class_ "text-red-500 ml-1" ] [ Text.raw "*" ]
-            ]
+        _div
+            [ _class_ "space-y-1" ]
+            [ _label
+                  [ _for_ inputId; _class_ "block text-sm font-medium text-slate-700" ]
+                  [ Text.raw field.DisplayName
+                    if field.IsRequired then
+                        _span [ _class_ "text-red-500 ml-1" ] [ Text.raw "*" ] ]
 
-            match field.Type with
-            | Parameters.Bool ->
-                _div [ _class_ "flex items-center" ] [
-                    _input [
-                        _id_ inputId
+              match field.Type with
+              | Parameters.Bool ->
+                  _div
+                      [ _class_ "flex items-center" ]
+                      [ _input
+                            [ _id_ inputId
+                              _name_ field.Key
+                              _type_ "checkbox"
+                              _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
+                              _value_ "true"
+                              if currentVal = "true" || currentVal = "True" then
+                                  Attr.create "checked" "checked" ] ]
+
+              | Parameters.Choice options ->
+                  _select
+                      [ _id_ inputId
                         _name_ field.Key
-                        _type_ "checkbox"
-                        _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
-                        _value_ "true"
-                        if currentVal = "true" || currentVal = "True" then
-                            Attr.create "checked" "checked"
-                    ]
-                ]
+                        _class_
+                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
+                      [ for opt in options do
+                            if opt = currentVal then
+                                _option [ _value_ opt; Attr.create "selected" "selected" ] [ Text.raw opt ]
+                            else
+                                _option [ _value_ opt ] [ Text.raw opt ] ]
 
-            | Parameters.Choice options ->
-                _select [
-                    _id_ inputId
-                    _name_ field.Key
-                    _class_
-                        "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                ] [
-                    for opt in options do
-                        if opt = currentVal then
-                            _option [ _value_ opt; Attr.create "selected" "selected" ] [ Text.raw opt ]
-                        else
-                            _option [ _value_ opt ] [ Text.raw opt ]
-                ]
+              | Parameters.MultiChoice options ->
+                  let selectedValues =
+                      currentVal.Split(Parameters.multiChoiceDelimiter) |> Array.map _.Trim() |> Set.ofArray
 
-            | Parameters.MultiChoice options ->
-                let selectedValues =
-                    currentVal.Split(Parameters.multiChoiceDelimiter)
-                    |> Array.map _.Trim()
-                    |> Set.ofArray
+                  let containerId = $"mc-{field.Key}"
 
-                let containerId = $"mc-{field.Key}"
+                  let syncScript =
+                      $"var h=document.getElementById('{inputId}');var c=document.getElementById('{containerId}');h.value=Array.from(c.querySelectorAll('input:checked')).map(i=>i.value).join('{Parameters.multiChoiceDelimiter}')"
 
-                let syncScript =
-                    $"var h=document.getElementById('{inputId}');var c=document.getElementById('{containerId}');h.value=Array.from(c.querySelectorAll('input:checked')).map(i=>i.value).join('{Parameters.multiChoiceDelimiter}')"
+                  _div
+                      [ _class_ "space-y-2" ]
+                      [ _input [ _id_ inputId; _name_ field.Key; _type_ "hidden"; _value_ currentVal ]
+                        _div
+                            [ _id_ containerId
+                              _class_ "max-h-48 overflow-y-auto space-y-1 border border-slate-200 rounded-md p-2" ]
+                            [ for opt in options do
+                                  _label
+                                      [ _class_
+                                            "flex items-center space-x-2 cursor-pointer py-1 px-1 hover:bg-slate-50 rounded" ]
+                                      [ _input
+                                            [ _type_ "checkbox"
+                                              _class_
+                                                  "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
+                                              _value_ opt
+                                              Attr.create "onchange" syncScript
+                                              if Set.contains opt selectedValues then
+                                                  Attr.create "checked" "checked" ]
+                                        _span [ _class_ "text-sm text-slate-700" ] [ Text.raw opt ] ] ] ]
 
-                _div [ _class_ "space-y-2" ] [
-                    _input [ _id_ inputId; _name_ field.Key; _type_ "hidden"; _value_ currentVal ]
-                    _div [ _id_ containerId; _class_ "max-h-48 overflow-y-auto space-y-1 border border-slate-200 rounded-md p-2" ] [
-                        for opt in options do
-                            _label [ _class_ "flex items-center space-x-2 cursor-pointer py-1 px-1 hover:bg-slate-50 rounded" ] [
-                                _input [
-                                    _type_ "checkbox"
-                                    _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
-                                    _value_ opt
-                                    Attr.create "onchange" syncScript
-                                    if Set.contains opt selectedValues then
-                                        Attr.create "checked" "checked"
-                                ]
-                                _span [ _class_ "text-sm text-slate-700" ] [ Text.raw opt ]
-                            ]
-                    ]
-                ]
+              | Parameters.Int(minVal, maxVal) ->
+                  _input
+                      [ _id_ inputId
+                        _name_ field.Key
+                        _type_ "number"
+                        _value_ currentVal
+                        _class_
+                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                        match minVal with
+                        | Some m -> Attr.create "min" (string m)
+                        | None -> ()
+                        match maxVal with
+                        | Some m -> Attr.create "max" (string m)
+                        | None -> () ]
 
-            | Parameters.Int(minVal, maxVal) ->
-                _input [
-                    _id_ inputId
-                    _name_ field.Key
-                    _type_ "number"
-                    _value_ currentVal
-                    _class_
-                        "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                    match minVal with
-                    | Some m -> Attr.create "min" (string m)
-                    | None -> ()
-                    match maxVal with
-                    | Some m -> Attr.create "max" (string m)
-                    | None -> ()
-                ]
+              | Parameters.Decimal(minVal, maxVal) ->
+                  _input
+                      [ _id_ inputId
+                        _name_ field.Key
+                        _type_ "number"
+                        Attr.create "step" "0.01"
+                        _value_ currentVal
+                        _class_
+                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                        match minVal with
+                        | Some m -> Attr.create "min" (string m)
+                        | None -> ()
+                        match maxVal with
+                        | Some m -> Attr.create "max" (string m)
+                        | None -> () ]
 
-            | Parameters.Decimal(minVal, maxVal) ->
-                _input [
-                    _id_ inputId
-                    _name_ field.Key
-                    _type_ "number"
-                    Attr.create "step" "0.01"
-                    _value_ currentVal
-                    _class_
-                        "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                    match minVal with
-                    | Some m -> Attr.create "min" (string m)
-                    | None -> ()
-                    match maxVal with
-                    | Some m -> Attr.create "max" (string m)
-                    | None -> ()
-                ]
+              | Parameters.String ->
+                  _input
+                      [ _id_ inputId
+                        _name_ field.Key
+                        _type_ "text"
+                        _value_ currentVal
+                        _class_
+                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
 
-            | Parameters.String ->
-                _input [
-                    _id_ inputId
-                    _name_ field.Key
-                    _type_ "text"
-                    _value_ currentVal
-                    _class_
-                        "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                ]
-
-            if not (String.IsNullOrEmpty field.Description) then
-                _p [ _class_ "text-xs text-slate-500" ] [ Text.raw field.Description ]
-        ]
+              if not (String.IsNullOrEmpty field.Description) then
+                  _p [ _class_ "text-xs text-slate-500" ] [ Text.raw field.Description ] ]
 
     let stepEditor (vm: StepEditorViewModel) =
-        _div [ _class_ "border-l border-slate-100 bg-white p-4" ] [
-            _div [ _class_ "flex items-center justify-between mb-4 pb-4 border-b" ] [
-                _div [ _class_ "flex items-center space-x-3" ] [
-                    _div [ _class_ "w-10 h-10 bg-slate-100 rounded-md flex items-center justify-center" ] [
-                        _i [ _class_ $"fas {vm.StepIcon} text-slate-500" ] []
-                    ]
-                    _div [] [
-                        _h3 [ _class_ "font-semibold text-slate-900" ] [ Text.raw vm.StepName ]
-                        _p [ _class_ "text-sm text-slate-500" ] [ Text.raw "Edit Parameters" ]
-                    ]
-                ]
-                _button [
-                    _type_ "button"
-                    _class_ "text-slate-400 hover:text-slate-600"
-                    Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''"
-                ] [ _i [ _class_ "fas fa-times" ] [] ]
-            ]
+        _div
+            [ _class_ "border-l border-slate-100 bg-white p-4" ]
+            [ _div
+                  [ _class_ "flex items-center justify-between mb-4 pb-4 border-b" ]
+                  [ _div
+                        [ _class_ "flex items-center space-x-3" ]
+                        [ _div
+                              [ _class_ "w-10 h-10 bg-slate-100 rounded-md flex items-center justify-center" ]
+                              [ _i [ _class_ $"fas {vm.StepIcon} text-slate-500" ] [] ]
+                          _div
+                              []
+                              [ _h3 [ _class_ "font-semibold text-slate-900" ] [ Text.raw vm.StepName ]
+                                _p [ _class_ "text-sm text-slate-500" ] [ Text.raw "Edit Parameters" ] ] ]
+                    _button
+                        [ _type_ "button"
+                          _class_ "text-slate-400 hover:text-slate-600"
+                          Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''" ]
+                        [ _i [ _class_ "fas fa-times" ] [] ] ]
 
-            if not vm.Errors.IsEmpty then
-                _div [ _class_ "mb-4 p-3 bg-red-50 border border-red-200 rounded-md" ] [
-                    _ul [ _class_ "text-sm text-red-700" ] [
-                        for err in vm.Errors do
-                            _li [] [ Text.raw err ]
-                    ]
-                ]
+              if not vm.Errors.IsEmpty then
+                  _div
+                      [ _class_ "mb-4 p-3 bg-red-50 border border-red-200 rounded-md" ]
+                      [ _ul
+                            [ _class_ "text-sm text-red-700" ]
+                            [ for err in vm.Errors do
+                                  _li [] [ Text.raw err ] ] ]
 
-            _form [
-                Hx.post $"/pipelines/{vm.PipelineId}/steps/{vm.StepId}/save"
-                Hx.targetCss $"#step-{vm.StepId}"
-                Hx.swapOuterHtml
-                Attr.create "hx-on::after-swap" "if(event.detail.target.id!=='step-editor-container'){document.getElementById('step-editor-container').innerHTML=''}"
-            ] [
-                _div [ _class_ "space-y-4" ] [
-                    for field in vm.Fields do
-                        parameterField field
-                ]
+              _form
+                  [ Hx.post $"/pipelines/{vm.PipelineId}/steps/{vm.StepId}/save"
+                    Hx.targetCss $"#step-{vm.StepId}"
+                    Hx.swapOuterHtml
+                    Attr.create
+                        "hx-on::after-swap"
+                        "if(event.detail.target.id!=='step-editor-container'){document.getElementById('step-editor-container').innerHTML=''}" ]
+                  [ _div
+                        [ _class_ "space-y-4" ]
+                        [ for field in vm.Fields do
+                              parameterField field ]
 
-                _div [ _class_ "mt-6 flex justify-end space-x-3" ] [
-                    _button [
-                        _type_ "button"
-                        _class_
-                            "px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-                        Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''"
-                    ] [ Text.raw "Cancel" ]
-                    _button [
-                        _type_ "submit"
-                        _class_
-                            "px-3 py-2 text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-md transition-colors"
-                    ] [ _i [ _class_ "fas fa-save mr-1" ] []; Text.raw "Save" ]
-                ]
-            ]
-        ]
+                    _div
+                        [ _class_ "mt-6 flex justify-end space-x-3" ]
+                        [ _button
+                              [ _type_ "button"
+                                _class_
+                                    "px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
+                                Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''" ]
+                              [ Text.raw "Cancel" ]
+                          _button
+                              [ _type_ "submit"
+                                _class_
+                                    "px-3 py-2 text-sm bg-slate-900 hover:bg-slate-800 text-white rounded-md transition-colors" ]
+                              [ _i [ _class_ "fas fa-save mr-1" ] []; Text.raw "Save" ] ] ] ]
 
     let stepEditorEmpty = _div [ _id_ "step-editor-container" ] []
 
     let private settingsForm (vm: EditPipelineViewModel) =
-        _form [ Hx.post $"/pipelines/{vm.Id}/edit"; Hx.targetCss "#modal-container"; Hx.swapInnerHtml ] [
-            _div [ _class_ "space-y-4" ] [
-                // market type
-                _div [] [
-                    _label [ _for_ "marketType"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
-                        Text.raw "Market Type "
-                        _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
-                    ]
-                    _select [
-                        _id_ "marketType"
-                        _name_ "marketType"
-                        _class_
-                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                        Hx.get "/instruments/base-currencies"
-                        Hx.trigger "change"
-                        Hx.includeCss "[name='marketType']"
-                        Hx.targetCss "#baseCurrency"
-                        Hx.swap HxSwap.InnerHTML
-                        Attr.create "hx-on::after-settle"
-                            "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('symbol');if(s)s.value=''"
-                    ] [
-                        for mt in vm.MarketTypes do
-                            if mt = vm.MarketType then
-                                _option [ _value_ (string (int mt)); Attr.create "selected" "selected" ] [
-                                    Text.raw (mt.ToString())
-                                ]
-                            else
-                                _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ]
-                    ]
-                ]
+        _form
+            [ Hx.post $"/pipelines/{vm.Id}/edit"; Hx.targetCss "#modal-container"; Hx.swapInnerHtml ]
+            [ _div
+                  [ _class_ "space-y-4" ]
+                  [
+                    // market type
+                    _div
+                        []
+                        [ _label
+                              [ _for_ "marketType"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                              [ Text.raw "Market Type "; _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
+                          _select
+                              [ _id_ "marketType"
+                                _name_ "marketType"
+                                _class_
+                                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                Hx.get "/instruments/base-currencies"
+                                Hx.trigger "change"
+                                Hx.includeCss "[name='marketType']"
+                                Hx.targetCss "#baseCurrency"
+                                Hx.swap HxSwap.InnerHTML
+                                Attr.create
+                                    "hx-on::after-settle"
+                                    "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('symbol');if(s)s.value=''" ]
+                              [ for mt in vm.MarketTypes do
+                                    if mt = vm.MarketType then
+                                        _option
+                                            [ _value_ (string (int mt)); Attr.create "selected" "selected" ]
+                                            [ Text.raw (mt.ToString()) ]
+                                    else
+                                        _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ] ] ]
 
-                // symbol (base + quote dropdowns)
-                _input [ _id_ "symbol"; _name_ "symbol"; _type_ "hidden"; _value_ vm.Symbol ]
-                _div [] [
-                    _label [ _for_ "baseCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
-                        Text.raw "Base Currency "
-                        _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
-                    ]
-                    _select [
-                        _id_ "baseCurrency"
-                        _name_ "baseCurrency"
-                        _class_
-                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                        Hx.get "/instruments/quote-currencies"
-                        Hx.trigger "change"
-                        Hx.includeCss "[name='marketType'],[name='baseCurrency']"
-                        Hx.targetCss "#quoteCurrency"
-                        Hx.swap HxSwap.InnerHTML
-                        Attr.create "hx-on::after-settle"
-                            "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''"
-                    ] [
-                        _option [ _value_ "" ] [ Text.raw "-- Select --" ]
-                        for c in vm.BaseCurrencies do
-                            if c = vm.BaseCurrency then
-                                _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
-                            else
-                                _option [ _value_ c ] [ Text.raw c ]
-                    ]
-                ]
-                _div [] [
-                    _label [ _for_ "quoteCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
-                        Text.raw "Quote Currency "
-                        _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
-                    ]
-                    _select [
-                        _id_ "quoteCurrency"
-                        _name_ "quoteCurrency"
-                        _class_
-                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                        Attr.create "hx-on:change"
-                            "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''"
-                    ] [
-                        _option [ _value_ "" ] [ Text.raw "-- Select --" ]
-                        for c in vm.QuoteCurrencies do
-                            if c = vm.QuoteCurrency then
-                                _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
-                            else
-                                _option [ _value_ c ] [ Text.raw c ]
-                    ]
-                ]
+                    // symbol (base + quote dropdowns)
+                    _input [ _id_ "symbol"; _name_ "symbol"; _type_ "hidden"; _value_ vm.Symbol ]
+                    _div
+                        []
+                        [ _label
+                              [ _for_ "baseCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                              [ Text.raw "Base Currency "; _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
+                          _select
+                              [ _id_ "baseCurrency"
+                                _name_ "baseCurrency"
+                                _class_
+                                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                Hx.get "/instruments/quote-currencies"
+                                Hx.trigger "change"
+                                Hx.includeCss "[name='marketType'],[name='baseCurrency']"
+                                Hx.targetCss "#quoteCurrency"
+                                Hx.swap HxSwap.InnerHTML
+                                Attr.create
+                                    "hx-on::after-settle"
+                                    "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
+                              [ _option [ _value_ "" ] [ Text.raw "-- Select --" ]
+                                for c in vm.BaseCurrencies do
+                                    if c = vm.BaseCurrency then
+                                        _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
+                                    else
+                                        _option [ _value_ c ] [ Text.raw c ] ] ]
+                    _div
+                        []
+                        [ _label
+                              [ _for_ "quoteCurrency"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                              [ Text.raw "Quote Currency "; _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
+                          _select
+                              [ _id_ "quoteCurrency"
+                                _name_ "quoteCurrency"
+                                _class_
+                                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                Attr.create
+                                    "hx-on:change"
+                                    "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
+                              [ _option [ _value_ "" ] [ Text.raw "-- Select --" ]
+                                for c in vm.QuoteCurrencies do
+                                    if c = vm.QuoteCurrency then
+                                        _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
+                                    else
+                                        _option [ _value_ c ] [ Text.raw c ] ] ]
 
-                // tags
-                _div [] [
-                    _label [ _for_ "tags"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [ Text.raw "Tags" ]
-                    _input [
-                        _id_ "tags"
-                        _name_ "tags"
-                        _type_ "text"
-                        _value_ vm.Tags
-                        Attr.create "placeholder" "e.g., scalping, btc"
-                        _class_
-                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                    ]
-                    _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw "Comma-separated tags" ]
-                ]
+                    // tags
+                    _div
+                        []
+                        [ _label
+                              [ _for_ "tags"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                              [ Text.raw "Tags" ]
+                          _input
+                              [ _id_ "tags"
+                                _name_ "tags"
+                                _type_ "text"
+                                _value_ vm.Tags
+                                Attr.create "placeholder" "e.g., scalping, btc"
+                                _class_
+                                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
+                          _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw "Comma-separated tags" ] ]
 
-                // execution interval
-                _div [] [
-                    _label [ _for_ "executionInterval"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ] [
-                        Text.raw "Execution Interval (minutes) "
-                        _span [ _class_ "text-red-500" ] [ Text.raw "*" ]
-                    ]
-                    _input [
-                        _id_ "executionInterval"
-                        _name_ "executionInterval"
-                        _type_ "number"
-                        _value_ (string vm.ExecutionInterval)
-                        Attr.create "min" "1"
-                        _class_
-                            "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                        Attr.create "required" "required"
-                    ]
-                ]
+                    // execution interval
+                    _div
+                        []
+                        [ _label
+                              [ _for_ "executionInterval"; _class_ "block text-sm font-medium text-slate-600 mb-1.5" ]
+                              [ Text.raw "Execution Interval (minutes) "
+                                _span [ _class_ "text-red-500" ] [ Text.raw "*" ] ]
+                          _input
+                              [ _id_ "executionInterval"
+                                _name_ "executionInterval"
+                                _type_ "number"
+                                _value_ (string vm.ExecutionInterval)
+                                Attr.create "min" "1"
+                                _class_
+                                    "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
+                                Attr.create "required" "required" ] ]
 
-                // enabled
-                _div [ _class_ "flex items-center" ] [
-                    _input [
-                        _id_ "enabled"
-                        _name_ "enabled"
-                        _type_ "checkbox"
-                        _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
-                        if vm.Enabled then
-                            Attr.create "checked" "checked"
-                    ]
-                    _label [ _for_ "enabled"; _class_ "ml-2 block text-sm text-slate-700" ] [
-                        Text.raw "Pipeline enabled"
-                    ]
-                ]
+                    // enabled
+                    _div
+                        [ _class_ "flex items-center" ]
+                        [ _input
+                              [ _id_ "enabled"
+                                _name_ "enabled"
+                                _type_ "checkbox"
+                                _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
+                                if vm.Enabled then
+                                    Attr.create "checked" "checked" ]
+                          _label
+                              [ _for_ "enabled"; _class_ "ml-2 block text-sm text-slate-700" ]
+                              [ Text.raw "Pipeline enabled" ] ]
 
-                // submit
-                _div [ _class_ "pt-4 border-t" ] [
-                    _button [
-                        _type_ "submit"
-                        _class_
-                            "w-full px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
-                    ] [ _i [ _class_ "fas fa-save mr-2" ] []; Text.raw "Save Settings" ]
-                ]
-            ]
-        ]
+                    // submit
+                    _div
+                        [ _class_ "pt-4 border-t" ]
+                        [ _button
+                              [ _type_ "submit"
+                                _class_
+                                    "w-full px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors" ]
+                              [ _i [ _class_ "fas fa-save mr-2" ] []; Text.raw "Save Settings" ] ] ] ]
 
     let modal (vm: EditPipelineViewModel) =
-        _div [
-            _id_ "pipeline-edit-modal"
-            _class_ "fixed inset-0 z-50 overflow-y-auto"
-            Attr.create "aria-labelledby" "modal-title"
-            Attr.create "role" "dialog"
-            Attr.create "aria-modal" "true"
-        ] [
-            modalBackdrop
+        _div
+            [ _id_ "pipeline-edit-modal"
+              _class_ "fixed inset-0 z-50 overflow-y-auto"
+              Attr.create "aria-labelledby" "modal-title"
+              Attr.create "role" "dialog"
+              Attr.create "aria-modal" "true" ]
+            [ modalBackdrop
 
-            _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
-                _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
-                    _div [
-                        _class_
-                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-7xl"
-                    ] [
-                        // header
-                        _div [ _class_ "border-b border-slate-100 px-6 py-4" ] [
-                            _div [ _class_ "flex items-center justify-between" ] [
-                                _div [] [
-                                    _h3 [ _id_ "modal-title"; _class_ "text-lg font-semibold text-slate-900" ] [
-                                        _i [ _class_ "fas fa-edit mr-2 text-slate-400" ] []
-                                        Text.raw "Edit Pipeline"
-                                    ]
-                                    _p [ _class_ "text-slate-500 text-sm mt-1" ] [
-                                        Text.raw $"{vm.Symbol} • ID: {vm.Id}"
-                                    ]
-                                ]
-                                closeModalButton
-                            ]
-                        ]
+              _div
+                  [ _class_ "fixed inset-0 z-10 overflow-y-auto" ]
+                  [ _div
+                        [ _class_ "flex min-h-full items-center justify-center p-4" ]
+                        [ _div
+                              [ _class_
+                                    "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-7xl" ]
+                              [
+                                // header
+                                _div
+                                    [ _class_ "border-b border-slate-100 px-6 py-4" ]
+                                    [ _div
+                                          [ _class_ "flex items-center justify-between" ]
+                                          [ _div
+                                                []
+                                                [ _h3
+                                                      [ _id_ "modal-title"
+                                                        _class_ "text-lg font-semibold text-slate-900" ]
+                                                      [ _i [ _class_ "fas fa-edit mr-2 text-slate-400" ] []
+                                                        Text.raw "Edit Pipeline" ]
+                                                  _p
+                                                      [ _class_ "text-slate-500 text-sm mt-1" ]
+                                                      [ Text.raw $"{vm.Symbol} • ID: {vm.Id}" ] ]
+                                            closeModalButton ] ]
 
-                        // content
-                        _div [ _class_ "flex max-h-[70vh]" ] [
-                            // left column
-                            _div [ _class_ "w-1/4 p-6 border-r overflow-y-auto" ] [
-                                _h4 [ _class_ "text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4" ] [
-                                    _i [ _class_ "fas fa-cog mr-2" ] []
-                                    Text.raw "Settings"
-                                ]
-                                settingsForm vm
-                            ]
+                                // content
+                                _div
+                                    [ _class_ "flex max-h-[70vh]" ]
+                                    [
+                                      // left column
+                                      _div
+                                          [ _class_ "w-1/4 p-6 border-r overflow-y-auto" ]
+                                          [ _h4
+                                                [ _class_
+                                                      "text-sm font-semibold text-slate-700 uppercase tracking-wide mb-4" ]
+                                                [ _i [ _class_ "fas fa-cog mr-2" ] []; Text.raw "Settings" ]
+                                            settingsForm vm ]
 
-                            // middle column
-                            _div [ _class_ "w-1/2 p-6 border-r overflow-y-auto" ] [
-                                _div [ _class_ "flex items-center justify-between mb-4" ] [
-                                    _h4 [ _class_ "text-sm font-semibold text-slate-700 uppercase tracking-wide" ] [
-                                        _i [ _class_ "fas fa-layer-group mr-2" ] []
-                                        Text.raw "Steps"
-                                    ]
-                                    _button [
-                                        _type_ "button"
-                                        _class_
-                                            "px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-medium rounded-md transition-colors"
-                                        Hx.get $"/pipelines/{vm.Id}/steps/selector"
-                                        Hx.targetCss "#step-editor-container"
-                                        Hx.swapInnerHtml
-                                    ] [ _i [ _class_ "fas fa-plus mr-1" ] []; Text.raw "Add" ]
-                                ]
-                                stepsList vm.Steps
-                            ]
+                                      // middle column
+                                      _div
+                                          [ _class_ "w-1/2 p-6 border-r overflow-y-auto" ]
+                                          [ _div
+                                                [ _class_ "flex items-center justify-between mb-4" ]
+                                                [ _h4
+                                                      [ _class_
+                                                            "text-sm font-semibold text-slate-700 uppercase tracking-wide" ]
+                                                      [ _i [ _class_ "fas fa-layer-group mr-2" ] []; Text.raw "Steps" ]
+                                                  _button
+                                                      [ _type_ "button"
+                                                        _class_
+                                                            "px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 text-sm font-medium rounded-md transition-colors"
+                                                        Hx.get $"/pipelines/{vm.Id}/steps/selector"
+                                                        Hx.targetCss "#step-editor-container"
+                                                        Hx.swapInnerHtml ]
+                                                      [ _i [ _class_ "fas fa-plus mr-1" ] []; Text.raw "Add" ] ]
+                                            stepsList vm.Steps ]
 
-                            // right column
-                            _div [ _id_ "step-editor-container"; _class_ "w-1/4 overflow-y-auto" ] []
-                        ]
+                                      // right column
+                                      _div [ _id_ "step-editor-container"; _class_ "w-1/4 overflow-y-auto" ] [] ]
 
-                        // footer
-                        _div [ _class_ "px-6 py-4 flex justify-between items-center border-t border-slate-100" ] [
-                            _div [
-                                _class_ "bg-slate-50 border border-slate-200 rounded-md p-2 text-xs text-slate-500"
-                            ] [
-                                _i [ _class_ "fas fa-info-circle mr-1" ] []
-                                Text.raw "Steps execute in order from top to bottom"
-                            ]
-                            _button [
-                                _type_ "button"
-                                _class_
-                                    "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
-                                Hx.get "/pipelines/modal/close"
-                                Hx.targetCss "#modal-container"
-                                Hx.swapInnerHtml
-                            ] [ _i [ _class_ "fas fa-times mr-2" ] []; Text.raw "Close" ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
+                                // footer
+                                _div
+                                    [ _class_ "px-6 py-4 flex justify-between items-center border-t border-slate-100" ]
+                                    [ _div
+                                          [ _class_
+                                                "bg-slate-50 border border-slate-200 rounded-md p-2 text-xs text-slate-500" ]
+                                          [ _i [ _class_ "fas fa-info-circle mr-1" ] []
+                                            Text.raw "Steps execute in order from top to bottom" ]
+                                      _button
+                                          [ _type_ "button"
+                                            _class_
+                                                "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
+                                            Hx.get "/pipelines/modal/close"
+                                            Hx.targetCss "#modal-container"
+                                            Hx.swapInnerHtml ]
+                                          [ _i [ _class_ "fas fa-times mr-2" ] []; Text.raw "Close" ] ] ] ] ] ]
 
     let successResponse (pipelineId: int) =
-        _div [ _id_ "pipeline-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
-            modalBackdrop
-            _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
-                _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
-                    _div [
-                        _class_
-                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
-                    ] [
-                        _div [
-                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4"
-                        ] [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Pipeline Updated!" ]
-                        _p [ _class_ "text-slate-600 mb-4" ] [ Text.raw "Your changes have been saved successfully." ]
-                        _button [
-                            _type_ "button"
-                            _class_
-                                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
-                            Hx.get "/pipelines/modal/close"
-                            Hx.targetCss "#modal-container"
-                            Hx.swapInnerHtml
-                            Attr.create "hx-on::after-request" "htmx.trigger('#pipelines-container', 'load')"
-                        ] [ Text.raw "Close" ]
-                    ]
-                ]
-            ]
-        ]
+        _div
+            [ _id_ "pipeline-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ]
+            [ modalBackdrop
+              _div
+                  [ _class_ "fixed inset-0 z-10 overflow-y-auto" ]
+                  [ _div
+                        [ _class_ "flex min-h-full items-center justify-center p-4" ]
+                        [ _div
+                              [ _class_
+                                    "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center" ]
+                              [ _div
+                                    [ _class_
+                                          "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-50 mb-4" ]
+                                    [ _i [ _class_ "fas fa-check text-3xl text-green-600" ] [] ]
+                                _h3
+                                    [ _class_ "text-lg font-semibold text-slate-900 mb-2" ]
+                                    [ Text.raw "Pipeline Updated!" ]
+                                _p
+                                    [ _class_ "text-slate-600 mb-4" ]
+                                    [ Text.raw "Your changes have been saved successfully." ]
+                                _button
+                                    [ _type_ "button"
+                                      _class_
+                                          "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
+                                      Hx.get "/pipelines/modal/close"
+                                      Hx.targetCss "#modal-container"
+                                      Hx.swapInnerHtml
+                                      Attr.create "hx-on::after-request" "htmx.trigger('#pipelines-container', 'load')" ]
+                                    [ Text.raw "Close" ] ] ] ] ]
 
     let errorResponse (message: string) (pipelineId: int) =
-        _div [ _id_ "pipeline-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
-            modalBackdrop
-            _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
-                _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
-                    _div [
-                        _class_
-                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
-                    ] [
-                        _div [
-                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
-                        ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Error" ]
-                        _p [ _class_ "text-slate-600 mb-4" ] [ Text.raw message ]
-                        _div [ _class_ "flex justify-center space-x-3" ] [
-                            _button [
-                                _type_ "button"
-                                _class_
-                                    "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
-                                Hx.get "/pipelines/modal/close"
-                                Hx.targetCss "#modal-container"
-                                Hx.swapInnerHtml
-                            ] [ Text.raw "Close" ]
-                            _button [
-                                _type_ "button"
-                                _class_
-                                    "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
-                                Hx.get $"/pipelines/{pipelineId}/edit/modal"
-                                Hx.targetCss "#modal-container"
-                                Hx.swapInnerHtml
-                            ] [ Text.raw "Try Again" ]
-                        ]
-                    ]
-                ]
-            ]
-        ]
+        _div
+            [ _id_ "pipeline-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ]
+            [ modalBackdrop
+              _div
+                  [ _class_ "fixed inset-0 z-10 overflow-y-auto" ]
+                  [ _div
+                        [ _class_ "flex min-h-full items-center justify-center p-4" ]
+                        [ _div
+                              [ _class_
+                                    "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center" ]
+                              [ _div
+                                    [ _class_
+                                          "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4" ]
+                                    [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
+                                _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Error" ]
+                                _p [ _class_ "text-slate-600 mb-4" ] [ Text.raw message ]
+                                _div
+                                    [ _class_ "flex justify-center space-x-3" ]
+                                    [ _button
+                                          [ _type_ "button"
+                                            _class_
+                                                "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
+                                            Hx.get "/pipelines/modal/close"
+                                            Hx.targetCss "#modal-container"
+                                            Hx.swapInnerHtml ]
+                                          [ Text.raw "Close" ]
+                                      _button
+                                          [ _type_ "button"
+                                            _class_
+                                                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
+                                            Hx.get $"/pipelines/{pipelineId}/edit/modal"
+                                            Hx.targetCss "#modal-container"
+                                            Hx.swapInnerHtml ]
+                                          [ Text.raw "Try Again" ] ] ] ] ] ]
 
     let notFound =
-        _div [ _id_ "pipeline-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ] [
-            modalBackdrop
-            _div [ _class_ "fixed inset-0 z-10 overflow-y-auto" ] [
-                _div [ _class_ "flex min-h-full items-center justify-center p-4" ] [
-                    _div [
-                        _class_
-                            "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center"
-                    ] [
-                        _div [
-                            _class_ "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4"
-                        ] [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
-                        _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Pipeline Not Found" ]
-                        _p [ _class_ "text-slate-600 mb-4" ] [ Text.raw "The requested pipeline could not be found." ]
-                        _button [
-                            _type_ "button"
-                            _class_
-                                "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
-                            Hx.get "/pipelines/modal/close"
-                            Hx.targetCss "#modal-container"
-                            Hx.swapInnerHtml
-                        ] [ Text.raw "Close" ]
-                    ]
-                ]
-            ]
-        ]
+        _div
+            [ _id_ "pipeline-edit-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ]
+            [ modalBackdrop
+              _div
+                  [ _class_ "fixed inset-0 z-10 overflow-y-auto" ]
+                  [ _div
+                        [ _class_ "flex min-h-full items-center justify-center p-4" ]
+                        [ _div
+                              [ _class_
+                                    "relative transform overflow-hidden rounded-lg bg-white shadow-lg w-full max-w-md p-6 text-center" ]
+                              [ _div
+                                    [ _class_
+                                          "mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-50 mb-4" ]
+                                    [ _i [ _class_ "fas fa-exclamation-triangle text-3xl text-red-600" ] [] ]
+                                _h3
+                                    [ _class_ "text-lg font-semibold text-slate-900 mb-2" ]
+                                    [ Text.raw "Pipeline Not Found" ]
+                                _p
+                                    [ _class_ "text-slate-600 mb-4" ]
+                                    [ Text.raw "The requested pipeline could not be found." ]
+                                _button
+                                    [ _type_ "button"
+                                      _class_
+                                          "px-4 py-2 text-slate-600 hover:bg-slate-100 font-medium text-sm rounded-md transition-colors"
+                                      Hx.get "/pipelines/modal/close"
+                                      Hx.targetCss "#modal-container"
+                                      Hx.swapInnerHtml ]
+                                    [ Text.raw "Close" ] ] ] ] ]
 
 module Handler =
     let modal (pipelineId: int) : HttpHandler =
