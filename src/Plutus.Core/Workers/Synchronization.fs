@@ -84,9 +84,7 @@ module CandlestickSync =
 
     let syncRecent (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
         task {
-            let! latestResult = CandlestickRepository.getLatest db symbol MarketType.Okx "1m" ct
-
-            match latestResult with
+            match! CandlestickRepository.getLatest db symbol MarketType.Okx "1m" ct with
             | Ok(Some latest) ->
                 let gap = DateTime.UtcNow - latest.Timestamp
 
@@ -118,9 +116,8 @@ module CandlestickSync =
     let syncHistory (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
         task {
             let oneYearAgo = DateTimeOffset.UtcNow.AddDays(-historyDays)
-            let! oldestResult = CandlestickRepository.getOldest db symbol MarketType.Okx "1m" ct
 
-            match oldestResult with
+            match! CandlestickRepository.getOldest db symbol MarketType.Okx "1m" ct with
             | Ok(Some oldest) when DateTimeOffset(oldest.Timestamp) <= oneYearAgo -> ()
             | Ok maybeOldest ->
                 let startFrom =
@@ -138,9 +135,7 @@ module CandlestickSync =
 
     let syncGaps (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
         task {
-            let! gapsResult = CandlestickRepository.findGaps db symbol MarketType.Okx "1m" ct
-
-            match gapsResult with
+            match! CandlestickRepository.findGaps db symbol MarketType.Okx "1m" ct with
             | Ok gaps when gaps.Length > 0 ->
                 logger.LogInformation("Found {Count} gaps for {Symbol}", gaps.Length, symbol)
 

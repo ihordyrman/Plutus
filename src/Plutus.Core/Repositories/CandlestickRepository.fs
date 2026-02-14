@@ -10,6 +10,9 @@ open Plutus.Core.Shared.Errors
 [<CLIMutable>]
 type Gap = { GapStart: DateTime; GapEnd: DateTime }
 
+[<CLIMutable>]
+type WeeklyCoverage = { Symbol: string; WeekStart: DateTime; Count: int }
+
 [<RequireQualifiedAccess>]
 module CandlestickRepository =
 
@@ -233,6 +236,23 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
+    let deleteAllBySymbol (db: IDbConnection) (symbol: string) (token: CancellationToken) =
+        task {
+            try
+                let! rowsAffected =
+                    db.ExecuteAsync(
+                        CommandDefinition(
+                            "DELETE FROM candlesticks WHERE symbol = @Symbol",
+                            {| Symbol = symbol |},
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok rowsAffected
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
     let deleteBySymbol (db: IDbConnection) (symbol: string) (marketType: MarketType) (token: CancellationToken) =
         task {
             try
@@ -286,6 +306,94 @@ module CandlestickRepository =
                     )
 
                 return Ok result
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
+    let getDistinctTimeframes (db: IDbConnection) (token: CancellationToken) =
+        task {
+            try
+                let! results =
+                    db.QueryAsync<string>(
+                        CommandDefinition(
+                            "SELECT DISTINCT timeframe FROM candlesticks ORDER BY timeframe",
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok(results |> Seq.toList)
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
+    let getDistinctSymbolCount (db: IDbConnection) (timeframe: string) (token: CancellationToken) =
+        task {
+            try
+                let! result =
+                    db.QuerySingleAsync<int>(
+                        CommandDefinition(
+                            "SELECT COUNT(DISTINCT symbol) FROM candlesticks WHERE timeframe = @Timeframe",
+                            {| Timeframe = timeframe |},
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok result
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
+    let getWeeklyCoveragePaged
+        (db: IDbConnection)
+        (timeframe: string)
+        (offset: int)
+        (limit: int)
+        (token: CancellationToken)
+        =
+        task {
+            try
+                let! results =
+                    db.QueryAsync<WeeklyCoverage>(
+                        CommandDefinition(
+                            """WITH symbols AS (
+                                   SELECT DISTINCT symbol FROM candlesticks
+                                   WHERE timeframe = @Timeframe
+                                   ORDER BY symbol
+                                   LIMIT @Limit OFFSET @Offset
+                               )
+                               SELECT c.symbol, date_trunc('week', c.timestamp) as week_start, COUNT(*) as count
+                               FROM candlesticks c
+                               INNER JOIN symbols s ON c.symbol = s.symbol
+                               WHERE c.timeframe = @Timeframe
+                               GROUP BY c.symbol, date_trunc('week', c.timestamp)
+                               ORDER BY c.symbol, week_start""",
+                            {| Timeframe = timeframe; Limit = limit; Offset = offset |},
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok(results |> Seq.toList)
+            with ex ->
+                return Error(Unexpected ex)
+        }
+
+    let getWeeklyCoverage (db: IDbConnection) (timeframe: string) (token: CancellationToken) =
+        task {
+            try
+                let! results =
+                    db.QueryAsync<WeeklyCoverage>(
+                        CommandDefinition(
+                            """SELECT symbol, date_trunc('week', timestamp) as week_start, COUNT(*) as count
+                               FROM candlesticks
+                               WHERE timeframe = @Timeframe
+                               GROUP BY symbol, date_trunc('week', timestamp)
+                               ORDER BY symbol, week_start""",
+                            {| Timeframe = timeframe |},
+                            cancellationToken = token
+                        )
+                    )
+
+                return Ok(results |> Seq.toList)
             with ex ->
                 return Error(Unexpected ex)
         }

@@ -137,6 +137,10 @@ let pipelines =
               PipelineEdit.Handler.saveStep pipelineId stepId ctx
           )) ]
 
+let coverageHeatmap =
+    [ get "/coverage-heatmap" (requireAuth CoverageHeatmap.Handler.heatmap)
+      delete "/coverage-heatmap/{symbol}" (requireAuth CoverageHeatmap.Handler.deleteSymbol) ]
+
 let candlestickSync =
     [ get "/candlestick-sync/modal" (requireAuth CandlestickSync.Handler.modal)
       get "/candlestick-sync/modal/close" (requireAuth CandlestickSync.Handler.closeModal)
@@ -203,5 +207,16 @@ app.UseAuthorization() |> ignore
 app.UseDefaultFiles().UseStaticFiles() |> ignore
 
 app
-    .UseFalco(auth @ general @ instruments @ balances @ markets @ accounts @ pipelines @ orders @ candlestickSync)
+    .UseFalco(
+        auth
+        @ general
+        @ instruments
+        @ balances
+        @ markets
+        @ accounts
+        @ pipelines
+        @ orders
+        @ coverageHeatmap
+        @ candlestickSync
+    )
     .Run(Response.ofPlainText "Not found")

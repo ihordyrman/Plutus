@@ -175,7 +175,7 @@ module View =
             [ _id_ "sync-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ]
             [ _div
                   [ Hx.get "/candlestick-sync/jobs"
-                    Hx.targetCss "#sync-jobs-container"
+                    Hx.targetCss "#data-coverage-content"
                     Hx.swapInnerHtml
                     Hx.trigger "load" ]
                   []
@@ -350,7 +350,7 @@ module View =
                 []
 
         _div
-            (pollingAttrs)
+            (_id_ "sync-jobs-container" :: pollingAttrs)
             [ match jobs with
               | [] -> _div [ _class_ "text-sm text-slate-400 py-4 text-center" ] [ Text.raw "No sync jobs" ]
               | jobs ->

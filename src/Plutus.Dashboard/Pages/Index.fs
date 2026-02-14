@@ -97,30 +97,6 @@ let private ordersSection =
               [ _class_ "flex justify-center py-8" ]
               [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] [] ] ]
 
-let private syncSection =
-    _section
-        [ _class_ "mt-10" ]
-        [ _div
-              [ _class_ "flex justify-between items-center mb-4" ]
-              [ _div
-                    []
-                    [ _h2 [ _class_ "text-lg font-semibold text-slate-900" ] [ Text.raw "Candlestick Sync" ]
-                      _p
-                          [ _class_ "text-slate-400 text-sm mt-1" ]
-                          [ Text.raw "Download historical data for backtesting" ] ]
-                _button
-                    [ _type_ "button"
-                      _class_
-                          "inline-flex items-center px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm rounded-md transition-colors"
-                      Hx.get "/candlestick-sync/modal"
-                      Hx.targetCss "#modal-container"
-                      Hx.swapInnerHtml ]
-                    [ _i [ _class_ "fas fa-download mr-2 text-slate-400" ] []; Text.raw "New Sync" ] ]
-          _div
-              [ _id_ "sync-jobs-container"; Hx.get "/candlestick-sync/jobs"; Hx.trigger Load; Hx.swapInnerHtml ]
-              [ _div
-                    [ _class_ "flex justify-center py-4" ]
-                    [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] [] ] ] ]
 
 let get: HttpHandler =
     let html =
@@ -178,10 +154,61 @@ let get: HttpHandler =
                                     "text-teal-600"
                                     "bg-teal-50/50" ]
 
-                          marketsSection
+                          _div
+                              [ _class_ "grid grid-cols-1 lg:grid-cols-2 gap-6" ]
+                              [ marketsSection
+                                _section
+                                    []
+                                    [ _div
+                                          [ _class_ "flex justify-between items-center mb-6" ]
+                                          [ _div
+                                                []
+                                                [ _h2
+                                                      [ _class_ "text-lg font-semibold text-slate-900" ]
+                                                      [ Text.raw "Data Coverage" ]
+                                                  _div
+                                                      [ _class_ "flex items-center gap-1 mt-2" ]
+                                                      [ _button
+                                                            [ _id_ "tab-heatmap"
+                                                              _class_
+                                                                  "px-2.5 py-1 text-xs font-medium rounded-md bg-slate-900 text-white transition-colors"
+                                                              Hx.get "/coverage-heatmap"
+                                                              Hx.targetCss "#data-coverage-content"
+                                                              Hx.swapInnerHtml
+                                                              Attr.create
+                                                                  "hx-on::before-request"
+                                                                  "document.getElementById('tab-heatmap').className='px-2.5 py-1 text-xs font-medium rounded-md bg-slate-900 text-white transition-colors';document.getElementById('tab-jobs').className='px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors'" ]
+                                                            [ Text.raw "Heatmap" ]
+                                                        _button
+                                                            [ _id_ "tab-jobs"
+                                                              _class_
+                                                                  "px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors"
+                                                              Hx.get "/candlestick-sync/jobs"
+                                                              Hx.targetCss "#data-coverage-content"
+                                                              Hx.swapInnerHtml
+                                                              Attr.create
+                                                                  "hx-on::before-request"
+                                                                  "document.getElementById('tab-jobs').className='px-2.5 py-1 text-xs font-medium rounded-md bg-slate-900 text-white transition-colors';document.getElementById('tab-heatmap').className='px-2.5 py-1 text-xs font-medium rounded-md text-slate-500 hover:bg-slate-100 transition-colors'" ]
+                                                            [ Text.raw "Jobs" ] ] ]
+                                            _button
+                                                [ _type_ "button"
+                                                  _class_
+                                                      "inline-flex items-center px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-sm rounded-md transition-colors"
+                                                  Hx.get "/candlestick-sync/modal"
+                                                  Hx.targetCss "#modal-container"
+                                                  Hx.swapInnerHtml ]
+                                                [ _i [ _class_ "fas fa-download mr-2 text-slate-400" ] []
+                                                  Text.raw "New Sync" ] ]
+                                      _div
+                                          [ _id_ "data-coverage-content"
+                                            Hx.get "/coverage-heatmap"
+                                            Hx.trigger Load
+                                            Hx.swapInnerHtml ]
+                                          [ _div
+                                                [ _class_ "flex justify-center py-8" ]
+                                                [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] [] ] ] ] ]
                           pipelinesSection
-                          ordersSection
-                          syncSection ]
+                          ordersSection ]
 
                     _div [ _id_ "modal-container" ] [] ] ]
 
