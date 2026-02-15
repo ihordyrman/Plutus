@@ -115,6 +115,10 @@ let get: HttpHandler =
                         [ _href_ "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
                           _rel_ "stylesheet" ]
                     _script [ _src_ HtmxScript.cdnSrc ] []
+                    _script
+                        [ _src_
+                              "https://unpkg.com/lightweight-charts@4/dist/lightweight-charts.standalone.production.js" ]
+                        []
                     _script [ _src_ "https://cdn.tailwindcss.com" ] [] ]
 
               _body

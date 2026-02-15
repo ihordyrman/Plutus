@@ -163,6 +163,54 @@ let candlestickSync =
           _.GetInt("jobId")
           (fun jobId -> requireAuth (CandlestickSync.Handler.remove jobId)) ]
 
+let apiKeys =
+    [ get "/settings/api-keys" (requireAuth ApiKeys.Handler.list)
+      get "/settings/api-keys/modal" (requireAuth ApiKeys.Handler.createModal)
+      post "/settings/api-keys" (requireAuth ApiKeys.Handler.create)
+      mapDelete "/settings/api-keys/{id:int}" _.GetInt("id") (fun id -> requireAuth (ApiKeys.Handler.revoke id)) ]
+
+let api =
+    [ get "/api/v1/steps" (ApiAuth.requireApiKey StepsApi.list)
+      get
+          "/api/v1/steps/{key}"
+          (ApiAuth.requireApiKey (fun ctx -> StepsApi.byKey (Request.getRoute(ctx).GetString("key")) ctx))
+      get "/api/v1/pipelines" (ApiAuth.requireApiKey PipelinesApi.list)
+      post "/api/v1/pipelines" (ApiAuth.requireApiKey PipelinesApi.create)
+      mapGet "/api/v1/pipelines/{id:int}" _.GetInt("id") (fun id -> ApiAuth.requireApiKey (PipelinesApi.get id))
+      put
+          "/api/v1/pipelines/{id:int}"
+          (ApiAuth.requireApiKey (fun ctx -> PipelinesApi.update (Request.getRoute(ctx).GetInt("id")) ctx))
+      mapDelete "/api/v1/pipelines/{id:int}" _.GetInt("id") (fun id -> ApiAuth.requireApiKey (PipelinesApi.delete id))
+      mapGet
+          "/api/v1/pipelines/{id:int}/steps"
+          _.GetInt("id")
+          (fun id -> ApiAuth.requireApiKey (PipelineStepsApi.list id))
+      post
+          "/api/v1/pipelines/{id:int}/steps"
+          (ApiAuth.requireApiKey (fun ctx -> PipelineStepsApi.add (Request.getRoute(ctx).GetInt("id")) ctx))
+      put
+          "/api/v1/pipelines/{pipelineId:int}/steps/{stepId:int}"
+          (ApiAuth.requireApiKey (fun ctx ->
+              let route = Request.getRoute ctx
+              PipelineStepsApi.update (route.GetInt("pipelineId")) (route.GetInt("stepId")) ctx
+          ))
+      delete
+          "/api/v1/pipelines/{pipelineId:int}/steps/{stepId:int}"
+          (ApiAuth.requireApiKey (fun ctx ->
+              let route = Request.getRoute ctx
+              PipelineStepsApi.delete (route.GetInt("pipelineId")) (route.GetInt("stepId")) ctx
+          ))
+      put
+          "/api/v1/pipelines/{id:int}/steps/bulk"
+          (ApiAuth.requireApiKey (fun ctx -> PipelineStepsApi.bulk (Request.getRoute(ctx).GetInt("id")) ctx))
+      post "/api/v1/backtests" (ApiAuth.requireApiKey BacktestsApi.run)
+      get "/api/v1/backtests" (ApiAuth.requireApiKey BacktestsApi.list)
+      mapGet "/api/v1/backtests/{id:int}" _.GetInt("id") (fun id -> ApiAuth.requireApiKey (BacktestsApi.get id))
+      mapGet
+          "/api/v1/backtests/{id:int}/trades"
+          _.GetInt("id")
+          (fun id -> ApiAuth.requireApiKey (BacktestsApi.trades id)) ]
+
 let webapp = WebApplication.CreateBuilder()
 
 webapp.Host.UseSerilog(fun context services configuration ->
@@ -218,5 +266,7 @@ app
         @ orders
         @ coverageHeatmap
         @ candlestickSync
+        @ apiKeys
+        @ api
     )
     .Run(Response.ofPlainText "Not found")

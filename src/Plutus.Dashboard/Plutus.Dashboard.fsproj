@@ -8,6 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Api\ApiResponse.fs" />
+        <Compile Include="Api\ApiDtos.fs" />
+        <Compile Include="Api\ApiAuth.fs" />
+        <Compile Include="Api\StepsApi.fs" />
+        <Compile Include="Api\PipelinesApi.fs" />
+        <Compile Include="Api\PipelineStepsApi.fs" />
+        <Compile Include="Api\BacktestsApi.fs" />
         <Compile Include="Pages\Markets.fs" />
         <Compile Include="Pages\Balance.fs" />
         <Compile Include="Pages\SystemStatus.fs" />
@@ -23,6 +30,7 @@
         <Compile Include="Pages\Orders.fs" />
         <Compile Include="Pages\CandlestickSync.fs" />
         <Compile Include="Pages\CoverageHeatmap.fs" />
+        <Compile Include="Pages\ApiKeys.fs" />
         <Compile Include="Pages\Login.fs" />
         <Compile Include="Pages\Index.fs" />
         <Compile Include="Program.fs" />

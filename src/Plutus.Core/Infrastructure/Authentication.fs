@@ -27,3 +27,11 @@ module Authentication =
     let defaultSessionDuration = TimeSpan.FromDays(7.0)
 
     let extendedSessionDuration = TimeSpan.FromDays(30.0)
+
+    let computeSha256 (input: string) : string =
+        let bytes = SHA256.HashData(Text.Encoding.UTF8.GetBytes(input))
+        Convert.ToHexStringLower(bytes)
+
+    let generateApiKey () : string =
+        let bytes = RandomNumberGenerator.GetBytes(32)
+        "plts_" + Convert.ToBase64String(bytes).Replace("+", "-").Replace("/", "_").TrimEnd('=')
