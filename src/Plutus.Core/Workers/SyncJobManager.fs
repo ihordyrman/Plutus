@@ -95,7 +95,7 @@ module SyncJobManager =
             return! f db CancellationToken.None
         }
 
-    let private persistStatus (scopeFactory: IServiceScopeFactory) (logger: ILogger) (jobId: int) (status: JobStatus) =
+    let private persistStatus (scopeFactory: IServiceScopeFactory) (jobId: int) (status: JobStatus) =
         task {
             let errorMsg =
                 match status with
@@ -109,6 +109,7 @@ module SyncJobManager =
 
             match result with
             | Error err ->
+                let logger = scopeFactory.CreateScope().ServiceProvider.GetRequiredService<ILogger>()
                 logger.LogError("Failed to persist status for job {JobId}: {Error}", jobId, serviceMessage err)
             | _ -> ()
         }
@@ -159,7 +160,7 @@ module SyncJobManager =
 
                     let setRunning (s: SyncJobState) = { s with Status = Running }
                     post (UpdateProgress(jobId, setRunning))
-                    do! persistStatus scopeFactory logger jobId Running
+                    do! persistStatus scopeFactory jobId Running
 
                     while keepGoing && not ct.IsCancellationRequested && cursor > fromDate do
                         pauseEvent.Wait(ct)
@@ -215,21 +216,21 @@ module SyncJobManager =
                         | Some errMsg ->
                             let setFailed (s: SyncJobState) = { s with Status = Failed errMsg }
                             post (UpdateProgress(jobId, setFailed))
-                            do! persistStatus scopeFactory logger jobId (Failed errMsg)
+                            do! persistStatus scopeFactory jobId (Failed errMsg)
                         | None ->
                             let setCompleted (s: SyncJobState) = { s with Status = Completed }
                             post (UpdateProgress(jobId, setCompleted))
-                            do! persistStatus scopeFactory logger jobId Completed
+                            do! persistStatus scopeFactory jobId Completed
                 with
                 | :? OperationCanceledException ->
                     let setStopped (s: SyncJobState) = { s with Status = Stopped }
                     post (UpdateProgress(jobId, setStopped))
-                    do! persistStatus scopeFactory logger jobId Stopped
+                    do! persistStatus scopeFactory jobId Stopped
                 | ex ->
                     logger.LogError(ex, "Sync job {JobId} failed", jobId)
                     let setFailed (s: SyncJobState) = { s with Status = Failed ex.Message }
                     post (UpdateProgress(jobId, setFailed))
-                    do! persistStatus scopeFactory logger jobId (Failed ex.Message)
+                    do! persistStatus scopeFactory jobId (Failed ex.Message)
             }
             :> Task
         )
@@ -246,7 +247,7 @@ module SyncJobManager =
     let private loadAndResume
         (scopeFactory: IServiceScopeFactory)
         (logger: ILogger)
-        : (Map<int, SyncJobState> * Map<int, CancellationTokenSource> * Map<int, ManualResetEventSlim>)
+        : Map<int, SyncJobState> * Map<int, CancellationTokenSource> * Map<int, ManualResetEventSlim>
         =
         let result =
             task {
@@ -296,8 +297,18 @@ module SyncJobManager =
 
         result |> Async.AwaitTask |> Async.RunSynchronously
 
+    let private mutateJobStatus
+        id
+        (jobs: Map<int, SyncJobState>)
+        (newStatus: JobStatus)
+        (scopeFactory: IServiceScopeFactory)
+        =
+        let jobs = Map.add id { jobs[id] with Status = newStatus } jobs
+        persistStatus scopeFactory id newStatus |> ignore
+        jobs
+
     let create (scopeFactory: IServiceScopeFactory) (logger: ILogger) : T =
-        let (initialJobs, initialCtss, initialPauses) = loadAndResume scopeFactory logger
+        let initialJobs, initialCtss, initialPauses = loadAndResume scopeFactory logger
 
         let agent =
             MailboxProcessor<SyncMessage>.Start(fun inbox ->
@@ -384,6 +395,7 @@ module SyncJobManager =
                             | Some cts, Some pause ->
                                 pause.Set()
                                 cts.Cancel()
+                                let jobs = mutateJobStatus id jobs Stopped scopeFactory
                                 reply.Reply true
                                 return! loop jobs ctss pauses
                             | _ ->
@@ -394,8 +406,7 @@ module SyncJobManager =
                             match Map.tryFind id pauses, Map.tryFind id jobs with
                             | Some pause, Some job when job.Status = Running ->
                                 pause.Reset()
-                                let jobs = Map.add id { job with Status = Paused } jobs
-                                persistStatus scopeFactory logger id Paused |> ignore
+                                let jobs = mutateJobStatus id jobs Paused scopeFactory
                                 reply.Reply true
                                 return! loop jobs ctss pauses
                             | _ ->
@@ -409,8 +420,7 @@ module SyncJobManager =
 
                                 if hasRunningLoop then
                                     pause.Set()
-                                    let jobs = Map.add id { job with Status = Running } jobs
-                                    persistStatus scopeFactory logger id Running |> ignore
+                                    let jobs = mutateJobStatus id jobs Running scopeFactory
                                     reply.Reply true
                                     return! loop jobs ctss pauses
                                 else
@@ -431,8 +441,7 @@ module SyncJobManager =
                                         cts
                                         newPause
 
-                                    let jobs = Map.add id { job with Status = Running } jobs
-                                    persistStatus scopeFactory logger id Running |> ignore
+                                    let jobs = mutateJobStatus id jobs Running scopeFactory
                                     reply.Reply true
 
                                     return! loop jobs (Map.add id cts ctss) (Map.add id newPause pauses)
