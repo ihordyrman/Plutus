@@ -166,4 +166,80 @@ create table candlestick_sync_jobs
     started_at      timestamp   not null,
     last_update_at  timestamp   not null,
     created_at      timestamp   not null
-)
+);
+
+CREATE TABLE backtest_runs
+(
+    id               serial PRIMARY KEY,
+    pipeline_id      int             NOT NULL REFERENCES pipelines (id),
+    status           int             NOT NULL DEFAULT 0,
+    start_date       timestamp       NOT NULL,
+    end_date         timestamp       NOT NULL,
+    interval_minutes int             NOT NULL,
+    initial_capital  decimal(28, 10) NOT NULL,
+    final_capital    decimal(28, 10),
+    total_trades     int             NOT NULL DEFAULT 0,
+    win_rate         decimal(28, 10),
+    max_drawdown     decimal(28, 10),
+    sharpe_ratio     decimal(28, 10),
+    error_message    text,
+    created_at       timestamp       NOT NULL DEFAULT now(),
+    completed_at     timestamp
+);
+
+CREATE INDEX idx_backtest_runs_pipeline_id ON backtest_runs (pipeline_id);
+CREATE INDEX idx_backtest_runs_status ON backtest_runs (status);
+
+CREATE TABLE backtest_trades
+(
+    id              serial PRIMARY KEY,
+    backtest_run_id int             NOT NULL REFERENCES backtest_runs (id) ON DELETE CASCADE,
+    side            int             NOT NULL,
+    price           decimal(28, 10) NOT NULL,
+    quantity        decimal(28, 10) NOT NULL,
+    fee             decimal(28, 10) NOT NULL DEFAULT 0,
+    candle_time     timestamp       NOT NULL,
+    capital         decimal(28, 10) NOT NULL
+);
+
+CREATE INDEX idx_backtest_trades_run_id ON backtest_trades (backtest_run_id);
+
+CREATE TABLE backtest_equity_points
+(
+    id              serial PRIMARY KEY,
+    backtest_run_id int             NOT NULL REFERENCES backtest_runs (id) ON DELETE CASCADE,
+    candle_time     timestamp       NOT NULL,
+    equity          decimal(28, 10) NOT NULL,
+    drawdown        decimal(28, 10) NOT NULL DEFAULT 0
+);
+
+CREATE INDEX idx_backtest_equity_run_id ON backtest_equity_points (backtest_run_id);
+
+CREATE TABLE backtest_execution_logs
+(
+    id              serial PRIMARY KEY,
+    backtest_run_id int       NOT NULL REFERENCES backtest_runs (id) ON DELETE CASCADE,
+    execution_id    text      NOT NULL,
+    step_type_key   text      NOT NULL,
+    outcome         int       NOT NULL,
+    message         text,
+    context         text,
+    candle_time     timestamp NOT NULL,
+    start_time      timestamp NOT NULL,
+    end_time        timestamp NOT NULL
+);
+
+CREATE INDEX idx_backtest_exec_logs_run_id ON backtest_execution_logs (backtest_run_id);
+CREATE INDEX idx_backtest_exec_logs_execution ON backtest_execution_logs (backtest_run_id, execution_id);
+
+CREATE TABLE api_keys
+(
+    id         SERIAL PRIMARY KEY,
+    name       VARCHAR(100) NOT NULL,
+    key_hash   VARCHAR(255) NOT NULL,
+    key_prefix VARCHAR(12)  NOT NULL,
+    is_active  BOOLEAN      NOT NULL DEFAULT true,
+    last_used  TIMESTAMP,
+    created_at TIMESTAMP    NOT NULL DEFAULT now()
+);
+CREATE INDEX ix_api_keys_hash ON api_keys (key_hash);
