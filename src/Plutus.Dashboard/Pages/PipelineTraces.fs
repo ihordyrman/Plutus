@@ -24,6 +24,15 @@ type ExecutionSummary =
 type ExecutionListData =
     { PipelineId: int; Executions: ExecutionSummary list; TotalCount: int; Page: int; PageSize: int }
 
+type TraceFilters =
+    { Outcome: string option
+      DateFrom: string option
+      DateTo: string option
+      Page: int
+      PageSize: int }
+
+    static member Empty = { Outcome = None; DateFrom = None; DateTo = None; Page = 1; PageSize = 20 }
+
 type StepTrace =
     { StepTypeKey: string
       Outcome: StepOutcome
@@ -47,20 +56,50 @@ module Data =
         | 1 -> StepOutcome.Stopped
         | _ -> StepOutcome.Failed
 
+    let private parseOutcome (value: string option) : int option =
+        match value with
+        | Some "0" -> Some 0
+        | Some "1" -> Some 1
+        | Some "2" -> Some 2
+        | _ -> None
+
+    let private parseDate (value: string option) : DateTime option =
+        match value with
+        | Some s ->
+            match DateTime.TryParse(s) with
+            | true, d -> Some d
+            | false, _ -> None
+        | None -> None
+
     let getExecutions
         (scopeFactory: IServiceScopeFactory)
         (pipelineId: int)
-        (page: int)
-        (pageSize: int)
+        (filters: TraceFilters)
         (ct: CancellationToken)
         : Task<ExecutionListData>
         =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let skip = (page - 1) * pageSize
-            let! rows = ExecutionLogRepository.getExecutionsByPipelineId db pipelineId skip pageSize ct
-            let! total = ExecutionLogRepository.countExecutionsByPipelineId db pipelineId ct
+            let skip = (filters.Page - 1) * filters.PageSize
+
+            let outcome = parseOutcome filters.Outcome
+            let dateFrom = parseDate filters.DateFrom
+            let dateTo = parseDate filters.DateTo
+
+            let! rows =
+                ExecutionLogRepository.getFilteredExecutionsByPipelineId
+                    db
+                    pipelineId
+                    outcome
+                    dateFrom
+                    dateTo
+                    skip
+                    filters.PageSize
+                    ct
+
+            let! total =
+                ExecutionLogRepository.countFilteredExecutionsByPipelineId db pipelineId outcome dateFrom dateTo ct
 
             let executions =
                 match rows with
@@ -84,8 +123,8 @@ module Data =
                 { PipelineId = pipelineId
                   Executions = executions
                   TotalCount = totalCount
-                  Page = page
-                  PageSize = pageSize }
+                  Page = filters.Page
+                  PageSize = filters.PageSize }
         }
 
     let getExecutionDetail
@@ -221,6 +260,52 @@ module View =
                       "text-xs bg-slate-50 border border-slate-100 p-3 rounded-md overflow-x-auto max-h-48 text-slate-600 font-mono" ]
                 [ Text.raw current ]
 
+    let private filterSelect name label (options: (string * string) list) =
+        _div
+            [ _class_ "min-w-[110px]" ]
+            [ _label [ _class_ "block text-xs font-medium text-slate-500 mb-1" ] [ Text.raw label ]
+              _select
+                  [ _name_ name
+                    _class_
+                        "w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-slate-300" ]
+                  [ yield _option [ _value_ "" ] [ Text.raw "All" ]
+                    for (value, text) in options do
+                        yield _option [ _value_ value ] [ Text.raw text ] ] ]
+
+    let private filterBar (pipelineId: int) =
+        _div
+            [ _id_ "traces-filter-form"; _class_ "pb-4 border-b border-slate-100 mb-4" ]
+            [ _form
+                  [ Hx.get $"/pipelines/{pipelineId}/traces/list"
+                    Hx.targetCss "#traces-list"
+                    Hx.trigger "change"
+                    Hx.swapOuterHtml
+                    Hx.includeThis ]
+                  [ _input [ _type_ "hidden"; _name_ "page"; _value_ "1" ]
+                    _div
+                        [ _class_ "flex flex-wrap gap-3 items-end" ]
+                        [ filterSelect "outcome" "Outcome" [ ("0", "Success"); ("1", "Stopped"); ("2", "Failed") ]
+                          _div
+                              [ _class_ "min-w-[130px]" ]
+                              [ _label
+                                    [ _class_ "block text-xs font-medium text-slate-500 mb-1" ]
+                                    [ Text.raw "Date From" ]
+                                _input
+                                    [ _type_ "date"
+                                      _name_ "dateFrom"
+                                      _class_
+                                          "w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-slate-300" ] ]
+                          _div
+                              [ _class_ "min-w-[130px]" ]
+                              [ _label
+                                    [ _class_ "block text-xs font-medium text-slate-500 mb-1" ]
+                                    [ Text.raw "Date To" ]
+                                _input
+                                    [ _type_ "date"
+                                      _name_ "dateTo"
+                                      _class_
+                                          "w-full px-2 py-1.5 border border-slate-200 rounded-md text-xs focus:outline-none focus:ring-1 focus:ring-slate-300" ] ] ] ] ]
+
     let executionList (data: ExecutionListData) =
         let totalPages = max 1 (int (Math.Ceiling(float data.TotalCount / float data.PageSize)))
         let hasPrev = data.Page > 1
@@ -281,6 +366,7 @@ module View =
                                         Hx.get $"/pipelines/{data.PipelineId}/traces/list?page={data.Page - 1}"
                                         Hx.targetCss "#traces-list"
                                         Hx.swapOuterHtml
+                                        Attr.create "hx-include" "#traces-filter-form form"
                                     else
                                         Attr.create "disabled" "disabled" ]
                                   [ Text.raw "Previous" ]
@@ -295,6 +381,7 @@ module View =
                                         Hx.get $"/pipelines/{data.PipelineId}/traces/list?page={data.Page + 1}"
                                         Hx.targetCss "#traces-list"
                                         Hx.swapOuterHtml
+                                        Attr.create "hx-include" "#traces-filter-form form"
                                     else
                                         Attr.create "disabled" "disabled" ]
                                   [ Text.raw "Next" ] ] ] ]
@@ -423,7 +510,7 @@ module View =
                                             closeModalButton ] ]
                                 _div
                                     [ _id_ "traces-content"; _class_ "px-6 py-4 max-h-[75vh] overflow-y-auto" ]
-                                    [ executionList data ] ] ] ] ]
+                                    [ filterBar data.PipelineId; executionList data ] ] ] ] ]
 
 module Handler =
     let private tryGetQueryInt (query: IQueryCollection) (key: string) (defaultValue: int) =
@@ -434,12 +521,24 @@ module Handler =
             | false, _ -> defaultValue
         | _ -> defaultValue
 
+    let private tryGetQueryString (query: IQueryCollection) (key: string) : string option =
+        match query.TryGetValue key with
+        | true, values when values.Count > 0 && not (String.IsNullOrEmpty values.[0]) -> Some values.[0]
+        | _ -> None
+
+    let private parseFilters (query: IQueryCollection) : TraceFilters =
+        { Outcome = tryGetQueryString query "outcome"
+          DateFrom = tryGetQueryString query "dateFrom"
+          DateTo = tryGetQueryString query "dateTo"
+          Page = tryGetQueryInt query "page" 1
+          PageSize = 20 }
+
     let tracesModal (pipelineId: int) : HttpHandler =
         fun ctx ->
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! data = Data.getExecutions scopeFactory pipelineId 1 20 ctx.RequestAborted
+                    let! data = Data.getExecutions scopeFactory pipelineId TraceFilters.Empty ctx.RequestAborted
                     return! Response.ofHtml (View.modal data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("PipelineTraces")
@@ -455,8 +554,8 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let page = tryGetQueryInt ctx.Request.Query "page" 1
-                    let! data = Data.getExecutions scopeFactory pipelineId page 20 ctx.RequestAborted
+                    let filters = parseFilters ctx.Request.Query
+                    let! data = Data.getExecutions scopeFactory pipelineId filters ctx.RequestAborted
                     return! Response.ofHtml (View.executionList data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("PipelineTraces")

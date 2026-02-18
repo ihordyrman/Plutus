@@ -34,15 +34,16 @@ module TrendFollowingSignal =
                             use scope = services.CreateScope()
                             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                             let candleCount = lookbackPeriod + 1
+                            let toDate = TradingContext.getData<DateTime> "backtest:currentTime" ctx
 
                             match!
                                 CandlestickRepository.query
                                     db
                                     ctx.Symbol
-                                    (ctx.MarketType)
+                                    ctx.MarketType
                                     timeframe
                                     None
-                                    None
+                                    toDate
                                     (Some candleCount)
                                     ct
                             with
@@ -71,10 +72,10 @@ module TrendFollowingSignal =
                                                 CandlestickRepository.query
                                                     db
                                                     instrument
-                                                    (ctx.MarketType)
+                                                    ctx.MarketType
                                                     timeframe
                                                     None
-                                                    None
+                                                    toDate
                                                     (Some candleCount)
                                                     ct
                                             with

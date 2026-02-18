@@ -30,15 +30,16 @@ module MacdSignal =
                             use scope = services.CreateScope()
                             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                             let candleCount = slowPeriod + signalPeriod
+                            let toDate = TradingContext.getData<DateTime> "backtest:currentTime" ctx
 
                             match!
                                 CandlestickRepository.query
                                     db
                                     ctx.Symbol
-                                    (ctx.MarketType)
+                                    ctx.MarketType
                                     timeframe
                                     None
-                                    None
+                                    toDate
                                     (Some candleCount)
                                     ct
                             with

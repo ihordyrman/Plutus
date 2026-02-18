@@ -29,8 +29,7 @@ module Data =
         (scopeFactory: IServiceScopeFactory)
         (pipelineId: int)
         (ct: CancellationToken)
-        : Task<PipelineDetailsInfo option>
-        =
+        : Task<PipelineDetailsInfo option> =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
@@ -106,7 +105,8 @@ module View =
                         "Market Type"
                         (_span
                             [ _class_ "inline-flex items-center px-3 py-1 rounded-md bg-slate-100 text-slate-700" ]
-                            [ _i [ _class_ "fas fa-exchange-alt mr-2" ] []; Text.raw (pipeline.MarketType.ToString()) ])
+                            [ _i [ _class_ "fas fa-exchange-alt mr-2" ] []
+                              Text.raw (pipeline.MarketType.ToString()) ])
 
                     infoRow "Symbol" (_span [] [ Text.raw pipeline.Symbol ])
 

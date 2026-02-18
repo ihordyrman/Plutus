@@ -28,15 +28,16 @@ module VwapSignal =
                         | _ ->
                             use scope = services.CreateScope()
                             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                            let toDate = TradingContext.getData<DateTime> "backtest:currentTime" ctx
 
                             match!
                                 CandlestickRepository.query
                                     db
                                     ctx.Symbol
-                                    (ctx.MarketType)
+                                    ctx.MarketType
                                     timeframe
                                     None
-                                    None
+                                    toDate
                                     (Some lookbackPeriod)
                                     ct
                             with

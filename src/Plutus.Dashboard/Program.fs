@@ -9,6 +9,7 @@ open Serilog
 open System
 open Plutus.App.Pages
 open Plutus.Core
+open Plutus.Dashboard.Api
 
 let auth =
     [ get "/login" Login.Handler.loginPage
@@ -31,7 +32,8 @@ let instruments =
       get "/instruments/quote-currencies" (requireAuth Instruments.Handler.quoteCurrencies) ]
 
 let general =
-    [ get "/" (requireAuth Index.get); get "/system-status" (requireAuth SystemStatus.Handler.status) ]
+    [ get "/" (requireAuth Index.get)
+      get "/system-status" (requireAuth SystemStatus.Handler.status) ]
 
 let balances =
     [ get "/balance/total" (requireAuth Balance.Handler.total)
@@ -136,6 +138,34 @@ let pipelines =
               let stepId = route.GetInt("stepId")
               PipelineEdit.Handler.saveStep pipelineId stepId ctx
           )) ]
+
+let backtests =
+    [ get "/backtests/grid" (requireAuth Backtest.Handler.grid)
+      get "/backtests/count" (requireAuth Backtest.Handler.count)
+      mapGet "/backtests/{id:int}/row" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.row id))
+      mapDelete "/backtests/{id:int}" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.delete id))
+      mapGet
+          "/backtests/configure/{pipelineId:int}"
+          _.GetInt("pipelineId")
+          (fun id -> requireAuth (Backtest.Handler.configureModal id))
+      get "/backtests/modal/close" (requireAuth Backtest.Handler.closeModal)
+      post "/backtests/run" (requireAuth Backtest.Handler.run)
+      mapGet "/backtests/{id:int}/status" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.status id))
+      mapGet "/backtests/{id:int}/results" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.results id))
+      mapGet "/backtests/{id:int}/trades" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.trades id))
+      mapGet "/backtests/{id:int}/executions" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.executions id))
+      get
+          "/backtests/{runId:int}/traces/{executionId}"
+          (requireAuth (fun ctx ->
+              let route = Request.getRoute ctx
+              Backtest.Handler.traces (route.GetInt "runId") (route.GetString "executionId") ctx
+          ))
+      mapGet "/backtests/{id:int}/chart-data" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.chartData id))
+      mapGet
+          "/backtests/{id:int}/traces/by-time"
+          _.GetInt("id")
+          (fun id -> requireAuth (Backtest.Handler.tracesByTime id))
+      mapGet "/backtests/{id:int}/export" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.export id)) ]
 
 let coverageHeatmap =
     [ get "/coverage-heatmap" (requireAuth CoverageHeatmap.Handler.heatmap)
@@ -264,6 +294,7 @@ app
         @ accounts
         @ pipelines
         @ orders
+        @ backtests
         @ coverageHeatmap
         @ candlestickSync
         @ apiKeys

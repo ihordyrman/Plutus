@@ -12,6 +12,8 @@
         <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />
+        <Compile Include="Domain\Backtests.fs" />
+        <Compile Include="Domain\ApiKeys.fs" />
 
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
@@ -31,6 +33,8 @@
         <Compile Include="Repositories\InstrumentRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
         <Compile Include="Repositories\SyncJobRepository.fs" />
+        <Compile Include="Repositories\BacktestRepository.fs" />
+        <Compile Include="Repositories\ApiKeyRepository.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\BalanceProvider.fs" />
@@ -68,6 +72,12 @@
         <Compile Include="Pipelines\Orchestration\Executor.fs" />
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />
 
+        <Compile Include="Backtesting\BacktestState.fs" />
+        <Compile Include="Backtesting\BacktestSteps.fs" />
+        <Compile Include="Backtesting\BacktestMetrics.fs" />
+        <Compile Include="Backtesting\BacktestExport.fs" />
+        <Compile Include="Backtesting\BacktestEngine.fs" />
+
         <Compile Include="Workers\InstrumentSync.fs" />
         <Compile Include="Workers\OrderSync.fs" />
         <Compile Include="Workers\Synchronization.fs" />
@@ -79,6 +89,7 @@
 
     <ItemGroup>
         <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+        <PackageReference Include="ClosedXML" Version="0.105.0" />
         <PackageReference Include="Dapper.FSharp" Version="4.9.0" />
         <PackageReference Include="FSharp.Control.TaskSeq" Version="0.4.0" />
         <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="4.18.0" />

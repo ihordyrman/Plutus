@@ -29,15 +29,16 @@ module ExponentialMovingAverageSignal =
                             use scope = services.CreateScope()
                             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                             let candleCount = slowPeriod + 1
+                            let toDate = TradingContext.getData<DateTime> "backtest:currentTime" ctx
 
                             match!
                                 CandlestickRepository.query
                                     db
                                     ctx.Symbol
-                                    (ctx.MarketType)
+                                    ctx.MarketType
                                     timeframe
                                     None
-                                    None
+                                    toDate
                                     (Some candleCount)
                                     ct
                             with
