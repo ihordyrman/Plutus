@@ -7,7 +7,6 @@ open Falco
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Backtesting
 open Plutus.Core.Domain
-open Plutus.Core.Pipelines.Core
 open Plutus.Core.Repositories
 
 module BacktestsApi =
@@ -61,7 +60,6 @@ module BacktestsApi =
                                     | Error err -> return! ApiResponse.internalError $"Failed to create run: {err}" ctx
                                     | Ok runId ->
                                         let services = ctx.RequestServices
-                                        let registry = ctx.Plug<Registry.T<TradingContext>>()
 
                                         let _ =
                                             Task.Run(
@@ -71,7 +69,6 @@ module BacktestsApi =
                                                             let! _ =
                                                                 BacktestEngine.run
                                                                     services
-                                                                    registry
                                                                     runId
                                                                     config
                                                                     CancellationToken.None

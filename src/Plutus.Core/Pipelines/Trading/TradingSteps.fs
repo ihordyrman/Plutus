@@ -1,5 +1,6 @@
 namespace Plutus.Core.Pipelines.Trading
 
+open Plutus.Core.Pipelines.Core.Ports
 open Plutus.Core.Pipelines.Trading
 
 module TradingSteps =
@@ -12,8 +13,7 @@ module TradingSteps =
     open EwmacSignal
     open TrendFollowingSignal
 
-    let private executionSteps = [ entry ]
-    let private validationSteps = [ checkPosition; positionGate ]
     let private signalSteps = [ ema; macd; vwap; ewmac; trendFollowing ]
 
-    let all = executionSteps @ validationSteps @ signalSteps
+    let all (getPosition: GetPosition) (executor: TradeExecutor) =
+        [ checkPosition getPosition; positionGate getPosition; entry executor ] @ signalSteps

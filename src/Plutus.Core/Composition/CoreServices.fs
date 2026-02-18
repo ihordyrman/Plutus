@@ -47,12 +47,17 @@ module CoreServices =
             | _ -> Dictionary<string, string>()
 
     let private pipelineOrchestrator (services: IServiceCollection) =
-        let registry = TradingSteps.all |> Registry.create
-        services.AddSingleton<Registry.T<TradingContext>>(registry) |> ignore
+        services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
+            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
+            TradingSteps.all (LiveAdapters.getPosition scopeFactory) (LiveAdapters.tradeExecutor scopeFactory)
+            |> Registry.create
+        )
+        |> ignore
 
         services.AddHostedService<Orchestrator.Worker>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
             let logger = provider.GetRequiredService<ILogger<Orchestrator.Worker>>()
+            let registry = provider.GetRequiredService<Registry.T<TradingContext>>()
             new Orchestrator.Worker(scopeFactory, logger, registry)
         )
         |> ignore

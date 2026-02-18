@@ -12,7 +12,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Backtesting
 open Plutus.Core.Domain
-open Plutus.Core.Pipelines.Core
 open Plutus.Core.Repositories
 
 type BacktestGridItem =
@@ -1139,7 +1138,6 @@ module Handler =
                         | Error err -> return! Response.ofHtml (View.errorResult $"Failed to create run: {err}") ctx
                         | Ok runId ->
                             let services = ctx.RequestServices
-                            let registry = ctx.Plug<Registry.T<TradingContext>>()
 
                             let _ =
                                 Task.Run(
@@ -1149,7 +1147,6 @@ module Handler =
                                                 let! _ =
                                                     BacktestEngine.run
                                                         services
-                                                        registry
                                                         runId
                                                         config
                                                         CancellationToken.None

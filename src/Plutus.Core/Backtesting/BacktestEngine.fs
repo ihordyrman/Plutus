@@ -7,6 +7,7 @@ open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
 open Plutus.Core.Pipelines.Core
+open Plutus.Core.Pipelines.Trading
 open Plutus.Core.Repositories
 
 module BacktestEngine =
@@ -16,16 +17,6 @@ module BacktestEngine =
           Metrics: BacktestMetrics.Metrics
           Trades: BacktestTrade list
           EquityPoints: BacktestEquityPoint list }
-
-    let private buildBacktestRegistry
-        (liveRegistry: Registry.T<TradingContext>)
-        (state: BacktestState.T)
-        : Registry.T<TradingContext>
-        =
-        liveRegistry
-        |> Registry.register (BacktestSteps.checkPosition state)
-        |> Registry.register (BacktestSteps.positionGate state)
-        |> Registry.register (BacktestSteps.entry state)
 
     let private forceClosePosition (state: BacktestState.T) (lastPrice: decimal) (candleTime: DateTime) =
         match state.CurrentPosition with
@@ -55,13 +46,7 @@ module BacktestEngine =
             let step = max 1 (points.Length / maxPoints)
             points |> List.indexed |> List.filter (fun (i, _) -> i % step = 0) |> List.map snd
 
-    let run
-        (services: IServiceProvider)
-        (liveRegistry: Registry.T<TradingContext>)
-        (runId: int)
-        (config: BacktestConfig)
-        (ct: CancellationToken)
-        =
+    let run (services: IServiceProvider) (runId: int) (config: BacktestConfig) (ct: CancellationToken) =
         task {
             use scope = services.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
@@ -105,7 +90,10 @@ module BacktestEngine =
                         )
 
                     let state = BacktestState.create config
-                    let backtestRegistry = buildBacktestRegistry liveRegistry state
+
+                    let backtestRegistry =
+                        TradingSteps.all (BacktestAdapters.getPosition state) (BacktestAdapters.tradeExecutor state)
+                        |> Registry.create
 
                     match Builder.buildSteps backtestRegistry scope.ServiceProvider stepConfigs with
                     | Error errors ->

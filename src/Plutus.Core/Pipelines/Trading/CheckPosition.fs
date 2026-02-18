@@ -1,25 +1,19 @@
 namespace Plutus.Core.Pipelines.Trading
 
 open System
-open System.Data
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
-open Microsoft.Extensions.DependencyInjection
-open Plutus.Core.Domain
-open Plutus.Core.Repositories
+open Plutus.Core.Pipelines.Core.Ports
 
 module CheckPosition =
-    let checkPosition: StepDefinition<TradingContext> =
-        let create (_: ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
+    let checkPosition (getPosition: GetPosition) : StepDefinition<TradingContext> =
+        let create (_: ValidatedParams) (_: IServiceProvider) : Step<TradingContext> =
             { key = "check-position"
               execute =
                 fun ctx ct ->
                     task {
-                        use scope = services.CreateScope()
-                        use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
-                        match! PositionRepository.getOpen db ctx.PipelineId ct with
+                        match! getPosition ctx.PipelineId ct with
                         | Error err -> return Fail $"Error retrieving position: {err}"
                         | Ok None -> return Continue({ ctx with Action = NoAction }, "No open position")
                         | Ok(Some pos) ->
@@ -27,7 +21,7 @@ module CheckPosition =
                                 { ctx with
                                     BuyPrice = Some pos.EntryPrice
                                     Quantity = Some pos.Quantity
-                                    ActiveOrderId = Some pos.BuyOrderId
+                                    ActiveOrderId = Some pos.OrderId
                                     Action = Hold }
 
                             return Continue(ctx', $"Position found - Entry: {pos.EntryPrice:F8}")

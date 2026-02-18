@@ -56,6 +56,7 @@
         <Compile Include="Pipelines\Core\Parameters.fs" />
 
         <Compile Include="Pipelines\Core\Steps.fs" />
+        <Compile Include="Pipelines\Core\Ports.fs" />
         <Compile Include="Pipelines\Core\Registry.fs" />
         <Compile Include="Pipelines\Core\Builder.fs" />
         <Compile Include="Pipelines\Core\Runner.fs" />
@@ -63,6 +64,7 @@
         <Compile Include="Pipelines\Trading\CheckPosition.fs" />
         <Compile Include="Pipelines\Trading\PositionGateStep.fs" />
         <Compile Include="Pipelines\Trading\EntryStep.fs" />
+        <Compile Include="Pipelines\Trading\LiveAdapters.fs" />
         <Compile Include="Pipelines\Trading\EmaSignal.fs" />
         <Compile Include="Pipelines\Trading\MacdSignal.fs" />
         <Compile Include="Pipelines\Trading\VwapSignal.fs" />
@@ -73,7 +75,7 @@
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />
 
         <Compile Include="Backtesting\BacktestState.fs" />
-        <Compile Include="Backtesting\BacktestSteps.fs" />
+        <Compile Include="Backtesting\BacktestAdapters.fs" />
         <Compile Include="Backtesting\BacktestMetrics.fs" />
         <Compile Include="Backtesting\BacktestExport.fs" />
         <Compile Include="Backtesting\BacktestEngine.fs" />
