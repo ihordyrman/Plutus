@@ -5,10 +5,12 @@ open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.HttpLogging
 open Microsoft.Extensions.DependencyInjection
+open Plutus.Core.Infrastructure
 open Serilog
 open System
 open Plutus.App.Pages
 open Plutus.Core
+open Plutus.Core.Queries
 open Plutus.Dashboard.Api
 
 let auth =
@@ -254,6 +256,9 @@ webapp.Host.UseSerilog(fun context services configuration ->
 |> ignore
 
 CoreServices.register webapp.Services webapp.Configuration
+
+webapp.Services.AddSingleton<CacheRefresher list>([ CoverageHeatmapCache.refresher ])
+|> ignore
 
 webapp.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

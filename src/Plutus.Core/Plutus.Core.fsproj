@@ -20,6 +20,7 @@
         <Compile Include="Infrastructure\Authentication.fs" />
         <Compile Include="Infrastructure\Tracing.fs" />
         <Compile Include="Infrastructure\ExecutionLogger.fs" />
+        <Compile Include="Infrastructure\CacheStore.fs" />
 
         <Compile Include="Shared\Errors.fs" />
 
@@ -79,6 +80,7 @@
         <Compile Include="Backtesting\BacktestMetrics.fs" />
         <Compile Include="Backtesting\BacktestExport.fs" />
         <Compile Include="Backtesting\BacktestEngine.fs" />
+        <Compile Include="Workers\CacheWorker.fs" />
 
         <Compile Include="Workers\InstrumentSync.fs" />
         <Compile Include="Workers\OrderSync.fs" />
@@ -87,6 +89,7 @@
         <Compile Include="Composition\CoreServices.fs" />
 
         <Compile Include="Queries\DashboardQueries.fs" />
+        <Compile Include="Queries\CoverageHeatmapCache.fs" />
     </ItemGroup>
 
     <ItemGroup>

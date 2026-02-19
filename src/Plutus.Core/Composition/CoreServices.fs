@@ -120,6 +120,20 @@ module CoreServices =
         )
         |> ignore
 
+    let private cacheStore (services: IServiceCollection) =
+        services.AddSingleton<CacheStore.T>(CacheStore.T()) |> ignore
+
+    let private cacheWorker (services: IServiceCollection) =
+        services.AddHostedService<CacheWorker>(fun provider ->
+            let store = provider.GetRequiredService<CacheStore.T>()
+            let refreshers = provider.GetService<CacheRefresher list>()
+            let refreshers = if isNull (box refreshers) then [] else refreshers
+            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
+            let logger = provider.GetRequiredService<ILogger<CacheWorker>>()
+            new CacheWorker(store, refreshers, scopeFactory, logger)
+        )
+        |> ignore
+
     let private executionLogger (services: IServiceCollection) =
         services.AddSingleton<ExecutionLogger.T>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
@@ -194,7 +208,9 @@ module CoreServices =
     let register (services: IServiceCollection) (configuration: IConfiguration) =
         database services configuration
 
-        [ executionLogger
+        [ cacheStore
+          cacheWorker
+          executionLogger
           balanceManager
           credentialsStore
           httpClientFactory

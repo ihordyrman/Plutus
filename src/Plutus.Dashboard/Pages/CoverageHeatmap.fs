@@ -7,6 +7,8 @@ open Falco.Htmx
 open Falco.Markup
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
+open Plutus.Core.Infrastructure
+open Plutus.Core.Queries
 open Plutus.Core.Repositories
 
 type HeatmapCell = { WeekStart: DateTime; Coverage: float }
@@ -204,7 +206,67 @@ module View =
 module Data =
     let private pageSize = 15
 
-    let load
+    let private buildFromCoverage
+        (coverage: WeeklyCoverage list)
+        (totalSymbols: int)
+        (selectedTimeframe: string)
+        (availableTimeframes: string list)
+        (page: int)
+        =
+        let expected = Shared.expectedCandlesPerWeek selectedTimeframe
+        let grouped = coverage |> List.groupBy _.Symbol |> List.sortBy fst
+        let totalPages = int (Math.Ceiling(float totalSymbols / float pageSize))
+        let safePage = max 1 (min page totalPages)
+        let offset = (safePage - 1) * pageSize
+
+        let pageSymbols = grouped |> List.skip offset |> List.truncate pageSize
+
+        let allWeeks = pageSymbols |> List.collect snd |> List.map _.WeekStart |> List.distinct |> List.sort
+
+        let symbolRows =
+            pageSymbols
+            |> List.map (fun (symbol, rows) ->
+                let cells =
+                    rows
+                    |> List.map (fun r -> { WeekStart = r.WeekStart; Coverage = min 1.0 (float r.Count / expected) })
+
+                { Symbol = symbol; Cells = cells }
+            )
+
+        { Symbols = symbolRows
+          Weeks = allWeeks
+          Timeframe = selectedTimeframe
+          AvailableTimeframes = availableTimeframes
+          Page = safePage
+          PageSize = pageSize
+          TotalSymbols = totalSymbols }
+
+    let private selectTimeframe (timeframe: string option) (available: string list) =
+        timeframe
+        |> Option.bind (fun tf -> if available |> List.contains tf then Some tf else None)
+        |> Option.orElseWith (fun () -> available |> List.tryHead)
+        |> Option.defaultValue "1H"
+
+    let loadFromCache (store: CacheStore.T) (timeframe: string option) (page: int) =
+        match store.Get<CoverageHeatmapCache.CachedHeatmapData>(CoverageHeatmapCache.Key) with
+        | Some cached ->
+            let selectedTimeframe = selectTimeframe timeframe cached.Timeframes
+
+            match cached.ByTimeframe |> Map.tryFind selectedTimeframe with
+            | Some tfData ->
+                Some(buildFromCoverage tfData.Coverage tfData.SymbolCount selectedTimeframe cached.Timeframes page)
+            | None ->
+                Some
+                    { Symbols = []
+                      Weeks = []
+                      Timeframe = selectedTimeframe
+                      AvailableTimeframes = cached.Timeframes
+                      Page = 1
+                      PageSize = pageSize
+                      TotalSymbols = 0 }
+        | None -> None
+
+    let loadFromDb
         (scopeFactory: IServiceScopeFactory)
         (timeframe: string option)
         (page: int)
@@ -221,12 +283,7 @@ module Data =
                 | Ok tfs -> tfs
                 | Error _ -> []
 
-            let selectedTimeframe =
-                timeframe
-                |> Option.bind (fun tf -> if availableTimeframes |> List.contains tf then Some tf else None)
-                |> Option.orElseWith (fun () -> availableTimeframes |> List.tryHead)
-                |> Option.defaultValue "1H"
-
+            let selectedTimeframe = selectTimeframe timeframe availableTimeframes
             let expected = Shared.expectedCandlesPerWeek selectedTimeframe
 
             match availableTimeframes with
@@ -289,13 +346,18 @@ module Handler =
         fun ctx ->
             task {
                 try
-                    let scopeFactory = ctx.Plug<IServiceScopeFactory>()
+                    let store = ctx.Plug<CacheStore.T>()
                     let query = Request.getQuery ctx
                     let timeframe = query.TryGetString "timeframe"
-
                     let page = query.TryGetInt "page" |> Option.defaultValue 1
 
-                    let! data = Data.load scopeFactory timeframe page ctx.RequestAborted
+                    let! data =
+                        match Data.loadFromCache store timeframe page with
+                        | Some cached -> task { return cached }
+                        | None ->
+                            let scopeFactory = ctx.Plug<IServiceScopeFactory>()
+                            Data.loadFromDb scopeFactory timeframe page ctx.RequestAborted
+
                     return! Response.ofHtml (View.heatmap data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("CoverageHeatmap")
@@ -325,7 +387,7 @@ module Handler =
                     let timeframe = query.TryGetString "timeframe"
                     let page = query.TryGetInt "page" |> Option.defaultValue 1
 
-                    let! data = Data.load scopeFactory timeframe page ctx.RequestAborted
+                    let! data = Data.loadFromDb scopeFactory timeframe page ctx.RequestAborted
                     return! Response.ofHtml (View.heatmap data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("CoverageHeatmap")

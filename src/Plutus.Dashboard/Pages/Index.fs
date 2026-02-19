@@ -74,20 +74,14 @@ let private marketsSection =
                       Hx.swapInnerHtml ]
                     [ _i [ _class_ "fas fa-plus mr-2 text-slate-400" ] []; Text.raw "Add Account" ] ]
           _div
-              [ _id_ "accounts-container"
-                Hx.get "/markets/grid"
-                Hx.trigger Load
-                Hx.swapInnerHtml ]
+              [ _id_ "accounts-container"; Hx.get "/markets/grid"; Hx.trigger Load; Hx.swapInnerHtml ]
               [ _div
                     [ _class_ "flex justify-center py-8" ]
                     [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] [] ] ] ]
 
 let private pipelinesSection =
     _div
-        [ _id_ "pipelines-container"
-          Hx.get "/pipelines/grid"
-          Hx.trigger Load
-          Hx.swapInnerHtml ]
+        [ _id_ "pipelines-container"; Hx.get "/pipelines/grid"; Hx.trigger Load; Hx.swapInnerHtml ]
         [ _div
               [ _class_ "flex justify-center py-8" ]
               [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] [] ] ]
@@ -122,9 +116,7 @@ let get: HttpHandler =
             [ _head
                   []
                   [ _meta [ Attr.create "charset" "utf-8" ]
-                    _meta
-                        [ _name_ "viewport"
-                          Attr.create "content" "width=device-width, initial-scale=1" ]
+                    _meta [ _name_ "viewport"; Attr.create "content" "width=device-width, initial-scale=1" ]
                     _title [] [ Text.raw "Plutus Trading System" ]
                     _link
                         [ _href_ "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -238,8 +230,8 @@ let get: HttpHandler =
                                                 [ _class_ "flex justify-center py-8" ]
                                                 [ _i [ _class_ "fas fa-spinner fa-spin text-slate-300 text-lg" ] [] ] ] ] ]
                           pipelinesSection
-                          backtestsSection
-                          ordersSection ]
+                          ordersSection
+                          backtestsSection ]
 
                     _div [ _id_ "modal-container" ] [] ] ]
 
