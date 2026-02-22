@@ -11,14 +11,7 @@ module BacktestAdapters =
             task {
                 match state.CurrentPosition with
                 | None -> return Ok None
-                | Some pos ->
-                    return
-                        Ok(
-                            Some
-                                { EntryPrice = pos.EntryPrice
-                                  Quantity = pos.Quantity
-                                  OrderId = 1 }
-                        )
+                | Some pos -> return Ok(Some { EntryPrice = pos.EntryPrice; Quantity = pos.Quantity; OrderId = 1 })
             }
 
     let tradeExecutor (state: BacktestState.T) : TradeExecutor =
@@ -91,11 +84,7 @@ module BacktestAdapters =
 
                         return
                             Ok(
-                                { ctx with
-                                    Action = Sell
-                                    ActiveOrderId = None
-                                    BuyPrice = None
-                                    Quantity = None },
+                                { ctx with Action = Sell; ActiveOrderId = None; BuyPrice = None; Quantity = None },
                                 $"SELL {pos.Quantity:F8} @ {ctx.CurrentPrice:F4}"
                             )
                 } }

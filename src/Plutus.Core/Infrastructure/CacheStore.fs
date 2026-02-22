@@ -13,7 +13,7 @@ module CacheStore =
         let store = ConcurrentDictionary<string, obj>()
 
         member _.Get<'a>(key: string) : 'a option =
-            match store.TryGetValue(key) with
+            match store.TryGetValue key with
             | true, value -> Some(value :?> 'a)
             | _ -> None
 

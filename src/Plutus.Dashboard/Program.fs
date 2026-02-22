@@ -34,8 +34,7 @@ let instruments =
       get "/instruments/quote-currencies" (requireAuth Instruments.Handler.quoteCurrencies) ]
 
 let general =
-    [ get "/" (requireAuth Index.get)
-      get "/system-status" (requireAuth SystemStatus.Handler.status) ]
+    [ get "/" (requireAuth Index.get); get "/system-status" (requireAuth SystemStatus.Handler.status) ]
 
 let balances =
     [ get "/balance/total" (requireAuth Balance.Handler.total)
@@ -257,8 +256,7 @@ webapp.Host.UseSerilog(fun context services configuration ->
 
 CoreServices.register webapp.Services webapp.Configuration
 
-webapp.Services.AddSingleton<CacheRefresher list>([ CoverageHeatmapCache.refresher ])
-|> ignore
+webapp.Services.AddSingleton<CacheRefresher list>([ CoverageHeatmapCache.refresher ]) |> ignore
 
 webapp.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

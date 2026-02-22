@@ -27,10 +27,7 @@ type PipelinesGridData =
       MarketTypes: string list
       Pipelines: PipelineListItem list }
 
-    static member Empty =
-        { Tags = []
-          MarketTypes = []
-          Pipelines = [] }
+    static member Empty = { Tags = []; MarketTypes = []; Pipelines = [] }
 
 type PipelineFilters =
     { SearchTerm: string option
@@ -56,11 +53,7 @@ type PipelinesTableData =
       Page: int
       PageSize: int }
 
-    static member Empty =
-        { Pipelines = []
-          TotalCount = 0
-          Page = 1
-          PageSize = 20 }
+    static member Empty = { Pipelines = []; TotalCount = 0; Page = 1; PageSize = 20 }
 
 module Data =
     let getTags (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) : Task<string list> =
@@ -72,8 +65,7 @@ module Data =
             match tags with
             | Ok tags -> return tags
             | Error err ->
-                let logger =
-                    scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Pipelines")
+                let logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Pipelines")
 
                 logger.LogError("Error getting pipeline tags: {Error}", Errors.serviceMessage err)
                 return []
@@ -107,8 +99,7 @@ module Data =
             match count with
             | Ok count -> return count
             | Error err ->
-                let logger =
-                    scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Pipelines")
+                let logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("Pipelines")
 
                 logger.LogError("Error getting pipelines count: {Error}", Errors.serviceMessage err)
                 return 0
@@ -136,17 +127,15 @@ module Data =
                           UpdatedAt = p.UpdatedAt }
                     )
 
-                return
-                    { Tags = tags
-                      MarketTypes = marketTypes
-                      Pipelines = pipelineItems }
+                return { Tags = tags; MarketTypes = marketTypes; Pipelines = pipelineItems }
         }
 
     let getFilteredPipelines
         (scopeFactory: IServiceScopeFactory)
         (filters: PipelineFilters)
         (ct: CancellationToken)
-        : Task<PipelinesTableData> =
+        : Task<PipelinesTableData>
+        =
         task {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
@@ -249,7 +238,7 @@ module View =
                                 _input
                                     [ _type_ "text"
                                       _name_ "searchTerm"
-                                      Attr.create "placeholder" "Search by symbol..."
+                                      _placeholder_ "Search by symbol..."
                                       _class_
                                           "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ] ]
                           filterSelect "filterTag" "Tag" data.Tags
@@ -358,7 +347,7 @@ module View =
         _tr
             []
             [ _td
-                  [ Attr.create "colspan" "6"; _class_ "px-4 py-12 text-center" ]
+                  [ _colspan_ "6"; _class_ "px-4 py-12 text-center" ]
                   [ _div
                         [ _class_ "text-slate-400" ]
                         [ _i [ _class_ "fas fa-robot text-3xl mb-3" ] []
@@ -369,7 +358,7 @@ module View =
         _tr
             []
             [ _td
-                  [ Attr.create "colspan" "6"; _class_ "px-4 py-8 text-center text-slate-400" ]
+                  [ _colspan_ "6"; _class_ "px-4 py-8 text-center text-slate-400" ]
                   [ _i [ _class_ "fas fa-spinner fa-spin text-lg mb-2" ] []
                     _p [ _class_ "text-sm" ] [ Text.raw "Loading pipelines..." ] ] ]
 
@@ -378,16 +367,11 @@ module View =
         let hasPrev = data.Page > 1
         let hasNext = data.Page < totalPages
 
-        let startRecord =
-            if data.TotalCount = 0 then
-                0
-            else
-                (data.Page - 1) * data.PageSize + 1
+        let startRecord = if data.TotalCount = 0 then 0 else (data.Page - 1) * data.PageSize + 1
 
         let endRecord = min (data.Page * data.PageSize) data.TotalCount
 
-        let enabledBtnClass =
-            "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+        let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
 
         let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
         let prevBtnClass = if hasPrev then enabledBtnClass else disabledBtnClass
@@ -409,7 +393,7 @@ module View =
                               Hx.swapOuterHtml
                               Attr.create "hx-include" "#pipelines-filter-form form"
                           else
-                              Attr.create "disabled" "disabled" ]
+                              _disabled_ ]
                         [ Text.raw "Previous" ]
                     _span
                         [ _class_ "px-3 py-1 text-xs text-slate-400" ]
@@ -423,7 +407,7 @@ module View =
                               Hx.swapOuterHtml
                               Attr.create "hx-include" "#pipelines-filter-form form"
                           else
-                              Attr.create "disabled" "disabled" ]
+                              _disabled_ ]
                         [ Text.raw "Next" ] ] ]
 
     let tableBody (data: PipelinesTableData) =
@@ -445,19 +429,14 @@ module View =
         _div
             [ _class_ "card overflow-hidden" ]
             [ _div
-                  [ _id_ "pipelines-table-container"
-                    Hx.get "/pipelines/table"
-                    Hx.trigger "load"
-                    Hx.swapOuterHtml ]
+                  [ _id_ "pipelines-table-container"; Hx.get "/pipelines/table"; Hx.trigger "load"; Hx.swapOuterHtml ]
                   [ _div
                         [ _class_ "overflow-x-auto" ]
                         [ _table
                               [ _class_ "min-w-full divide-y divide-slate-100" ]
-                              [ tableHeader
-                                _tbody [ _class_ "bg-white divide-y divide-slate-100" ] [ loadingState ] ] ] ] ]
+                              [ tableHeader; _tbody [ _class_ "bg-white divide-y divide-slate-100" ] [ loadingState ] ] ] ] ]
 
-    let section (data: PipelinesGridData) =
-        _section [] [ sectionHeader; filterBar data; pipelinesTable ]
+    let section (data: PipelinesGridData) = _section [] [ sectionHeader; filterBar data; pipelinesTable ]
 
     let count (n: int) = Text.raw (string n)
 
@@ -512,9 +491,7 @@ module Handler =
                           Tag = tryGetQueryStringValue ctx.Request.Query "filterTag"
                           MarketType = tryGetQueryStringValue ctx.Request.Query "filterAccount"
                           Status = tryGetQueryStringValue ctx.Request.Query "filterStatus"
-                          SortBy =
-                            tryGetQueryStringValue ctx.Request.Query "sortBy"
-                            |> Option.defaultValue "symbol"
+                          SortBy = tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "symbol"
                           Page = tryGetQueryStringInt ctx.Request.Query "page" 1
                           PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20 }
 

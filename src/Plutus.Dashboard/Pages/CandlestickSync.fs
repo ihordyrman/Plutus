@@ -83,7 +83,7 @@ module View =
                           _type_ "date"
                           _value_ oneYearAgo
                           _class_ selectClass
-                          Attr.create "required" "required" ] ]
+                          _required_ ] ]
               _div
                   []
                   [ _label
@@ -95,7 +95,7 @@ module View =
                           _type_ "date"
                           _value_ today
                           _class_ selectClass
-                          Attr.create "required" "required" ] ] ]
+                          _required_ ] ] ]
 
     let private closeModalButton =
         _button
@@ -134,7 +134,7 @@ module View =
         _div
             [ _id_ "sync-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
               _div
@@ -263,7 +263,7 @@ module View =
 
         _div
             [ _class_ "w-full bg-slate-100 rounded-full h-1.5" ]
-            [ _div [ _class_ "bg-blue-500 h-1.5 rounded-full transition-all"; Attr.create "style" $"width: {pct}%%" ] [] ]
+            [ _div [ _class_ "bg-blue-500 h-1.5 rounded-full transition-all"; _style_ $"width: {pct}%%" ] [] ]
 
     let private jobActions (job: SyncJobManager.SyncJobState) =
         let btnClass = "px-2 py-1 text-xs font-medium rounded border transition-colors"

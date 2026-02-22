@@ -15,8 +15,8 @@ module View =
     let private headContent =
         _head
             []
-            [ _meta [ Attr.create "charset" "utf-8" ]
-              _meta [ _name_ "viewport"; Attr.create "content" "width=device-width, initial-scale=1" ]
+            [ _meta [ _charset_ "utf-8" ]
+              _meta [ _name_ "viewport"; _content_ "width=device-width, initial-scale=1" ]
               _title [] [ Text.raw "Login - Plutus" ]
               _link
                   [ _href_ "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"

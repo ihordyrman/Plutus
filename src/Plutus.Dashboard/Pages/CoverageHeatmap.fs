@@ -66,7 +66,7 @@ module View =
               Hx.includeThis ]
             [ for tf in available do
                   if tf = selected then
-                      _option [ _value_ tf; Attr.create "selected" "selected" ] [ Text.raw tf ]
+                      _option [ _value_ tf; _selected_ ] [ Text.raw tf ]
                   else
                       _option [ _value_ tf ] [ Text.raw tf ] ]
 
@@ -95,8 +95,7 @@ module View =
             [ _class_ "flex ml-[120px]" ]
             [ for (_, label) in labels do
                   _div
-                      [ _class_ "text-[10px] text-slate-400 text-center"
-                        Attr.create "style" "width:14px;min-width:14px" ]
+                      [ _class_ "text-[10px] text-slate-400 text-center"; _style_ "width:14px;min-width:14px" ]
                       [ Text.raw label ] ]
 
     let private symbolRow (weeks: DateTime list) (row: SymbolRow) =
@@ -110,16 +109,14 @@ module View =
                   [ _class_ "w-[120px] min-w-[120px] flex items-center justify-end pr-3 gap-1" ]
                   [ _button
                         [ _class_ "text-slate-300 hover:text-red-500 text-xs leading-none"
-                          Attr.create "title" $"Delete all data for {row.Symbol}"
+                          _title_ $"Delete all data for {row.Symbol}"
                           Hx.delete $"/coverage-heatmap/{encodedSymbol}"
                           Hx.confirm $"Delete all candlestick data for {row.Symbol}?"
                           Hx.targetCss "#coverage-heatmap-container"
                           Hx.swapInnerHtml
                           Hx.includeCss "[name=timeframe]" ]
                         [ Text.raw "\u00D7" ]
-                    _span
-                        [ _class_ "text-xs text-slate-600 truncate"; Attr.create "title" row.Symbol ]
-                        [ Text.raw row.Symbol ] ]
+                    _span [ _class_ "text-xs text-slate-600 truncate"; _title_ row.Symbol ] [ Text.raw row.Symbol ] ]
               _div
                   [ _class_ "flex gap-px" ]
                   [ for w in weeks do
@@ -128,7 +125,7 @@ module View =
                         let weekStr = w.ToString("yyyy-MM-dd")
                         let color = coverageColor coverage
 
-                        _div [ _class_ $"w-3 h-3 rounded-sm {color}"; Attr.create "title" $"{weekStr}: {pct}%%" ] [] ] ]
+                        _div [ _class_ $"w-3 h-3 rounded-sm {color}"; _title_ $"{weekStr}: {pct}%%" ] [] ] ]
 
     let private paginationControls (data: HeatmapData) =
         let totalPages = int (Math.Ceiling(float data.TotalSymbols / float data.PageSize))
@@ -160,7 +157,7 @@ module View =
                                   Hx.swapInnerHtml
                                   Hx.includeCss "[name=timeframe]"
                               else
-                                  Attr.create "disabled" "disabled" ]
+                                  _disabled_ ]
                             [ Text.raw "Previous" ]
                         _span
                             [ _class_ "px-3 py-1 text-xs text-slate-400" ]
@@ -175,7 +172,7 @@ module View =
                                   Hx.swapInnerHtml
                                   Hx.includeCss "[name=timeframe]"
                               else
-                                  Attr.create "disabled" "disabled" ]
+                                  _disabled_ ]
                             [ Text.raw "Next" ] ] ]
 
     let heatmap (data: HeatmapData) =

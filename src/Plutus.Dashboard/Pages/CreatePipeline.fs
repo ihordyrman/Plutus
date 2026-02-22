@@ -13,9 +13,11 @@ open Plutus.Core.Domain
 open Plutus.Core.Repositories
 open Plutus.Core.Shared
 
+type PipelineInstrument = { BaseCurrency: string; QuoteCurrency: string }
+
 type CreatePipelineInput =
     { MarketType: MarketType
-      Symbol: string
+      Instrument: PipelineInstrument
       Tags: string list
       ExecutionInterval: TimeSpan
       Enabled: bool }
@@ -27,12 +29,13 @@ type CreateResult =
 
 type FormDataInfo =
     { MarketType: int option
-      Symbol: string option
+      Instrument: PipelineInstrument option
       Tags: string option
       ExecutionInterval: int option
       Enabled: bool }
 
-    static member Empty = { MarketType = None; Symbol = None; Tags = None; ExecutionInterval = None; Enabled = false }
+    static member Empty =
+        { MarketType = None; Instrument = None; Tags = None; ExecutionInterval = None; Enabled = false }
 
 module Data =
     let private marketTypes = [ MarketType.Okx; MarketType.Binance ]
@@ -40,17 +43,26 @@ module Data =
     let getMarketTypes () : MarketType list = marketTypes
 
     let parseFormData (form: FormData) : FormDataInfo =
+        let instrument =
+            match form.TryGetString "baseCurrency", form.TryGetString "quoteCurrency" with
+            | Some baseCur, Some quoteCur when
+                not (String.IsNullOrWhiteSpace(baseCur)) && not (String.IsNullOrWhiteSpace(quoteCur))
+                ->
+                Some
+                    { BaseCurrency = baseCur.Trim().ToUpperInvariant()
+                      QuoteCurrency = quoteCur.Trim().ToUpperInvariant() }
+            | _ -> None
+
         { MarketType = form.TryGetInt "marketType"
-          Symbol = form.TryGetString "symbol"
+          Instrument = instrument
           Tags = form.TryGetString "tags"
           ExecutionInterval = form.TryGetInt "executionInterval"
           Enabled = form.TryGetString "enabled" |> Option.map (fun _ -> true) |> Option.defaultValue false }
 
     let validateAndCreate (formData: FormDataInfo) : Result<CreatePipelineInput, string> =
-        match formData.Symbol with
-        | None -> Error "Symbol is required"
-        | Some symbol when String.IsNullOrWhiteSpace(symbol) -> Error "Symbol is required"
-        | Some symbol ->
+        match formData.Instrument with
+        | None -> Error "Base and Quote currencies are required"
+        | Some instrument ->
             let marketType =
                 formData.MarketType |> Option.map enum<MarketType> |> Option.defaultValue MarketType.Okx
 
@@ -71,7 +83,7 @@ module Data =
 
             Ok
                 { MarketType = marketType
-                  Symbol = symbol.Trim().ToUpperInvariant()
+                  Instrument = instrument
                   Tags = tags
                   ExecutionInterval = interval
                   Enabled = formData.Enabled }
@@ -86,11 +98,12 @@ module Data =
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let instrumentSymbol = input.Instrument.BaseCurrency + "-" + input.Instrument.QuoteCurrency
 
                 let pipeline: Pipeline =
                     { Id = 0
-                      Name = input.Symbol
-                      Symbol = input.Symbol
+                      Name = instrumentSymbol // consider custom naming in the future
+                      Symbol = instrumentSymbol
                       MarketType = input.MarketType
                       Enabled = input.Enabled
                       ExecutionInterval = input.ExecutionInterval
@@ -183,7 +196,7 @@ module View =
                   [ _id_ "tags"
                     _name_ "tags"
                     _type_ "text"
-                    Attr.create "placeholder" "e.g., scalping, high-frequency, btc"
+                    _placeholder_ "e.g., scalping, high-frequency, btc"
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
               _p
@@ -200,11 +213,11 @@ module View =
                   [ _id_ "executionInterval"
                     _name_ "executionInterval"
                     _type_ "number"
-                    Attr.create "min" "1"
-                    Attr.create "placeholder" "e.g., 5"
+                    _min_ "1"
+                    _placeholder_ "e.g., 5"
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                    Attr.create "required" "required" ]
+                    _required_ ]
               _p
                   [ _class_ "text-sm text-slate-500 mt-1" ]
                   [ Text.raw "Specify how often the pipeline should execute (in minutes)." ] ]
@@ -229,8 +242,12 @@ module View =
                   [ _i [ _class_ "fas fa-info-circle mr-1" ] []; Text.raw "Tips" ]
               _ul
                   [ _class_ "text-xs text-slate-500 space-y-0.5" ]
-                  [ _li [] [ Text.raw "• Select base and quote currencies to define the trading pair" ]
-                    _li [] [ Text.raw "• Each market + symbol combination must be unique" ] ] ]
+                  [ _li
+                        []
+                        [ Text.raw "• Select base and quote currencies to define the trading pair (e.g., BTC-USDT)." ]
+                    _li [] [ Text.raw "• Use tags to categorize pipelines (e.g., scalping, swing)." ]
+                    _li [] [ Text.raw "• Set execution interval based on your strategy needs." ]
+                    _li [] [ Text.raw "• You can edit or disable the pipeline later from the dashboard." ] ] ]
 
     let private closeModalButton =
         _button
@@ -270,7 +287,7 @@ module View =
             [ _id_ "pipeline-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
               Attr.create "aria-labelledby" "modal-title"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
 

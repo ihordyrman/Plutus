@@ -154,7 +154,7 @@ module Http =
                     if counter.TimeStamps.Count >= counter.Limit then
                         let waitTime = counter.Window - (now - counter.TimeStamps.Peek())
 
-                        logger.LogWarning(
+                        logger.LogDebug(
                             "Rate limit hit for {Endpoint}. Waiting for {WaitTime} ms before retrying.",
                             req.Endpoint,
                             waitTime.TotalMilliseconds

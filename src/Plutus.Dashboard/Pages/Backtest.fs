@@ -50,7 +50,8 @@ module Data =
         (offset: int)
         (limit: int)
         (ct: CancellationToken)
-        : Task<Result<BacktestGridItem list * int, string>> =
+        : Task<Result<BacktestGridItem list * int, string>>
+        =
         task {
             match! BacktestRepository.getAllRuns db offset limit ct with
             | Error err -> return Error $"Failed to load runs: {err}"
@@ -92,7 +93,8 @@ module Data =
         (db: IDbConnection)
         (runId: int)
         (ct: CancellationToken)
-        : Task<Result<BacktestRun * Pipeline, string>> =
+        : Task<Result<BacktestRun * Pipeline, string>>
+        =
         task {
             match! BacktestRepository.getRunById db runId ct with
             | Error err -> return Error $"Run not found: {err}"
@@ -158,7 +160,7 @@ module View =
         _div
             [ _id_ "backtest-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
               _div
@@ -203,7 +205,7 @@ module View =
                                                               _type_ "date"
                                                               _value_ thirtyDaysAgo
                                                               _class_ selectClass
-                                                              Attr.create "required" "required" ] ]
+                                                              _required_ ] ]
                                                   _div
                                                       []
                                                       [ _label
@@ -217,7 +219,7 @@ module View =
                                                               _type_ "date"
                                                               _value_ today
                                                               _class_ selectClass
-                                                              Attr.create "required" "required" ] ] ]
+                                                              _required_ ] ] ]
                                             _div
                                                 []
                                                 [ _label
@@ -244,9 +246,9 @@ module View =
                                                         _type_ "number"
                                                         _value_ "10000"
                                                         _class_ selectClass
-                                                        Attr.create "min" "1"
-                                                        Attr.create "step" "0.01"
-                                                        Attr.create "required" "required" ] ] ]
+                                                        _min_ "1"
+                                                        _step_ "0.01"
+                                                        _required_ ] ] ]
                                       _div
                                           [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-slate-100" ]
                                           [ _button
@@ -267,7 +269,7 @@ module View =
         _div
             [ _id_ "backtest-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ _div [ _class_ "fixed inset-0 bg-black bg-opacity-50 transition-opacity" ] []
               _div
@@ -328,15 +330,11 @@ module View =
     let private formatMoney (v: decimal) = $"{v:F2}"
 
     let private formatDuration (d: TimeSpan) =
-        if d.TotalDays >= 1.0 then
-            $"{int d.TotalDays}d {d.Hours}h"
-        elif d.TotalHours >= 1.0 then
-            $"{int d.TotalHours}h {d.Minutes}m"
-        else
-            $"{int d.TotalMinutes}m"
+        if d.TotalDays >= 1.0 then $"{int d.TotalDays}d {d.Hours}h"
+        elif d.TotalHours >= 1.0 then $"{int d.TotalHours}h {d.Minutes}m"
+        else $"{int d.TotalMinutes}m"
 
-    let toUnixSeconds (dt: DateTime) =
-        DateTimeOffset(dt, TimeSpan.Zero).ToUnixTimeSeconds()
+    let toUnixSeconds (dt: DateTime) = DateTimeOffset(dt, TimeSpan.Zero).ToUnixTimeSeconds()
 
     let candlesJson (candles: Candlestick list) =
         candles
@@ -408,16 +406,12 @@ module View =
     let resultsView (vm: ResultsViewModel) =
         let m = vm.Metrics
 
-        let returnColor =
-            if m.TotalReturn >= 0m then
-                "text-green-600"
-            else
-                "text-red-600"
+        let returnColor = if m.TotalReturn >= 0m then "text-green-600" else "text-red-600"
 
         _div
             [ _id_ "backtest-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
               _div
@@ -464,10 +458,7 @@ module View =
                                             metricCard
                                                 "Win Rate"
                                                 (formatPct m.WinRate)
-                                                (if m.WinRate >= 50m then
-                                                     "text-green-600"
-                                                 else
-                                                     "text-slate-900")
+                                                (if m.WinRate >= 50m then "text-green-600" else "text-slate-900")
                                             metricCard "Max Drawdown" (formatPct m.MaxDrawdownPct) "text-red-600"
                                             metricCard "Sharpe Ratio" (formatMoney m.SharpeRatio) "text-slate-900"
                                             metricCard "Total Trades" (string m.TotalTrades) "text-slate-900" ]
@@ -550,7 +541,7 @@ module View =
                                           [ _h4
                                                 [ _class_ "text-sm font-semibold text-slate-700 mb-3" ]
                                                 [ Text.raw "Price & Equity" ]
-                                            _div [ _id_ "backtest-chart"; Attr.create "style" "height:400px" ] []
+                                            _div [ _id_ "backtest-chart"; _style_ "height:400px" ] []
                                             _script [] [ Text.raw (chartScript vm.Run.Id) ] ]
 
                                       // Trade table
@@ -654,8 +645,7 @@ module View =
                                                     Hx.swapInnerHtml ]
                                                   [ _i [ _class_ "fas fa-list-ul text-xs" ] [] ] ] ] ] ]
 
-              let enabledBtnClass =
-                  "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
 
               let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
 
@@ -673,7 +663,7 @@ module View =
                                     Hx.targetCss "#backtest-trades-container"
                                     Hx.swapInnerHtml
                                 else
-                                    Attr.create "disabled" "disabled" ]
+                                    _disabled_ ]
                               [ Text.raw "Previous" ]
                           _span
                               [ _class_ "px-3 py-1 text-xs text-slate-400" ]
@@ -687,7 +677,7 @@ module View =
                                     Hx.targetCss "#backtest-trades-container"
                                     Hx.swapInnerHtml
                                 else
-                                    Attr.create "disabled" "disabled" ]
+                                    _disabled_ ]
                               [ Text.raw "Next" ] ] ] ]
 
     let private outcomeBadge (outcome: int) =
@@ -753,8 +743,7 @@ module View =
                                                     Hx.swapInnerHtml ]
                                                   [ _i [ _class_ "fas fa-eye text-xs" ] [] ] ] ] ] ]
 
-              let enabledBtnClass =
-                  "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
+              let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
 
               let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
 
@@ -772,7 +761,7 @@ module View =
                                     Hx.targetCss "#backtest-executions-container"
                                     Hx.swapInnerHtml
                                 else
-                                    Attr.create "disabled" "disabled" ]
+                                    _disabled_ ]
                               [ Text.raw "Previous" ]
                           _span
                               [ _class_ "px-3 py-1 text-xs text-slate-400" ]
@@ -786,7 +775,7 @@ module View =
                                     Hx.targetCss "#backtest-executions-container"
                                     Hx.swapInnerHtml
                                 else
-                                    Attr.create "disabled" "disabled" ]
+                                    _disabled_ ]
                               [ Text.raw "Next" ] ] ] ]
 
     let traceDetail (logs: BacktestExecutionLog list) =
@@ -861,9 +850,7 @@ module View =
     let private gridRow (item: BacktestGridItem) =
         let polling =
             if item.Status = BacktestStatus.Pending || item.Status = BacktestStatus.Running then
-                [ Hx.get $"/backtests/{item.RunId}/row"
-                  Hx.trigger "every 3s"
-                  Hx.swap HxSwap.OuterHTML ]
+                [ Hx.get $"/backtests/{item.RunId}/row"; Hx.trigger "every 3s"; Hx.swap HxSwap.OuterHTML ]
             else
                 []
 
@@ -896,12 +883,7 @@ module View =
                     elif item.Status = BacktestStatus.Failed then
                         _span
                             [ _class_ "text-red-400 text-xs truncate max-w-[200px]" ]
-                            [ Text.raw (
-                                  if String.IsNullOrEmpty item.ErrorMessage then
-                                      "Error"
-                                  else
-                                      item.ErrorMessage
-                              ) ]
+                            [ Text.raw (if String.IsNullOrEmpty item.ErrorMessage then "Error" else item.ErrorMessage) ]
                     else
                         _span [ _class_ "text-slate-300" ] [ Text.raw "—" ] ]
               _td
@@ -945,7 +927,7 @@ module View =
         _tr
             []
             [ _td
-                  [ Attr.create "colspan" "6"; _class_ "px-4 py-12 text-center" ]
+                  [ _colspan_ "6"; _class_ "px-4 py-12 text-center" ]
                   [ _div
                         [ _class_ "text-slate-400" ]
                         [ _i [ _class_ "fas fa-flask text-3xl mb-3" ] []
@@ -964,8 +946,7 @@ module View =
                   [ _class_ "overflow-x-auto" ]
                   [ _table
                         [ _class_ "min-w-full divide-y divide-slate-100" ]
-                        [ gridTableHeader
-                          _tbody [ _class_ "bg-white divide-y divide-slate-100" ] rows ] ]
+                        [ gridTableHeader; _tbody [ _class_ "bg-white divide-y divide-slate-100" ] rows ] ]
               _div
                   [ _class_ "px-4 py-3 border-t border-slate-100" ]
                   [ _div [ _class_ "text-xs text-slate-400" ] [ Text.raw $"{total} backtest run(s)" ] ] ]
@@ -1113,13 +1094,10 @@ module Handler =
                     let endDateStr = form.TryGetString "endDate" |> Option.defaultValue ""
                     let intervalMinutes = form.TryGetInt "intervalMinutes" |> Option.defaultValue 1
 
-                    let initialCapital =
-                        form.TryGetFloat "initialCapital" |> Option.defaultValue 10000.0
+                    let initialCapital = form.TryGetFloat "initialCapital" |> Option.defaultValue 10000.0
 
                     if
-                        pipelineId = 0
-                        || String.IsNullOrWhiteSpace startDateStr
-                        || String.IsNullOrWhiteSpace endDateStr
+                        pipelineId = 0 || String.IsNullOrWhiteSpace startDateStr || String.IsNullOrWhiteSpace endDateStr
                     then
                         return! Response.ofHtml (View.errorResult "All fields are required") ctx
                     else
@@ -1145,11 +1123,7 @@ module Handler =
                                         task {
                                             try
                                                 let! _ =
-                                                    BacktestEngine.run
-                                                        services
-                                                        runId
-                                                        config
-                                                        CancellationToken.None
+                                                    BacktestEngine.run scopeFactory runId config CancellationToken.None
 
                                                 ()
                                             with ex ->
@@ -1202,11 +1176,7 @@ module Handler =
 
             return
                 View.resultsView
-                    { Run = run
-                      Pipeline = pipeline
-                      Metrics = metrics
-                      EquityPoints = equity
-                      TradePairs = pairs }
+                    { Run = run; Pipeline = pipeline; Metrics = metrics; EquityPoints = equity; TradePairs = pairs }
         }
 
     let status (runId: int) : HttpHandler =
@@ -1228,10 +1198,7 @@ module Handler =
                             return! Response.ofHtml view ctx
                         | _ ->
                             let msg =
-                                if String.IsNullOrEmpty run.ErrorMessage then
-                                    "Backtest failed"
-                                else
-                                    run.ErrorMessage
+                                if String.IsNullOrEmpty run.ErrorMessage then "Backtest failed" else run.ErrorMessage
 
                             return! Response.ofHtml (View.errorResult msg) ctx
                 with ex ->
@@ -1274,8 +1241,7 @@ module Handler =
                     let allPairs = Data.getTradePairs allTrades
                     let totalPairs = allPairs.Length
 
-                    let pagedPairs =
-                        allPairs |> List.skip ((page - 1) * pageSize) |> List.truncate pageSize
+                    let pagedPairs = allPairs |> List.skip ((page - 1) * pageSize) |> List.truncate pageSize
 
                     return! Response.ofHtml (View.tradeRows runId pagedPairs page pageSize totalPairs) ctx
                 with ex ->

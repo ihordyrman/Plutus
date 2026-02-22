@@ -234,9 +234,7 @@ module BacktestRepository =
                                GROUP BY execution_id, candle_time
                                ORDER BY candle_time ASC
                                OFFSET @Offset ROWS FETCH NEXT @Limit ROWS ONLY""",
-                            {| RunId = runId
-                               Offset = offset
-                               Limit = limit |},
+                            {| RunId = runId; Offset = offset; Limit = limit |},
                             cancellationToken = token
                         )
                     )
@@ -338,8 +336,7 @@ module BacktestRepository =
                             """SELECT * FROM backtest_execution_logs
                                WHERE backtest_run_id = @RunId AND execution_id = @ExecutionId
                                ORDER BY id ASC""",
-                            {| RunId = runId
-                               ExecutionId = executionId |},
+                            {| RunId = runId; ExecutionId = executionId |},
                             cancellationToken = token
                         )
                     )

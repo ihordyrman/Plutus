@@ -368,7 +368,7 @@ module View =
                                         Hx.swapOuterHtml
                                         Attr.create "hx-include" "#traces-filter-form form"
                                     else
-                                        Attr.create "disabled" "disabled" ]
+                                        _disabled_ ]
                                   [ Text.raw "Previous" ]
                               _span
                                   [ _class_ "px-3 py-1 text-xs text-slate-400" ]
@@ -383,7 +383,7 @@ module View =
                                         Hx.swapOuterHtml
                                         Attr.create "hx-include" "#traces-filter-form form"
                                     else
-                                        Attr.create "disabled" "disabled" ]
+                                        _disabled_ ]
                                   [ Text.raw "Next" ] ] ] ]
 
     let executionDetail (detail: ExecutionDetail) =
@@ -459,7 +459,7 @@ module View =
                                         [ _class_ "flex-1 h-4 bg-slate-100 rounded-full relative overflow-hidden" ]
                                         [ _div
                                               [ _class_ $"absolute top-0 h-full rounded-full {barColor}"
-                                                Attr.create "style" $"left:{offsetPct:F1}%%;width:{widthPct:F1}%%" ]
+                                                _style_ $"left:{offsetPct:F1}%%;width:{widthPct:F1}%%" ]
                                               [] ]
                                     _span
                                         [ _class_ "w-16 text-xs text-slate-400 text-right font-mono" ]
@@ -489,7 +489,7 @@ module View =
         _div
             [ _id_ "pipeline-traces-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
               _div

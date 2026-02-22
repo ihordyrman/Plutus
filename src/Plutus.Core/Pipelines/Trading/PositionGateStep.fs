@@ -21,8 +21,7 @@ module PositionGateStep =
                             | Ok(Some pos) ->
                                 return
                                     Continue(
-                                        { ctx with
-                                            ActiveOrderId = Some pos.OrderId },
+                                        { ctx with ActiveOrderId = Some pos.OrderId },
                                         "Open position exists, setting action to Hold"
                                     )
                             | Ok None ->

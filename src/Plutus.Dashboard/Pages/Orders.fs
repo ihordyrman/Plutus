@@ -173,7 +173,7 @@ module View =
                                 _input
                                     [ _type_ "text"
                                       _name_ "searchTerm"
-                                      Attr.create "placeholder" "Search by symbol..."
+                                      _placeholder_ "Search by symbol..."
                                       _class_
                                           "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ] ]
                           filterSelect "filterSide" "Side" [ ("buy", "Buy"); ("sell", "Sell") ]
@@ -278,7 +278,7 @@ module View =
         _tr
             []
             [ _td
-                  [ Attr.create "colspan" "9"; _class_ "px-4 py-12 text-center" ]
+                  [ _colspan_ "9"; _class_ "px-4 py-12 text-center" ]
                   [ _div
                         [ _class_ "text-slate-400" ]
                         [ _i [ _class_ "fas fa-receipt text-3xl mb-3" ] []
@@ -289,7 +289,7 @@ module View =
         _tr
             []
             [ _td
-                  [ Attr.create "colspan" "9"; _class_ "px-4 py-8 text-center text-slate-400" ]
+                  [ _colspan_ "9"; _class_ "px-4 py-8 text-center text-slate-400" ]
                   [ _i [ _class_ "fas fa-spinner fa-spin text-lg mb-2" ] []
                     _p [ _class_ "text-sm" ] [ Text.raw "Loading orders..." ] ] ]
 
@@ -321,7 +321,7 @@ module View =
                               Hx.swapOuterHtml
                               Attr.create "hx-include" "#orders-filter-form form"
                           else
-                              Attr.create "disabled" "disabled" ]
+                              _disabled_ ]
                         [ Text.raw "Previous" ]
                     _span
                         [ _class_ "px-3 py-1 text-xs text-slate-400" ]
@@ -335,7 +335,7 @@ module View =
                               Hx.swapOuterHtml
                               Attr.create "hx-include" "#orders-filter-form form"
                           else
-                              Attr.create "disabled" "disabled" ]
+                              _disabled_ ]
                         [ Text.raw "Next" ] ] ]
 
     let tableBody (data: OrdersGridData) =

@@ -770,7 +770,7 @@ module View =
                     _button
                         [ _type_ "button"
                           _class_ "text-slate-400 hover:text-slate-600"
-                          Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''" ]
+                          _onclick_ "document.getElementById('step-editor-container').innerHTML = ''" ]
                         [ _i [ _class_ "fas fa-times" ] [] ] ]
 
               _div
@@ -800,7 +800,7 @@ module View =
                                                   Hx.targetCss "#steps-list"
                                                   Hx.swap HxSwap.BeforeEnd
                                               if isDisabled then
-                                                  Attr.create "disabled" "disabled" ]
+                                                  _disabled_ ]
                                             [ _div
                                                   [ _class_ "flex items-start space-x-3" ]
                                                   [ _div
@@ -856,7 +856,7 @@ module View =
                               _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
                               _value_ "true"
                               if currentVal = "true" || currentVal = "True" then
-                                  Attr.create "checked" "checked" ] ]
+                                  _checked_ ] ]
 
               | Parameters.Choice options ->
                   _select
@@ -866,7 +866,7 @@ module View =
                             "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
                       [ for opt in options do
                             if opt = currentVal then
-                                _option [ _value_ opt; Attr.create "selected" "selected" ] [ Text.raw opt ]
+                                _option [ _value_ opt; _selected_ ] [ Text.raw opt ]
                             else
                                 _option [ _value_ opt ] [ Text.raw opt ] ]
 
@@ -894,9 +894,9 @@ module View =
                                               _class_
                                                   "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
                                               _value_ opt
-                                              Attr.create "onchange" syncScript
+                                              _onchange_ syncScript
                                               if Set.contains opt selectedValues then
-                                                  Attr.create "checked" "checked" ]
+                                                  _checked_ ]
                                         _span [ _class_ "text-sm text-slate-700" ] [ Text.raw opt ] ] ] ]
 
               | Parameters.Int(minVal, maxVal) ->
@@ -908,10 +908,10 @@ module View =
                         _class_
                             "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                         match minVal with
-                        | Some m -> Attr.create "min" (string m)
+                        | Some m -> _min_ (string m)
                         | None -> ()
                         match maxVal with
-                        | Some m -> Attr.create "max" (string m)
+                        | Some m -> _max_ (string m)
                         | None -> () ]
 
               | Parameters.Decimal(minVal, maxVal) ->
@@ -919,15 +919,15 @@ module View =
                       [ _id_ inputId
                         _name_ field.Key
                         _type_ "number"
-                        Attr.create "step" "0.01"
+                        _step_ "0.01"
                         _value_ currentVal
                         _class_
                             "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                         match minVal with
-                        | Some m -> Attr.create "min" (string m)
+                        | Some m -> _min_ (string m)
                         | None -> ()
                         match maxVal with
-                        | Some m -> Attr.create "max" (string m)
+                        | Some m -> _max_ (string m)
                         | None -> () ]
 
               | Parameters.String ->
@@ -959,7 +959,7 @@ module View =
                     _button
                         [ _type_ "button"
                           _class_ "text-slate-400 hover:text-slate-600"
-                          Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''" ]
+                          _onclick_ "document.getElementById('step-editor-container').innerHTML = ''" ]
                         [ _i [ _class_ "fas fa-times" ] [] ] ]
 
               if not vm.Errors.IsEmpty then
@@ -988,7 +988,7 @@ module View =
                               [ _type_ "button"
                                 _class_
                                     "px-3 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md transition-colors"
-                                Attr.create "onclick" "document.getElementById('step-editor-container').innerHTML = ''" ]
+                                _onclick_ "document.getElementById('step-editor-container').innerHTML = ''" ]
                               [ Text.raw "Cancel" ]
                           _button
                               [ _type_ "submit"
@@ -1025,9 +1025,7 @@ module View =
                                     "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('symbol');if(s)s.value=''" ]
                               [ for mt in vm.MarketTypes do
                                     if mt = vm.MarketType then
-                                        _option
-                                            [ _value_ (string (int mt)); Attr.create "selected" "selected" ]
-                                            [ Text.raw (mt.ToString()) ]
+                                        _option [ _value_ (string (int mt)); _selected_ ] [ Text.raw (mt.ToString()) ]
                                     else
                                         _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ] ] ]
 
@@ -1054,7 +1052,7 @@ module View =
                               [ _option [ _value_ "" ] [ Text.raw "-- Select --" ]
                                 for c in vm.BaseCurrencies do
                                     if c = vm.BaseCurrency then
-                                        _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
+                                        _option [ _value_ c; _selected_ ] [ Text.raw c ]
                                     else
                                         _option [ _value_ c ] [ Text.raw c ] ] ]
                     _div
@@ -1073,7 +1071,7 @@ module View =
                               [ _option [ _value_ "" ] [ Text.raw "-- Select --" ]
                                 for c in vm.QuoteCurrencies do
                                     if c = vm.QuoteCurrency then
-                                        _option [ _value_ c; Attr.create "selected" "selected" ] [ Text.raw c ]
+                                        _option [ _value_ c; _selected_ ] [ Text.raw c ]
                                     else
                                         _option [ _value_ c ] [ Text.raw c ] ] ]
 
@@ -1088,7 +1086,7 @@ module View =
                                 _name_ "tags"
                                 _type_ "text"
                                 _value_ vm.Tags
-                                Attr.create "placeholder" "e.g., scalping, btc"
+                                _placeholder_ "e.g., scalping, btc"
                                 _class_
                                     "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
                           _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw "Comma-separated tags" ] ]
@@ -1105,10 +1103,10 @@ module View =
                                 _name_ "executionInterval"
                                 _type_ "number"
                                 _value_ (string vm.ExecutionInterval)
-                                Attr.create "min" "1"
+                                _min_ "1"
                                 _class_
                                     "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                                Attr.create "required" "required" ] ]
+                                _required_ ] ]
 
                     // enabled
                     _div
@@ -1119,7 +1117,7 @@ module View =
                                 _type_ "checkbox"
                                 _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
                                 if vm.Enabled then
-                                    Attr.create "checked" "checked" ]
+                                    _checked_ ]
                           _label
                               [ _for_ "enabled"; _class_ "ml-2 block text-sm text-slate-700" ]
                               [ Text.raw "Pipeline enabled" ] ]
@@ -1138,7 +1136,7 @@ module View =
             [ _id_ "pipeline-edit-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
               Attr.create "aria-labelledby" "modal-title"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
 

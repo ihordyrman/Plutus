@@ -49,6 +49,7 @@ module CoreServices =
     let private pipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
+
             TradingSteps.all (LiveAdapters.getPosition scopeFactory) (LiveAdapters.tradeExecutor scopeFactory)
             |> Registry.create
         )

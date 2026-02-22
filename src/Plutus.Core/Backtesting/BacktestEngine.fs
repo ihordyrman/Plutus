@@ -46,9 +46,9 @@ module BacktestEngine =
             let step = max 1 (points.Length / maxPoints)
             points |> List.indexed |> List.filter (fun (i, _) -> i % step = 0) |> List.map snd
 
-    let run (services: IServiceProvider) (runId: int) (config: BacktestConfig) (ct: CancellationToken) =
+    let run (scopeFactory: IServiceScopeFactory) (runId: int) (config: BacktestConfig) (ct: CancellationToken) =
         task {
-            use scope = services.CreateScope()
+            use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
             let! _ =

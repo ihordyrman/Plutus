@@ -4,10 +4,7 @@ open System.Threading
 open System.Threading.Tasks
 
 module Ports =
-    type PositionInfo =
-        { EntryPrice: decimal
-          Quantity: decimal
-          OrderId: int }
+    type PositionInfo = { EntryPrice: decimal; Quantity: decimal; OrderId: int }
 
     type GetPosition = int -> CancellationToken -> Task<Result<PositionInfo option, string>>
 

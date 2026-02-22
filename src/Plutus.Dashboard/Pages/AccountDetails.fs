@@ -149,7 +149,7 @@ module View =
             [ _id_ "account-details-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
               Attr.create "aria-labelledby" "modal-title"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
 

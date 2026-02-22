@@ -59,7 +59,7 @@ module BacktestsApi =
                                     match! BacktestRepository.createRun db config ctx.RequestAborted with
                                     | Error err -> return! ApiResponse.internalError $"Failed to create run: {err}" ctx
                                     | Ok runId ->
-                                        let services = ctx.RequestServices
+                                        let scopeFactory = ctx.Plug<IServiceScopeFactory>()
 
                                         let _ =
                                             Task.Run(
@@ -68,17 +68,17 @@ module BacktestsApi =
                                                         try
                                                             let! _ =
                                                                 BacktestEngine.run
-                                                                    services
+                                                                    scopeFactory
                                                                     runId
                                                                     config
                                                                     CancellationToken.None
 
                                                             ()
                                                         with ex ->
-                                                            use s = services.CreateScope()
+                                                            use services = scopeFactory.CreateScope()
 
                                                             use db2 =
-                                                                s.ServiceProvider.GetRequiredService<
+                                                                services.ServiceProvider.GetRequiredService<
                                                                     System.Data.IDbConnection
                                                                  >()
 

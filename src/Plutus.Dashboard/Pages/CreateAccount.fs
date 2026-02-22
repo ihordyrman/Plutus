@@ -123,10 +123,10 @@ module View =
                   [ _id_ "apiKey"
                     _name_ "apiKey"
                     _type_ "password"
-                    Attr.create "placeholder" "Enter your API key"
+                    _placeholder_ "Enter your API key"
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                    Attr.create "required" "required" ] ]
+                    _required_ ] ]
 
     let private secretKeyField =
         _div
@@ -138,10 +138,10 @@ module View =
                   [ _id_ "secretKey"
                     _name_ "secretKey"
                     _type_ "password"
-                    Attr.create "placeholder" "Enter your secret key"
+                    _placeholder_ "Enter your secret key"
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
-                    Attr.create "required" "required" ] ]
+                    _required_ ] ]
 
     let private passphraseField =
         _div
@@ -153,7 +153,7 @@ module View =
                   [ _id_ "passphrase"
                     _name_ "passphrase"
                     _type_ "password"
-                    Attr.create "placeholder" "Enter passphrase (if required)"
+                    _placeholder_ "Enter passphrase (if required)"
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
               _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw "Required for OKX accounts" ] ]
@@ -166,7 +166,7 @@ module View =
                     _name_ "isSandbox"
                     _type_ "checkbox"
                     _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
-                    Attr.create "checked" "checked" ]
+                    _checked_ ]
               _label [ _for_ "isSandbox"; _class_ "ml-2 block text-sm text-slate-700" ] [ Text.raw "Sandbox/Demo mode" ] ]
 
     let private helpSection =
@@ -219,7 +219,7 @@ module View =
             [ _id_ "account-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
               Attr.create "aria-labelledby" "modal-title"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
 

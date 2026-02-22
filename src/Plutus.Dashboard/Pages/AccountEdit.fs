@@ -163,7 +163,7 @@ module View =
                   [ _id_ "secretKey"
                     _name_ "secretKey"
                     _type_ "password"
-                    Attr.create "placeholder" "Enter new secret key (or leave blank)"
+                    _placeholder_ "Enter new secret key (or leave blank)"
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
               _p [ _class_ "text-sm text-slate-500 mt-1" ] [ Text.raw "Leave blank to keep current value" ] ]
@@ -194,7 +194,7 @@ module View =
                     _type_ "checkbox"
                     _class_ "h-4 w-4 text-slate-900 focus:ring-slate-300 border-slate-200 rounded"
                     if isSandbox then
-                        Attr.create "checked" "checked" ]
+                        _checked_ ]
               _label [ _for_ "isSandbox"; _class_ "ml-2 block text-sm text-slate-700" ] [ Text.raw "Sandbox/Demo mode" ] ]
 
     let private dangerZone (marketId: int) =
@@ -221,7 +221,7 @@ module View =
             [ _id_ "account-edit-modal"
               _class_ "fixed inset-0 z-50 overflow-y-auto"
               Attr.create "aria-labelledby" "modal-title"
-              Attr.create "role" "dialog"
+              _role_ "dialog"
               Attr.create "aria-modal" "true" ]
             [ modalBackdrop
 
