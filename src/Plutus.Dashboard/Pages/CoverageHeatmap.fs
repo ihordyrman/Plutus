@@ -112,7 +112,7 @@ module View =
                           _title_ $"Delete all data for {row.Symbol}"
                           Hx.delete $"/coverage-heatmap/{encodedSymbol}"
                           Hx.confirm $"Delete all candlestick data for {row.Symbol}?"
-                          Hx.targetCss "#coverage-heatmap-container"
+                          Hx.targetCss "#data-coverage-content"
                           Hx.swapInnerHtml
                           Hx.includeCss "[name=timeframe]" ]
                         [ Text.raw "\u00D7" ]

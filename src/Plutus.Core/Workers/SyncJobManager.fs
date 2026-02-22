@@ -137,7 +137,6 @@ module SyncJobManager =
         (post: SyncMessage -> unit)
         (jobId: int)
         (symbol: string)
-        (marketType: MarketType)
         (timeframe: string)
         (fromDate: DateTimeOffset)
         (startCursor: DateTimeOffset)
@@ -247,7 +246,7 @@ module SyncJobManager =
     let private loadAndResume
         (scopeFactory: IServiceScopeFactory)
         (logger: ILogger)
-        : Map<int, SyncJobState> * Map<int, CancellationTokenSource> * Map<int, ManualResetEventSlim>
+        : Map<int, SyncJobState> * Map<int, ManualResetEventSlim>
         =
         let result =
             task {
@@ -256,7 +255,6 @@ module SyncJobManager =
                 match activeResult with
                 | Ok activeJobs ->
                     let mutable jobs = Map.empty
-                    let mutable ctss = Map.empty
                     let mutable pauses = Map.empty
 
                     for dbJob in activeJobs do
@@ -275,11 +273,9 @@ module SyncJobManager =
 
                         let state = { fromDbJob dbJob with Status = Paused }
 
-                        let cts = new CancellationTokenSource()
                         let pauseEvent = new ManualResetEventSlim(false)
 
                         jobs <- Map.add dbJob.Id state jobs
-                        ctss <- Map.add dbJob.Id cts ctss
                         pauses <- Map.add dbJob.Id pauseEvent pauses
 
                         logger.LogInformation(
@@ -289,10 +285,10 @@ module SyncJobManager =
                             enum<SyncJobStatus> dbJob.Status
                         )
 
-                    return (jobs, ctss, pauses)
+                    return (jobs, pauses)
                 | Error err ->
                     logger.LogError("Failed to load active sync jobs: {Error}", serviceMessage err)
-                    return (Map.empty, Map.empty, Map.empty)
+                    return (Map.empty, Map.empty)
             }
 
         result |> Async.AwaitTask |> Async.RunSynchronously
@@ -308,7 +304,7 @@ module SyncJobManager =
         jobs
 
     let create (scopeFactory: IServiceScopeFactory) (logger: ILogger) : T =
-        let initialJobs, initialCtss, initialPauses = loadAndResume scopeFactory logger
+        let initialJobs, initialPauses = loadAndResume scopeFactory logger
 
         let agent =
             MailboxProcessor<SyncMessage>.Start(fun inbox ->
@@ -374,7 +370,6 @@ module SyncJobManager =
                                     inbox.Post
                                     id
                                     symbol
-                                    marketType
                                     timeframe
                                     fromDate
                                     toDate
@@ -433,7 +428,6 @@ module SyncJobManager =
                                         inbox.Post
                                         id
                                         job.Symbol
-                                        job.MarketType
                                         job.Timeframe
                                         job.FromDate
                                         job.Progress.CurrentTimestamp
@@ -507,7 +501,7 @@ module SyncJobManager =
                             return! loop jobs ctss pauses
                     }
 
-                loop initialJobs initialCtss initialPauses
+                loop initialJobs Map.empty initialPauses
             )
 
         { startJob =

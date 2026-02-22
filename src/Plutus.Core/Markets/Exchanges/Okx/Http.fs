@@ -133,7 +133,7 @@ module Http =
             [ ("/api/v5/public/instruments", create 20)
               ("/api/v5/market/candles", create 40)
               ("/api/v5/market/history-candles", { create 20 with Window = TimeSpan.FromSeconds(2.0) })
-              ("/api/v5/asset/asset-valuation", { create 1 with Window = TimeSpan.FromSeconds(2.0) })
+              ("/api/v5/asset/asset-valuation", { create 1 with Window = TimeSpan.FromSeconds(3.0) })
               ("/api/v5/account/balance", create 10)
               ("/api/v5/asset/balances", create 10)
               ("/api/v5/trade/order", create 60) ]
