@@ -240,36 +240,36 @@ module View =
                                             Hx.swapInnerHtml ]
                                           [ Text.raw "Try Again" ] ] ] ] ] ]
 
-    let private statusBadge (status: SyncJobManager.JobStatus) =
+    let private statusBadge (status: JobsManager.JobStatus) =
         let (bgClass, textClass, label) =
             match status with
-            | SyncJobManager.Pending -> "bg-yellow-50", "text-yellow-700", "Pending"
-            | SyncJobManager.Running -> "bg-blue-50", "text-blue-700", "Running"
-            | SyncJobManager.Paused -> "bg-orange-50", "text-orange-700", "Paused"
-            | SyncJobManager.Completed -> "bg-green-50", "text-green-700", "Completed"
-            | SyncJobManager.Failed _ -> "bg-red-50", "text-red-700", "Failed"
-            | SyncJobManager.Stopped -> "bg-slate-50", "text-slate-500", "Stopped"
+            | JobsManager.Pending -> "bg-yellow-50", "text-yellow-700", "Pending"
+            | JobsManager.Running -> "bg-blue-50", "text-blue-700", "Running"
+            | JobsManager.Paused -> "bg-orange-50", "text-orange-700", "Paused"
+            | JobsManager.Completed -> "bg-green-50", "text-green-700", "Completed"
+            | JobsManager.Failed _ -> "bg-red-50", "text-red-700", "Failed"
+            | JobsManager.Stopped -> "bg-slate-50", "text-slate-500", "Stopped"
 
         _span [ _class_ $"px-2 py-0.5 text-xs font-medium rounded {bgClass} {textClass}" ] [ Text.raw label ]
 
-    let private progressPercent (progress: SyncJobManager.JobProgress) =
+    let private progressPercent (progress: JobsManager.JobProgress) =
         if progress.EstimatedTotal <= 0 then
             0
         else
             min 100 (int (float progress.FetchedCount / float progress.EstimatedTotal * 100.0))
 
-    let private progressBar (progress: SyncJobManager.JobProgress) =
+    let private progressBar (progress: JobsManager.JobProgress) =
         let pct = progressPercent progress
 
         _div
             [ _class_ "w-full bg-slate-100 rounded-full h-1.5" ]
             [ _div [ _class_ "bg-blue-500 h-1.5 rounded-full transition-all"; _style_ $"width: {pct}%%" ] [] ]
 
-    let private jobActions (job: SyncJobManager.SyncJobState) =
+    let private jobActions (job: JobsManager.SyncJobState) =
         let btnClass = "px-2 py-1 text-xs font-medium rounded border transition-colors"
 
         match job.Status with
-        | SyncJobManager.Running ->
+        | JobsManager.Running ->
             _div
                 [ _class_ "flex gap-1" ]
                 [ _button
@@ -284,7 +284,7 @@ module View =
                         Hx.targetCss "#sync-jobs-container"
                         Hx.swapInnerHtml ]
                       [ _i [ _class_ "fas fa-stop mr-1" ] []; Text.raw "Stop" ] ]
-        | SyncJobManager.Paused ->
+        | JobsManager.Paused ->
             _div
                 [ _class_ "flex gap-1" ]
                 [ _button
@@ -309,7 +309,7 @@ module View =
                         Hx.swapInnerHtml ]
                       [ _i [ _class_ "fas fa-trash-alt mr-1" ] []; Text.raw "Remove" ] ]
 
-    let private jobRow (job: SyncJobManager.SyncJobState) =
+    let private jobRow (job: JobsManager.SyncJobState) =
         let pct = progressPercent job.Progress
         let fromStr = job.FromDate.ToString("yyyy-MM-dd")
         let toStr = job.ToDate.ToString("yyyy-MM-dd")
@@ -332,14 +332,14 @@ module View =
                               [ Text.raw $"{countStr} candles ({pct}%%)" ] ] ]
               jobActions job ]
 
-    let jobsSection (jobs: SyncJobManager.SyncJobState list) =
+    let jobsSection (jobs: JobsManager.SyncJobState list) =
         let hasActive =
             jobs
             |> List.exists (fun j ->
                 match j.Status with
-                | SyncJobManager.Running
-                | SyncJobManager.Paused
-                | SyncJobManager.Pending -> true
+                | JobsManager.Running
+                | JobsManager.Paused
+                | JobsManager.Pending -> true
                 | _ -> false
             )
 
@@ -389,7 +389,7 @@ module Handler =
                         let fromDate = DateTimeOffset(DateTime.Parse(fromDateStr), TimeSpan.Zero)
                         let toDate = DateTimeOffset(DateTime.Parse(toDateStr), TimeSpan.Zero).AddDays(1.0)
 
-                        let manager = ctx.Plug<SyncJobManager.T>()
+                        let manager = ctx.Plug<JobsManager.T>()
                         let _jobId = manager.startJob symbol marketType "1m" fromDate toDate
                         return! Response.ofHtml (View.successResponse symbol) ctx
                 with ex ->
@@ -399,7 +399,7 @@ module Handler =
     let jobs: HttpHandler =
         fun ctx ->
             task {
-                let manager = ctx.Plug<SyncJobManager.T>()
+                let manager = ctx.Plug<JobsManager.T>()
                 let jobs = manager.getJobs ()
                 return! Response.ofHtml (View.jobsSection jobs) ctx
             }
@@ -407,7 +407,7 @@ module Handler =
     let pause (jobId: int) : HttpHandler =
         fun ctx ->
             task {
-                let manager = ctx.Plug<SyncJobManager.T>()
+                let manager = ctx.Plug<JobsManager.T>()
                 let _ = manager.pauseJob jobId
                 let jobs = manager.getJobs ()
                 return! Response.ofHtml (View.jobsSection jobs) ctx
@@ -416,7 +416,7 @@ module Handler =
     let resume (jobId: int) : HttpHandler =
         fun ctx ->
             task {
-                let manager = ctx.Plug<SyncJobManager.T>()
+                let manager = ctx.Plug<JobsManager.T>()
                 let _ = manager.resumeJob jobId
                 let jobs = manager.getJobs ()
                 return! Response.ofHtml (View.jobsSection jobs) ctx
@@ -425,7 +425,7 @@ module Handler =
     let stop (jobId: int) : HttpHandler =
         fun ctx ->
             task {
-                let manager = ctx.Plug<SyncJobManager.T>()
+                let manager = ctx.Plug<JobsManager.T>()
                 let _ = manager.stopJob jobId
                 let jobs = manager.getJobs ()
                 return! Response.ofHtml (View.jobsSection jobs) ctx
@@ -434,7 +434,7 @@ module Handler =
     let remove (jobId: int) : HttpHandler =
         fun ctx ->
             task {
-                let manager = ctx.Plug<SyncJobManager.T>()
+                let manager = ctx.Plug<JobsManager.T>()
                 let _ = manager.removeJob jobId
                 let jobs = manager.getJobs ()
                 return! Response.ofHtml (View.jobsSection jobs) ctx

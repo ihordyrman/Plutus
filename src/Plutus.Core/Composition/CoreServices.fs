@@ -83,10 +83,10 @@ module CoreServices =
         |> ignore
 
     let private syncJobManager (services: IServiceCollection) =
-        services.AddSingleton<SyncJobManager.T>(fun provider ->
+        services.AddSingleton<JobsManager.T>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            let logger = provider.GetRequiredService<ILogger<SyncJobManager.T>>()
-            SyncJobManager.create scopeFactory logger
+            let logger = provider.GetRequiredService<ILogger<JobsManager.T>>()
+            JobsManager.create scopeFactory logger
         )
         |> ignore
 

@@ -81,11 +81,11 @@
         <Compile Include="Backtesting\BacktestExport.fs" />
         <Compile Include="Backtesting\BacktestEngine.fs" />
         <Compile Include="Workers\CacheWorker.fs" />
+        <Compile Include="Workers\CandlestickSync.fs" />
 
         <Compile Include="Workers\InstrumentSync.fs" />
         <Compile Include="Workers\OrderSync.fs" />
-        <Compile Include="Workers\Synchronization.fs" />
-        <Compile Include="Workers\SyncJobManager.fs" />
+        <Compile Include="Workers\JobsManager.fs" />
         <Compile Include="Composition\CoreServices.fs" />
 
         <Compile Include="Queries\DashboardQueries.fs" />

@@ -11,7 +11,7 @@ open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
 open Plutus.Core.Shared.Errors
 
-module SyncJobManager =
+module JobsManager =
 
     type JobStatus =
         | Pending

@@ -12,6 +12,7 @@ open Plutus.Core.Domain
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
 
+// Background service that periodically syncs the list of instruments from OKX and upserts them into the database.
 type InstrumentSyncWorker
     (scopeFactory: IServiceScopeFactory, httpFactory: IHttpClientFactory, logger: ILogger<InstrumentSyncWorker>) =
     inherit BackgroundService()
@@ -67,6 +68,7 @@ type InstrumentSyncWorker
             use timer = new PeriodicTimer(TimeSpan.FromHours 24.0)
 
             while not ct.IsCancellationRequested do
-                let! _ = timer.WaitForNextTickAsync(ct)
                 do! syncInstruments ct
+                let! _ = timer.WaitForNextTickAsync(ct)
+                ()
         }

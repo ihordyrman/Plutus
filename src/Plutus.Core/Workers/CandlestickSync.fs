@@ -1,6 +1,7 @@
 namespace Plutus.Core.Workers
 
 open System
+open System.Collections.Generic
 open System.Data
 open System.Threading
 open System.Threading.Tasks
@@ -14,7 +15,6 @@ open Plutus.Core.Shared.Errors
 
 module CandlestickSync =
 
-    let private historyDays = 365
     let private recentCandleThreshold = TimeSpan.FromMinutes 5.0
     let private historyBoundaryDays = 30
 
@@ -115,17 +115,17 @@ module CandlestickSync =
 
     let syncHistory (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
         task {
-            let oneYearAgo = DateTimeOffset.UtcNow.AddDays(-historyDays)
+            let monthAgo = DateTimeOffset.UtcNow.AddDays(-365)
 
             match! CandlestickRepository.getOldest db symbol MarketType.Okx "1m" ct with
-            | Ok(Some oldest) when DateTimeOffset(oldest.Timestamp) <= oneYearAgo -> ()
+            | Ok(Some oldest) when DateTimeOffset(oldest.Timestamp) <= monthAgo -> ()
             | Ok maybeOldest ->
                 let startFrom =
                     match maybeOldest with
                     | Some oldest -> DateTimeOffset(oldest.Timestamp)
                     | None -> DateTimeOffset.UtcNow
 
-                let! count = pageBackward http.getHistoryCandlesticks db logger symbol startFrom oneYearAgo ct
+                let! count = pageBackward http.getHistoryCandlesticks db logger symbol startFrom monthAgo ct
 
                 if count > 0 then
                     logger.LogInformation("History backfill for {Symbol}: {Count} candles saved", symbol, count)
@@ -159,11 +159,29 @@ module CandlestickSync =
 
     let getEnabledSymbols (db: IDbConnection) (ct: CancellationToken) =
         task {
-            match! PipelineRepository.getEnabled db ct with
-            | Ok pipelines -> return pipelines |> List.map _.Symbol |> List.distinct |> Array.ofList
+            let symbols = HashSet<string>()
+
+            match! PipelineRepository.getAll db ct with
+            | Ok pipelines ->
+                for pi in pipelines do
+                    let! steps = PipelineStepRepository.getByPipelineId db pi.Id ct
+
+                    match steps with
+                    | Error _ -> ()
+                    | Ok steps ->
+                        steps
+                        |> List.filter (fun x -> x.StepTypeKey = "trend-following-signal")
+                        |> List.iter (fun x ->
+                            match x.Parameters.TryGetValue("instruments") with
+                            | true, s -> s.Split(';') |> Array.iter (fun s -> symbols.Add(s.Trim()) |> ignore)
+                            | _ -> ()
+                        )
+
+                pipelines |> List.map _.Symbol |> List.distinct |> List.iter (fun s -> symbols.Add s |> ignore)
+
+                return symbols |> Seq.toArray
             | Error _ -> return Array.empty
         }
-
 
 type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogger<OkxSynchronizationWorker>) =
     inherit BackgroundService()
