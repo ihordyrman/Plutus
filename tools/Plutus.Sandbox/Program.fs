@@ -6,7 +6,7 @@ open Microsoft.Extensions.DependencyInjection
 open Plutus.Core
 open Plutus.Core.Markets.Exchanges.Okx
 
-type Pipeline = { Id: int; Name: string; Symbol: string }
+type Pipeline = { Id: int; Name: string; Instrument: string }
 
 let builder =
     ConfigurationBuilder()

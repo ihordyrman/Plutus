@@ -16,7 +16,7 @@ open Plutus.Core.Repositories
 type OrderListItem =
     { Id: int64
       PipelineId: int option
-      Symbol: string
+      Instrument: string
       Side: OrderSide
       Status: OrderStatus
       MarketType: MarketType
@@ -114,7 +114,7 @@ module Data =
                     |> List.map (fun o ->
                         { Id = o.Id
                           PipelineId = if o.PipelineId.HasValue then Some o.PipelineId.Value else None
-                          Symbol = o.Symbol
+                          Instrument = o.Instrument
                           Side = o.Side
                           Status = o.Status
                           MarketType = o.MarketType
@@ -169,11 +169,11 @@ module View =
                               [ _class_ "flex-1 min-w-[200px]" ]
                               [ _label
                                     [ _class_ "block text-xs font-medium text-slate-500 mb-1" ]
-                                    [ Text.raw "Search Symbol" ]
+                                    [ Text.raw "Search Instrument" ]
                                 _input
                                     [ _type_ "text"
                                       _name_ "searchTerm"
-                                      _placeholder_ "Search by symbol..."
+                                      _placeholder_ "Search by instrument..."
                                       _class_
                                           "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ] ]
                           filterSelect "filterSide" "Side" [ ("buy", "Buy"); ("sell", "Sell") ]
@@ -191,8 +191,8 @@ module View =
                               "Sort By"
                               [ ("created-desc", "Newest First")
                                 ("created", "Oldest First")
-                                ("symbol", "Symbol A-Z")
-                                ("symbol-desc", "Symbol Z-A")
+                                ("instrument", "Instrument A-Z")
+                                ("instrument-desc", "Instrument Z-A")
                                 ("quantity-desc", "Quantity High")
                                 ("quantity", "Quantity Low")
                                 ("status", "Status") ] ] ] ]
@@ -205,7 +205,7 @@ module View =
                   [ for (text, align) in
                         [ "ID", "left"
                           "Pipeline", "left"
-                          "Symbol", "left"
+                          "Instrument", "left"
                           "Side", "left"
                           "Status", "left"
                           "Quantity", "right"
@@ -258,7 +258,7 @@ module View =
                   [ Text.raw (formatPipelineId order.PipelineId) ]
               _td
                   [ _class_ "px-4 py-3 whitespace-nowrap" ]
-                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw order.Symbol ] ]
+                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw order.Instrument ] ]
               _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ sideBadge order.Side ]
               _td [ _class_ "px-4 py-3 whitespace-nowrap" ] [ statusBadge order.Status ]
               _td

@@ -20,7 +20,7 @@ type Order =
       PipelineId: Nullable<int>
       MarketType: MarketType
       ExchangeOrderId: string
-      Symbol: string
+      Instrument: string
       Side: OrderSide
       Status: OrderStatus
       Quantity: decimal

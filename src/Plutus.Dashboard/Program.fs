@@ -170,7 +170,7 @@ let backtests =
 
 let coverageHeatmap =
     [ get "/coverage-heatmap" (requireAuth CoverageHeatmap.Handler.heatmap)
-      delete "/coverage-heatmap/{symbol}" (requireAuth CoverageHeatmap.Handler.deleteSymbol) ]
+      delete "/coverage-heatmap/{instrument}" (requireAuth CoverageHeatmap.Handler.deleteInstrument) ]
 
 let candlestickSync =
     [ get "/candlestick-sync/modal" (requireAuth CandlestickSync.Handler.modal)

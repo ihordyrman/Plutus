@@ -20,6 +20,8 @@ module Steps =
         | Signal = 2
         | Execution = 3
 
+    type RequiredCandleData = { Instrument: string option; Interval: string; LookbackDays: int }
+
     type StepDefinition<'ctx> =
         { Key: string
           Name: string
@@ -27,4 +29,5 @@ module Steps =
           Category: StepCategory
           Icon: string
           ParameterSchema: ParameterSchema
+          RequiredCandleData: ValidatedParams -> RequiredCandleData list
           Create: ValidatedParams -> IServiceProvider -> Step<'ctx> }

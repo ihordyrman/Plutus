@@ -64,4 +64,5 @@ module EntryStep =
                     Required = false
                     DefaultValue = Some(DecimalValue -0.5m)
                     Group = Some "Thresholds" } ] }
+          RequiredCandleData = fun _ -> []
           Create = create }

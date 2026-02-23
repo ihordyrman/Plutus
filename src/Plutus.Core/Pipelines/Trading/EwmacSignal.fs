@@ -34,7 +34,7 @@ module EwmacSignal =
                             match!
                                 CandlestickRepository.query
                                     db
-                                    ctx.Symbol
+                                    ctx.Instrument
                                     ctx.MarketType
                                     timeframe
                                     None
@@ -131,4 +131,5 @@ module EwmacSignal =
                     Required = false
                     DefaultValue = Some(DecimalValue 1.0m)
                     Group = Some "Weights" } ] }
+          RequiredCandleData = fun _ -> []
           Create = create }

@@ -74,8 +74,8 @@ module PipelineRepository =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
                             """INSERT INTO pipelines
-                           (name, symbol, market_type, enabled, execution_interval, last_executed_at, status, tags, created_at, updated_at)
-                           VALUES (@Name, @Symbol, @MarketType, @Enabled, @ExecutionInterval, @LastExecutedAt, @Status, @Tags::jsonb, now(), now())
+                           (name, instrument, market_type, enabled, execution_interval, last_executed_at, status, tags, created_at, updated_at)
+                           VALUES (@Name, @Instrument, @MarketType, @Enabled, @ExecutionInterval, @LastExecutedAt, @Status, @Tags::jsonb, now(), now())
                            RETURNING id""",
                             pipeline,
                             cancellationToken = token
@@ -103,7 +103,7 @@ module PipelineRepository =
                     db.ExecuteAsync(
                         CommandDefinition(
                             """UPDATE pipelines
-                           SET name = @Name, symbol = @Symbol, market_type = @MarketType,
+                           SET name = @Name, instrument = @Instrument, market_type = @MarketType,
                                enabled = @Enabled, execution_interval = @ExecutionInterval,
                                last_executed_at = @LastExecutedAt, status = @Status, tags = @Tags::jsonb,
                                updated_at = now()
@@ -260,7 +260,7 @@ module PipelineRepository =
 
                 match filters.SearchTerm with
                 | Some term when not (String.IsNullOrEmpty term) ->
-                    conditions.Add("AND symbol ILIKE @SearchTerm")
+                    conditions.Add("AND instrument ILIKE @SearchTerm")
                     parameters.Add("SearchTerm", $"%%{term}%%")
                 | _ -> ()
 
@@ -282,14 +282,14 @@ module PipelineRepository =
 
                 let orderClause =
                     match filters.SortBy with
-                    | "symbol-desc" -> "ORDER BY symbol DESC"
+                    | "instrument-desc" -> "ORDER BY instrument DESC"
                     | "account" -> "ORDER BY market_type ASC"
                     | "account-desc" -> "ORDER BY market_type DESC"
                     | "status" -> "ORDER BY enabled ASC"
                     | "status-desc" -> "ORDER BY enabled DESC"
                     | "updated" -> "ORDER BY updated_at ASC"
                     | "updated-desc" -> "ORDER BY updated_at DESC"
-                    | _ -> "ORDER BY symbol ASC"
+                    | _ -> "ORDER BY instrument ASC"
 
                 let whereClause = String.Join(" ", conditions)
 

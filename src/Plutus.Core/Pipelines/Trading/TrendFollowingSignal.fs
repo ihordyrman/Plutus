@@ -39,7 +39,7 @@ module TrendFollowingSignal =
                             match!
                                 CandlestickRepository.query
                                     db
-                                    ctx.Symbol
+                                    ctx.Instrument
                                     ctx.MarketType
                                     timeframe
                                     None
@@ -47,12 +47,12 @@ module TrendFollowingSignal =
                                     (Some candleCount)
                                     ct
                             with
-                            | Error err -> return Fail $"Error fetching candles for {ctx.Symbol}: {err}"
+                            | Error err -> return Fail $"Error fetching candles for {ctx.Instrument}: {err}"
                             | Ok ownCandles when ownCandles.Length < candleCount ->
                                 return
                                     Continue(
                                         ctx,
-                                        $"Insufficient candle data for {ctx.Symbol} ({ownCandles.Length}/{candleCount}), skip trend signal."
+                                        $"Insufficient candle data for {ctx.Instrument} ({ownCandles.Length}/{candleCount}), skip trend signal."
                                     )
                             | Ok ownCandles ->
                                 let ownCloses = ownCandles |> List.rev |> List.map _.Close
@@ -67,7 +67,7 @@ module TrendFollowingSignal =
                                     let mutable total = 0
 
                                     for instrument in selectedInstruments do
-                                        if instrument <> ctx.Symbol then
+                                        if instrument <> ctx.Instrument then
                                             match!
                                                 CandlestickRepository.query
                                                     db
@@ -173,4 +173,5 @@ module TrendFollowingSignal =
                     Required = false
                     DefaultValue = Some(DecimalValue 1.0m)
                     Group = Some "Weights" } ] }
+          RequiredCandleData = fun _ -> []
           Create = create }

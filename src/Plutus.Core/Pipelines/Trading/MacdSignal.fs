@@ -35,7 +35,7 @@ module MacdSignal =
                             match!
                                 CandlestickRepository.query
                                     db
-                                    ctx.Symbol
+                                    ctx.Instrument
                                     ctx.MarketType
                                     timeframe
                                     None
@@ -137,4 +137,5 @@ module MacdSignal =
                     Required = false
                     DefaultValue = Some(DecimalValue 1.0m)
                     Group = Some "Weights" } ] }
+          RequiredCandleData = fun _ -> []
           Create = create }

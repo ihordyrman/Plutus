@@ -13,16 +13,16 @@ open Plutus.Core.Repositories
 
 type HeatmapCell = { WeekStart: DateTime; Coverage: float }
 
-type SymbolRow = { Symbol: string; Cells: HeatmapCell list }
+type InstrumentRow = { Instrument: string; Cells: HeatmapCell list }
 
 type HeatmapData =
-    { Symbols: SymbolRow list
+    { Instruments: InstrumentRow list
       Weeks: DateTime list
       Timeframe: string
       AvailableTimeframes: string list
       Page: int
       PageSize: int
-      TotalSymbols: int }
+      TotalInstruments: int }
 
 module Shared =
     let expectedCandlesPerWeek (timeframe: string) =
@@ -98,10 +98,10 @@ module View =
                       [ _class_ "text-[10px] text-slate-400 text-center"; _style_ "width:14px;min-width:14px" ]
                       [ Text.raw label ] ]
 
-    let private symbolRow (weeks: DateTime list) (row: SymbolRow) =
+    let private instrumentRow (weeks: DateTime list) (row: InstrumentRow) =
         let cellMap = row.Cells |> List.map (fun c -> c.WeekStart, c.Coverage) |> Map.ofList
 
-        let encodedSymbol = Uri.EscapeDataString(row.Symbol)
+        let encodedInstrument = Uri.EscapeDataString(row.Instrument)
 
         _div
             [ _class_ "flex items-center" ]
@@ -109,14 +109,16 @@ module View =
                   [ _class_ "w-[120px] min-w-[120px] flex items-center justify-end pr-3 gap-1" ]
                   [ _button
                         [ _class_ "text-slate-300 hover:text-red-500 text-xs leading-none"
-                          _title_ $"Delete all data for {row.Symbol}"
-                          Hx.delete $"/coverage-heatmap/{encodedSymbol}"
-                          Hx.confirm $"Delete all candlestick data for {row.Symbol}?"
+                          _title_ $"Delete all data for {row.Instrument}"
+                          Hx.delete $"/coverage-heatmap/{encodedInstrument}"
+                          Hx.confirm $"Delete all candlestick data for {row.Instrument}?"
                           Hx.targetCss "#data-coverage-content"
                           Hx.swapInnerHtml
                           Hx.includeCss "[name=timeframe]" ]
                         [ Text.raw "\u00D7" ]
-                    _span [ _class_ "text-xs text-slate-600 truncate"; _title_ row.Symbol ] [ Text.raw row.Symbol ] ]
+                    _span
+                        [ _class_ "text-xs text-slate-600 truncate"; _title_ row.Instrument ]
+                        [ Text.raw row.Instrument ] ]
               _div
                   [ _class_ "flex gap-px" ]
                   [ for w in weeks do
@@ -128,7 +130,7 @@ module View =
                         _div [ _class_ $"w-3 h-3 rounded-sm {color}"; _title_ $"{weekStr}: {pct}%%" ] [] ] ]
 
     let private paginationControls (data: HeatmapData) =
-        let totalPages = int (Math.Ceiling(float data.TotalSymbols / float data.PageSize))
+        let totalPages = int (Math.Ceiling(float data.TotalInstruments / float data.PageSize))
 
         if totalPages <= 1 then
             _div [] []
@@ -136,7 +138,7 @@ module View =
             let hasPrev = data.Page > 1
             let hasNext = data.Page < totalPages
             let startRecord = (data.Page - 1) * data.PageSize + 1
-            let endRecord = min (data.Page * data.PageSize) data.TotalSymbols
+            let endRecord = min (data.Page * data.PageSize) data.TotalInstruments
             let enabledBtnClass = "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
             let disabledBtnClass = "bg-slate-50 text-slate-300 cursor-not-allowed"
 
@@ -144,7 +146,7 @@ module View =
                 [ _class_ "flex items-center justify-between mt-3" ]
                 [ _div
                       [ _class_ "text-xs text-slate-400" ]
-                      [ Text.raw $"Showing {startRecord} to {endRecord} of {data.TotalSymbols} symbols" ]
+                      [ Text.raw $"Showing {startRecord} to {endRecord} of {data.TotalInstruments} instruments" ]
                   _div
                       [ _class_ "flex gap-2" ]
                       [ _button
@@ -184,7 +186,7 @@ module View =
                         [ _class_ "flex items-center gap-3" ]
                         [ timeframeDropdown data.Timeframe data.AvailableTimeframes ]
                     legendBar ]
-              match data.Symbols with
+              match data.Instruments with
               | [] ->
                   _div
                       [ _class_ "text-sm text-slate-400 py-8 text-center" ]
@@ -195,8 +197,8 @@ module View =
                       [ monthLabels data.Weeks
                         _div
                             [ _class_ "space-y-px mt-1" ]
-                            [ for row in data.Symbols do
-                                  symbolRow data.Weeks row ] ]
+                            [ for row in data.Instruments do
+                                  instrumentRow data.Weeks row ] ]
 
                   paginationControls data ]
 
@@ -205,38 +207,38 @@ module Data =
 
     let private buildFromCoverage
         (coverage: WeeklyCoverage list)
-        (totalSymbols: int)
+        (totalInstruments: int)
         (selectedTimeframe: string)
         (availableTimeframes: string list)
         (page: int)
         =
         let expected = Shared.expectedCandlesPerWeek selectedTimeframe
-        let grouped = coverage |> List.groupBy _.Symbol |> List.sortBy fst
-        let totalPages = int (Math.Ceiling(float totalSymbols / float pageSize))
+        let grouped = coverage |> List.groupBy _.Instrument |> List.sortBy fst
+        let totalPages = int (Math.Ceiling(float totalInstruments / float pageSize))
         let safePage = max 1 (min page totalPages)
         let offset = (safePage - 1) * pageSize
 
-        let pageSymbols = grouped |> List.skip offset |> List.truncate pageSize
+        let pageInstruments = grouped |> List.skip offset |> List.truncate pageSize
 
-        let allWeeks = pageSymbols |> List.collect snd |> List.map _.WeekStart |> List.distinct |> List.sort
+        let allWeeks = pageInstruments |> List.collect snd |> List.map _.WeekStart |> List.distinct |> List.sort
 
-        let symbolRows =
-            pageSymbols
-            |> List.map (fun (symbol, rows) ->
+        let instrumentRows =
+            pageInstruments
+            |> List.map (fun (instrument, rows) ->
                 let cells =
                     rows
                     |> List.map (fun r -> { WeekStart = r.WeekStart; Coverage = min 1.0 (float r.Count / expected) })
 
-                { Symbol = symbol; Cells = cells }
+                { Instrument = instrument; Cells = cells }
             )
 
-        { Symbols = symbolRows
+        { Instruments = instrumentRows
           Weeks = allWeeks
           Timeframe = selectedTimeframe
           AvailableTimeframes = availableTimeframes
           Page = safePage
           PageSize = pageSize
-          TotalSymbols = totalSymbols }
+          TotalInstruments = totalInstruments }
 
     let private selectTimeframe (timeframe: string option) (available: string list) =
         timeframe
@@ -251,16 +253,16 @@ module Data =
 
             match cached.ByTimeframe |> Map.tryFind selectedTimeframe with
             | Some tfData ->
-                Some(buildFromCoverage tfData.Coverage tfData.SymbolCount selectedTimeframe cached.Timeframes page)
+                Some(buildFromCoverage tfData.Coverage tfData.InstrumentCount selectedTimeframe cached.Timeframes page)
             | None ->
                 Some
-                    { Symbols = []
+                    { Instruments = []
                       Weeks = []
                       Timeframe = selectedTimeframe
                       AvailableTimeframes = cached.Timeframes
                       Page = 1
                       PageSize = pageSize
-                      TotalSymbols = 0 }
+                      TotalInstruments = 0 }
         | None -> None
 
     let loadFromDb
@@ -286,22 +288,22 @@ module Data =
             match availableTimeframes with
             | [] ->
                 return
-                    { Symbols = []
+                    { Instruments = []
                       Weeks = []
                       Timeframe = selectedTimeframe
                       AvailableTimeframes = []
                       Page = 1
                       PageSize = pageSize
-                      TotalSymbols = 0 }
+                      TotalInstruments = 0 }
             | _ ->
-                let! countResult = CandlestickRepository.getDistinctSymbolCount db selectedTimeframe ct
+                let! countResult = CandlestickRepository.getDistinctInstrumentCount db selectedTimeframe ct
 
-                let totalSymbols =
+                let totalInstruments =
                     match countResult with
                     | Ok c -> c
                     | Error _ -> 0
 
-                let totalPages = int (Math.Ceiling(float totalSymbols / float pageSize))
+                let totalPages = int (Math.Ceiling(float totalInstruments / float pageSize))
                 let safePage = max 1 (min page totalPages)
                 let offset = (safePage - 1) * pageSize
 
@@ -315,27 +317,27 @@ module Data =
 
                 let allWeeks = coverage |> List.map _.WeekStart |> List.distinct |> List.sort
 
-                let symbolRows =
+                let instrumentRows =
                     coverage
-                    |> List.groupBy _.Symbol
-                    |> List.map (fun (symbol, rows) ->
+                    |> List.groupBy _.Instrument
+                    |> List.map (fun (instrument, rows) ->
                         let cells =
                             rows
                             |> List.map (fun r ->
                                 { WeekStart = r.WeekStart; Coverage = min 1.0 (float r.Count / expected) }
                             )
 
-                        { Symbol = symbol; Cells = cells }
+                        { Instrument = instrument; Cells = cells }
                     )
 
                 return
-                    { Symbols = symbolRows
+                    { Instruments = instrumentRows
                       Weeks = allWeeks
                       Timeframe = selectedTimeframe
                       AvailableTimeframes = availableTimeframes
                       Page = safePage
                       PageSize = pageSize
-                      TotalSymbols = totalSymbols }
+                      TotalInstruments = totalInstruments }
         }
 
 module Handler =
@@ -368,17 +370,17 @@ module Handler =
                             ctx
             }
 
-    let deleteSymbol: HttpHandler =
+    let deleteInstrument: HttpHandler =
         fun ctx ->
             task {
                 try
                     let route = Request.getRoute ctx
-                    let symbol = route.GetString "symbol"
+                    let instrument = route.GetString "instrument"
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
 
                     use scope = scopeFactory.CreateScope()
                     use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                    let! _ = CandlestickRepository.deleteAllBySymbol db symbol ctx.RequestAborted
+                    let! _ = CandlestickRepository.deleteAllByInstrument db instrument ctx.RequestAborted
 
                     let query = Request.getQuery ctx
                     let timeframe = query.TryGetString "timeframe"

@@ -29,7 +29,7 @@ module View =
                   [ for mt in marketTypes do
                         _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ] ] ]
 
-    let private symbolFields =
+    let private instrumentFields =
         _div
             [ _class_ "space-y-3" ]
             [ _div
@@ -163,14 +163,14 @@ module View =
                                       Hx.swapInnerHtml ]
                                     [ _div
                                           [ _class_ "px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto" ]
-                                          [ marketTypeField; symbolFields; dateFields ]
+                                          [ marketTypeField; instrumentFields; dateFields ]
                                       _div
                                           [ _class_ "px-6 py-4 flex justify-end space-x-3 border-t border-slate-100" ]
                                           [ cancelButton; submitButton ] ] ] ] ] ]
 
     let closeModal = _div [] []
 
-    let successResponse (symbol: string) =
+    let successResponse (instrument: string) =
         _div
             [ _id_ "sync-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ]
             [ _div
@@ -194,7 +194,7 @@ module View =
                                 _h3 [ _class_ "text-lg font-semibold text-slate-900 mb-2" ] [ Text.raw "Sync Started!" ]
                                 _p
                                     [ _class_ "text-slate-600 mb-4" ]
-                                    [ Text.raw $"Candlestick sync for {symbol} has been started." ]
+                                    [ Text.raw $"Candlestick sync for {instrument} has been started." ]
                                 _button
                                     [ _type_ "button"
                                       _class_
@@ -321,7 +321,7 @@ module View =
                   [ _class_ "min-w-0 flex-1" ]
                   [ _div
                         [ _class_ "flex items-center gap-2 mb-1" ]
-                        [ _span [ _class_ "font-medium text-sm text-slate-900" ] [ Text.raw job.Symbol ]
+                        [ _span [ _class_ "font-medium text-sm text-slate-900" ] [ Text.raw job.Instrument ]
                           statusBadge job.Status
                           _span [ _class_ "text-xs text-slate-400" ] [ Text.raw $"{fromStr} → {toStr}" ] ]
                     _div
@@ -374,13 +374,13 @@ module Handler =
                     let fromDateStr = form.TryGetString "fromDate" |> Option.defaultValue ""
                     let toDateStr = form.TryGetString "toDate" |> Option.defaultValue ""
 
-                    let symbol =
+                    let instrument =
                         if String.IsNullOrWhiteSpace baseCurrency || String.IsNullOrWhiteSpace quoteCurrency then
                             ""
                         else
                             $"{baseCurrency}-{quoteCurrency}"
 
-                    if String.IsNullOrWhiteSpace symbol then
+                    if String.IsNullOrWhiteSpace instrument then
                         return! Response.ofHtml (View.errorResponse "Base and quote currencies are required") ctx
                     elif String.IsNullOrWhiteSpace fromDateStr || String.IsNullOrWhiteSpace toDateStr then
                         return! Response.ofHtml (View.errorResponse "Date range is required") ctx
@@ -390,8 +390,8 @@ module Handler =
                         let toDate = DateTimeOffset(DateTime.Parse(toDateStr), TimeSpan.Zero).AddDays(1.0)
 
                         let manager = ctx.Plug<JobsManager.T>()
-                        let _jobId = manager.startJob symbol marketType "1m" fromDate toDate
-                        return! Response.ofHtml (View.successResponse symbol) ctx
+                        let _jobId = manager.startJob instrument marketType "1m" fromDate toDate
+                        return! Response.ofHtml (View.successResponse instrument) ctx
                 with ex ->
                     return! Response.ofHtml (View.errorResponse $"Failed to start sync: {ex.Message}") ctx
             }

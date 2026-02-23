@@ -23,7 +23,7 @@ type CreatePipelineInput =
       Enabled: bool }
 
 type CreateResult =
-    | Success of symbol: string
+    | Success of instrument: string
     | ValidationError of message: string
     | ServerError of message: string
 
@@ -98,12 +98,12 @@ module Data =
             try
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let instrumentSymbol = input.Instrument.BaseCurrency + "-" + input.Instrument.QuoteCurrency
+                let instrumentInstrument = input.Instrument.BaseCurrency + "-" + input.Instrument.QuoteCurrency
 
                 let pipeline: Pipeline =
                     { Id = 0
-                      Name = instrumentSymbol // consider custom naming in the future
-                      Symbol = instrumentSymbol
+                      Name = instrumentInstrument // consider custom naming in the future
+                      Instrument = instrumentInstrument
                       MarketType = input.MarketType
                       Enabled = input.Enabled
                       ExecutionInterval = input.ExecutionInterval
@@ -116,7 +116,7 @@ module Data =
                 let! result = PipelineRepository.create db pipeline ct
 
                 match result with
-                | Ok created -> return Success created.Symbol
+                | Ok created -> return Success created.Instrument
                 | Error err ->
                     let message = Errors.serviceMessage err
                     return ServerError message
@@ -144,13 +144,13 @@ module View =
                   [ for marketType in marketTypes do
                         _option [ _value_ (string (int marketType)) ] [ Text.raw (marketType.ToString()) ] ] ]
 
-    let private symbolFields =
+    let private instrumentFields =
         let selectClass =
             "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
 
         _div
             [ _class_ "space-y-3" ]
-            [ _input [ _id_ "symbol"; _name_ "symbol"; _type_ "hidden" ]
+            [ _input [ _id_ "instrument"; _name_ "instrument"; _type_ "hidden" ]
               _div
                   []
                   [ _label
@@ -167,7 +167,7 @@ module View =
                           Hx.swap HxSwap.InnerHTML
                           Attr.create
                               "hx-on::after-settle"
-                              "var q=document.getElementById('quoteCurrency');if(q){htmx.trigger(q,'change')};var s=document.getElementById('symbol');if(s)s.value=''" ]
+                              "var q=document.getElementById('quoteCurrency');if(q){htmx.trigger(q,'change')};var s=document.getElementById('instrument');if(s)s.value=''" ]
                         [ _option [ _value_ "" ] [ Text.raw "Loading..." ] ] ]
               _div
                   []
@@ -185,7 +185,7 @@ module View =
                           Hx.swap HxSwap.InnerHTML
                           Attr.create
                               "hx-on::after-settle"
-                              "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
+                              "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('instrument');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
                         [ _option [ _value_ "" ] [ Text.raw "-- Select base first --" ] ] ] ]
 
     let private tagsField =
@@ -322,7 +322,7 @@ module View =
                                     [ _div
                                           [ _class_ "px-6 py-4 space-y-4 max-h-[60vh] overflow-y-auto" ]
                                           [ marketTypeField
-                                            symbolFields
+                                            instrumentFields
                                             tagsField
                                             executionIntervalField
                                             enabledField
@@ -335,7 +335,7 @@ module View =
 
     let closeModal = _div [] []
 
-    let successResponse (symbol: string) =
+    let successResponse (instrument: string) =
         _div
             [ _id_ "pipeline-modal"; _class_ "fixed inset-0 z-50 overflow-y-auto" ]
             [ _div
@@ -361,7 +361,7 @@ module View =
                                     [ Text.raw "Pipeline Created!" ]
                                 _p
                                     [ _class_ "text-slate-600 mb-4" ]
-                                    [ Text.raw $"Pipeline for {symbol} has been created successfully." ]
+                                    [ Text.raw $"Pipeline for {instrument} has been created successfully." ]
                                 _button
                                     [ _type_ "button"
                                       _class_
@@ -409,7 +409,7 @@ module View =
 
     let createResult (result: CreateResult) =
         match result with
-        | Success symbol -> successResponse symbol
+        | Success instrument -> successResponse instrument
         | ValidationError msg -> errorResponse msg
         | ServerError msg -> errorResponse msg
 

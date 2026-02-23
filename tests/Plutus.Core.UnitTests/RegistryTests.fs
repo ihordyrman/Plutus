@@ -12,6 +12,7 @@ let private mkDef key : StepDefinition<string> =
       Category = StepCategory.Signal
       Icon = ""
       ParameterSchema = { Parameters = [] }
+      RequiredCandleData = fun _ -> []
       Create =
         fun _ _ -> { key = key; execute = fun ctx _ -> System.Threading.Tasks.Task.FromResult(Continue(ctx, "ok")) } }
 

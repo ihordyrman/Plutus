@@ -9,7 +9,7 @@ open Plutus.Core.Shared.Errors
 
 type CreatePositionRequest =
     { PipelineId: int
-      Symbol: string
+      Instrument: string
       EntryPrice: decimal
       Quantity: decimal
       BuyOrderId: int
@@ -58,11 +58,11 @@ module PositionRepository =
                 let! result =
                     db.QuerySingleAsync<Position>(
                         CommandDefinition(
-                            "INSERT INTO positions (pipeline_id, symbol, entry_price, quantity, buy_order_id, status, created_at, updated_at)
-                             VALUES (@PipelineId, @Symbol, @EntryPrice, @Quantity, @BuyOrderId, @Status, NOW(), NOW())
+                            "INSERT INTO positions (pipeline_id, instrument, entry_price, quantity, buy_order_id, status, created_at, updated_at)
+                             VALUES (@PipelineId, @Instrument, @EntryPrice, @Quantity, @BuyOrderId, @Status, NOW(), NOW())
                              RETURNING *",
                             {| PipelineId = request.PipelineId
-                               Symbol = request.Symbol
+                               Instrument = request.Instrument
                                EntryPrice = request.EntryPrice
                                Quantity = request.Quantity
                                BuyOrderId = request.BuyOrderId

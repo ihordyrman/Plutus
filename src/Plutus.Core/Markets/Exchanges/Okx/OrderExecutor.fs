@@ -18,7 +18,7 @@ module OrderExecutor =
     let mapToRequest (order: Order) =
         let isLimitOrder = order.Price.HasValue && order.Price.Value > 0m
 
-        { InstrumentId = order.Symbol
+        { InstrumentId = order.Instrument
           TradeMode = "cash"
           Side = toOkxSide order.Side
           OrderType = if isLimitOrder then "limit" else "market"
@@ -35,7 +35,7 @@ module OrderExecutor =
                 let request = mapToRequest order
 
                 logger.LogInformation(
-                    "Placing {OrderType} {Side} order for {Symbol}: Qty={Quantity}, Price={Price}",
+                    "Placing {OrderType} {Side} order for {Instrument}: Qty={Quantity}, Price={Price}",
                     request.OrderType,
                     request.Side,
                     request.InstrumentId,

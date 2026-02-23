@@ -13,7 +13,7 @@ type PipelineStatus =
 type Pipeline =
     { Id: int
       Name: string
-      Symbol: string
+      Instrument: string
       MarketType: MarketType
       Enabled: bool
       ExecutionInterval: TimeSpan

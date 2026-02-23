@@ -35,4 +35,5 @@ module PositionGateStep =
           Category = StepCategory.Validation
           Icon = "fa-sign-in-alt"
           ParameterSchema = { Parameters = [] }
+          RequiredCandleData = fun _ -> []
           Create = create }

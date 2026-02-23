@@ -33,4 +33,5 @@ module CheckPosition =
           Category = StepCategory.Validation
           Icon = "fa-search-dollar"
           ParameterSchema = { Parameters = [] }
+          RequiredCandleData = fun _ -> []
           Create = create }

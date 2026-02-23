@@ -56,7 +56,7 @@ module LiveAdapters =
                                 db
                                 txn
                                 { PipelineId = ctx.PipelineId
-                                  Symbol = ctx.Symbol
+                                  Instrument = ctx.Instrument
                                   MarketType = ctx.MarketType
                                   Quantity = ctx.Quantity.Value
                                   Side = side
@@ -88,7 +88,7 @@ module LiveAdapters =
                                           EntryPrice = order.Price.Value
                                           Quantity = order.Quantity
                                           Status = positionStatus
-                                          Symbol = order.Symbol }
+                                          Instrument = order.Instrument }
                                         ct
 
                                 return ()

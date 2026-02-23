@@ -16,7 +16,7 @@ create table pipelines
 (
     id                 serial primary key,
     name               varchar(200) not null,
-    symbol             varchar(20)  not null,
+    instrument         varchar(20)  not null,
     market_type        int          not null,
     enabled            boolean      not null default false,
     execution_interval interval     not null,
@@ -31,7 +31,7 @@ create table positions
 (
     id            serial primary key,
     pipeline_id   int references pipelines (id) on delete cascade,
-    symbol        varchar(20) not null,
+    instrument    varchar(20) not null,
     status        int         not null,
     entry_price   decimal(28, 10),
     quantity      decimal(28, 10),
@@ -48,7 +48,7 @@ create index ix_positions_pipeline_status on positions (pipeline_id, status);
 create table candlesticks
 (
     id           serial primary key,
-    symbol       varchar(20)     not null,
+    instrument   varchar(20)     not null,
     market_type  int             not null,
     timestamp    timestamp       not null,
     timeframe    varchar(10)     not null,
@@ -61,8 +61,8 @@ create table candlesticks
     is_completed boolean         not null default false
 );
 
-create unique index ix_candlesticks_symbol_market_timeframe_timestamp
-    on candlesticks (symbol, market_type, timeframe, timestamp);
+create unique index ix_candlesticks_instrument_market_timeframe_timestamp
+    on candlesticks (instrument, market_type, timeframe, timestamp);
 
 create index ix_candlesticks_timestamp on candlesticks (timestamp);
 
@@ -89,7 +89,7 @@ create table orders
     pipeline_id       int references pipelines (id),
     market_type       int             not null,
     exchange_order_id varchar(100)    not null,
-    symbol            varchar(20)     not null,
+    instrument        varchar(20)     not null,
     side              int             not null,
     status            int             not null,
     quantity          decimal(28, 10) not null,
@@ -106,7 +106,7 @@ create table orders
 );
 
 create index ix_orders_pipeline_id on orders (pipeline_id, created_at desc);
-create index ix_orders_symbol on orders (symbol);
+create index ix_orders_instrument on orders (instrument);
 create index ix_orders_exchange_id_market on orders (exchange_order_id, market_type);
 create index ix_orders_status on orders (status);
 
@@ -153,7 +153,7 @@ create index ix_instruments_base_quote on instruments (market_type, instrument_t
 create table candlestick_sync_jobs
 (
     id              serial primary key,
-    symbol          varchar(20) not null,
+    instrument      varchar(20) not null,
     market_type     int         not null,
     timeframe       varchar(10) not null,
     from_date       timestamptz not null,

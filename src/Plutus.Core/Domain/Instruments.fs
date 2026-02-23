@@ -12,3 +12,12 @@ type ExchangeInstrument =
       MarketType: int
       SyncedAt: DateTime
       CreatedAt: DateTime }
+
+type Interval =
+    | OneMinute
+    | FiveMinutes
+    | FifteenMinutes
+    | ThirtyMinutes
+    | OneHour
+    | FourHours
+    | OneDay

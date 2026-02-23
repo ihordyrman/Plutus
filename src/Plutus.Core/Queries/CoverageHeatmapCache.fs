@@ -9,7 +9,7 @@ open Plutus.Core.Infrastructure
 open Plutus.Core.Repositories
 
 module CoverageHeatmapCache =
-    type CachedTimeframeData = { Coverage: WeeklyCoverage list; SymbolCount: int }
+    type CachedTimeframeData = { Coverage: WeeklyCoverage list; InstrumentCount: int }
 
     type CachedHeatmapData = { Timeframes: string list; ByTimeframe: Map<string, CachedTimeframeData> }
 
@@ -43,14 +43,14 @@ module CoverageHeatmapCache =
                     | Ok c -> c
                     | Error _ -> []
 
-                let! countResult = CandlestickRepository.getDistinctSymbolCount db tf ct
+                let! countResult = CandlestickRepository.getDistinctInstrumentCount db tf ct
 
                 let count =
                     match countResult with
                     | Ok c -> c
                     | Error _ -> 0
 
-                byTimeframe <- byTimeframe |> Map.add tf { Coverage = coverage; SymbolCount = count }
+                byTimeframe <- byTimeframe |> Map.add tf { Coverage = coverage; InstrumentCount = count }
 
             store.Set(Key, { Timeframes = timeframes; ByTimeframe = byTimeframe })
         }

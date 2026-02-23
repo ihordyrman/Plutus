@@ -10,7 +10,7 @@ open Plutus.Core.Shared.Errors
 type CreateOrderRequest =
     { PipelineId: int
       MarketType: MarketType
-      Symbol: string
+      Instrument: string
       Side: OrderSide
       Quantity: decimal
       Price: decimal }
@@ -165,13 +165,13 @@ module OrderRepository =
                     db.QuerySingleAsync<Order>(
                         CommandDefinition(
                             """INSERT INTO orders
-                               (pipeline_id, market_type, exchange_order_id, symbol, side, status, quantity, price, created_at, updated_at)
-                               VALUES (@PipelineId, @MarketType, @ExchangeOrderId, @Symbol, @Side, @Status, @Quantity, @Price, now(), now())
+                               (pipeline_id, market_type, exchange_order_id, instrument, side, status, quantity, price, created_at, updated_at)
+                               VALUES (@PipelineId, @MarketType, @ExchangeOrderId, @Instrument, @Side, @Status, @Quantity, @Price, now(), now())
                                RETURNING *""",
                             {| PipelineId = order.PipelineId
                                MarketType = marketTypeInt
                                ExchangeOrderId = ""
-                               Symbol = order.Symbol
+                               Instrument = order.Instrument
                                Side = sideInt
                                Status = statusInt
                                Quantity = order.Quantity
@@ -229,7 +229,7 @@ module OrderRepository =
 
                 match filters.SearchTerm with
                 | Some term when not (String.IsNullOrEmpty term) ->
-                    conditions.Add("symbol ILIKE @SearchTerm")
+                    conditions.Add("instrument ILIKE @SearchTerm")
                     parameters.Add("SearchTerm", $"%%{term}%%")
                 | _ -> ()
 
@@ -255,8 +255,8 @@ module OrderRepository =
 
                 let orderClause =
                     match filters.SortBy with
-                    | "symbol" -> "ORDER BY symbol ASC"
-                    | "symbol-desc" -> "ORDER BY symbol DESC"
+                    | "instrument" -> "ORDER BY instrument ASC"
+                    | "instrument-desc" -> "ORDER BY instrument DESC"
                     | "status" -> "ORDER BY status ASC"
                     | "status-desc" -> "ORDER BY status DESC"
                     | "side" -> "ORDER BY side ASC"

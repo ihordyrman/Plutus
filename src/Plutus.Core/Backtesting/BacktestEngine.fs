@@ -128,7 +128,7 @@ module BacktestEngine =
                         match!
                             CandlestickRepository.query
                                 db
-                                pipeline.Symbol
+                                pipeline.Instrument
                                 pipeline.MarketType
                                 "1m"
                                 (Some config.StartDate)
@@ -152,7 +152,7 @@ module BacktestEngine =
                             for candle in sortedCandles do
                                 if not ct.IsCancellationRequested && candle.Timestamp >= nextExecution then
                                     let ctx =
-                                        { TradingContext.empty pipeline.Id pipeline.Symbol pipeline.MarketType with
+                                        { TradingContext.empty pipeline.Id pipeline.Instrument pipeline.MarketType with
                                             CurrentPrice = candle.Close }
                                         |> TradingContext.withData "backtest:currentTime" candle.Timestamp
 

@@ -5,7 +5,7 @@ open System
 [<CLIMutable>]
 type Candlestick =
     { Id: int
-      Symbol: string
+      Instrument: string
       MarketType: int
       Timestamp: DateTime
       Open: decimal
@@ -28,7 +28,7 @@ type SyncJobStatus =
 [<CLIMutable>]
 type SyncJob =
     { Id: int
-      Symbol: string
+      Instrument: string
       MarketType: int
       Timeframe: string
       FromDate: DateTimeOffset

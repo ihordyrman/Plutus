@@ -33,7 +33,7 @@ module Executor =
         }
 
     let private createContext (pipeline: Pipeline) (currentPrice: decimal) =
-        { TradingContext.empty pipeline.Id pipeline.Symbol pipeline.MarketType with
+        { TradingContext.empty pipeline.Id pipeline.Instrument pipeline.MarketType with
             CurrentPrice = currentPrice }
 
     let private executeLoop
@@ -96,13 +96,13 @@ module Executor =
 
                             | Ok steps ->
                                 let! latestCandle =
-                                    CandlestickRepository.getLatest db pipeline.Symbol pipeline.MarketType "1m" ct
+                                    CandlestickRepository.getLatest db pipeline.Instrument pipeline.MarketType "1m" ct
 
                                 match latestCandle with
                                 | Error error ->
                                     logger.LogError(
-                                        "Failed to retrieve latest candlestick for {Symbol}: {Error}",
-                                        pipeline.Symbol,
+                                        "Failed to retrieve latest candlestick for {instrument}: {Error}",
+                                        pipeline.Instrument,
                                         Errors.serviceMessage error
                                     )
 
@@ -111,8 +111,8 @@ module Executor =
                                     match latestCandle with
                                     | None ->
                                         logger.LogWarning(
-                                            "No candlestick data for {Symbol}, skipping execution",
-                                            pipeline.Symbol
+                                            "No candlestick data for {instrument}, skipping execution",
+                                            pipeline.Instrument
                                         )
 
                                         do! Task.Delay(pipeline.ExecutionInterval, ct)

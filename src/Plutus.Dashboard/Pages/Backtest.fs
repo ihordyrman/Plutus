@@ -16,7 +16,7 @@ open Plutus.Core.Repositories
 
 type BacktestGridItem =
     { RunId: int
-      PipelineSymbol: string
+      PipelineInstrument: string
       Status: BacktestStatus
       StartDate: DateTime
       EndDate: DateTime
@@ -63,15 +63,15 @@ module Data =
                         for run in runs do
                             let! pipeline = PipelineRepository.getById db run.PipelineId ct
 
-                            let symbol =
+                            let instrument =
                                 match pipeline with
-                                | Ok p -> p.Symbol
+                                | Ok p -> p.Instrument
                                 | Error _ -> $"Pipeline #{run.PipelineId}"
 
                             result <-
                                 result
                                 @ [ { RunId = run.Id
-                                      PipelineSymbol = symbol
+                                      PipelineInstrument = instrument
                                       Status = run.Status
                                       StartDate = run.StartDate
                                       EndDate = run.EndDate
@@ -153,7 +153,7 @@ module View =
           "240", "4 hours"
           "1440", "1 day" ]
 
-    let configureModal (pipelineId: int) (symbol: string) =
+    let configureModal (pipelineId: int) (instrument: string) =
         let thirtyDaysAgo = DateTime.UtcNow.AddDays(-30.0).ToString("yyyy-MM-dd")
         let today = DateTime.UtcNow.ToString("yyyy-MM-dd")
 
@@ -181,7 +181,7 @@ module View =
                                             closeModalButton ]
                                       _p
                                           [ _class_ "text-slate-500 text-sm mt-1" ]
-                                          [ Text.raw $"Configure backtest for {symbol}" ] ]
+                                          [ Text.raw $"Configure backtest for {instrument}" ] ]
                                 _form
                                     [ _method_ "post"
                                       Hx.post "/backtests/run"
@@ -437,7 +437,7 @@ module View =
                                                       [ _class_ "text-slate-500 text-sm mt-1" ]
                                                       [ let startStr = vm.Run.StartDate.ToString("MMM dd, yyyy")
                                                         let endStr = vm.Run.EndDate.ToString("MMM dd, yyyy")
-                                                        Text.raw $"{vm.Pipeline.Symbol} | {startStr} — {endStr}" ] ]
+                                                        Text.raw $"{vm.Pipeline.Instrument} | {startStr} — {endStr}" ] ]
                                             _div
                                                 [ _class_ "flex items-center gap-3" ]
                                                 [ _a
@@ -858,7 +858,7 @@ module View =
             ([ _id_ $"backtest-row-{item.RunId}"; _class_ "hover:bg-slate-50" ] @ polling)
             [ _td
                   [ _class_ "px-4 py-3 whitespace-nowrap" ]
-                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw item.PipelineSymbol ] ]
+                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw item.PipelineInstrument ] ]
               _td
                   [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ]
                   [ Text.raw $"""{item.StartDate.ToString("MMM dd")} — {item.EndDate.ToString("MMM dd, yyyy")}""" ]
@@ -912,7 +912,7 @@ module View =
             [ _tr
                   []
                   [ for (text, align) in
-                        [ "Symbol", "left"
+                        [ "Instrument", "left"
                           "Date Range", "left"
                           "Status", "left"
                           "Metrics", "left"
@@ -985,7 +985,7 @@ module Handler =
                     let! pipeline = PipelineRepository.getById db pipelineId ctx.RequestAborted
 
                     match pipeline with
-                    | Ok p -> return! Response.ofHtml (View.configureModal pipelineId p.Symbol) ctx
+                    | Ok p -> return! Response.ofHtml (View.configureModal pipelineId p.Instrument) ctx
                     | Error _ -> return! Response.ofHtml (View.errorResult "Pipeline not found") ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Backtest")
@@ -1057,14 +1057,14 @@ module Handler =
                     | Ok(Some run) ->
                         let! pipeline = PipelineRepository.getById db run.PipelineId ctx.RequestAborted
 
-                        let symbol =
+                        let instrument =
                             match pipeline with
-                            | Ok p -> p.Symbol
+                            | Ok p -> p.Instrument
                             | Error _ -> $"Pipeline #{run.PipelineId}"
 
                         let item: BacktestGridItem =
                             { RunId = run.Id
-                              PipelineSymbol = symbol
+                              PipelineInstrument = instrument
                               Status = run.Status
                               StartDate = run.StartDate
                               EndDate = run.EndDate
@@ -1330,7 +1330,7 @@ module Handler =
                         let! candlesResult =
                             CandlestickRepository.query
                                 db
-                                pipeline.Symbol
+                                pipeline.Instrument
                                 pipeline.MarketType
                                 "1m"
                                 (Some run.StartDate)
@@ -1415,7 +1415,7 @@ module Handler =
 
                         ctx.Response.Headers.Append(
                             "Content-Disposition",
-                            $"attachment; filename=backtest-{pipeline.Symbol}-{run.Id}.xlsx"
+                            $"attachment; filename=backtest-{pipeline.Instrument}-{run.Id}.xlsx"
                         )
 
                         do! ms.CopyToAsync(ctx.Response.Body, ctx.RequestAborted)

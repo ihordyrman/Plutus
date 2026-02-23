@@ -47,7 +47,7 @@ module OrderSyncer =
     let create (http: Http.T) (logger: ILogger) : OrderSyncer.T =
         let getUpdate (order: Order) _ =
             task {
-                match! http.getOrder order.Symbol order.ExchangeOrderId with
+                match! http.getOrder order.Instrument order.ExchangeOrderId with
                 | Error err ->
                     logger.LogWarning("Failed to fetch order {OrderId} from OKX: {Error}", order.Id, err)
                     return Ok None

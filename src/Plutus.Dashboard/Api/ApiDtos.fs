@@ -12,11 +12,19 @@ module ApiDtos =
 
     [<CLIMutable>]
     type CreatePipelineRequest =
-        { Symbol: string; MarketType: int; ExecutionIntervalMinutes: int; Enabled: bool; Tags: string list }
+        { Instrument: string
+          MarketType: int
+          ExecutionIntervalMinutes: int
+          Enabled: bool
+          Tags: string list }
 
     [<CLIMutable>]
     type UpdatePipelineRequest =
-        { Symbol: string; MarketType: int; ExecutionIntervalMinutes: int; Enabled: bool; Tags: string list }
+        { Instrument: string
+          MarketType: int
+          ExecutionIntervalMinutes: int
+          Enabled: bool
+          Tags: string list }
 
     [<CLIMutable>]
     type AddStepRequest = { StepTypeKey: string; IsEnabled: bool; Parameters: Dictionary<string, string> }
@@ -57,7 +65,7 @@ module ApiDtos =
     type PipelineDto =
         { Id: int
           Name: string
-          Symbol: string
+          Instrument: string
           MarketType: int
           Enabled: bool
           ExecutionIntervalMinutes: int
@@ -80,7 +88,7 @@ module ApiDtos =
     type PipelineDetailDto =
         { Id: int
           Name: string
-          Symbol: string
+          Instrument: string
           MarketType: int
           Enabled: bool
           ExecutionIntervalMinutes: int
@@ -178,7 +186,7 @@ module ApiDtos =
     let toPipelineDto (p: Pipeline) : PipelineDto =
         { Id = p.Id
           Name = p.Name
-          Symbol = p.Symbol
+          Instrument = p.Instrument
           MarketType = int p.MarketType
           Enabled = p.Enabled
           ExecutionIntervalMinutes = int p.ExecutionInterval.TotalMinutes
@@ -190,7 +198,7 @@ module ApiDtos =
     let toPipelineDetailDto (p: Pipeline) (steps: PipelineStep list) : PipelineDetailDto =
         { Id = p.Id
           Name = p.Name
-          Symbol = p.Symbol
+          Instrument = p.Instrument
           MarketType = int p.MarketType
           Enabled = p.Enabled
           ExecutionIntervalMinutes = int p.ExecutionInterval.TotalMinutes

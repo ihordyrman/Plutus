@@ -18,9 +18,9 @@ module CandlestickSync =
     let private recentCandleThreshold = TimeSpan.FromMinutes 5.0
     let private historyBoundaryDays = 30
 
-    let toCandlestick (symbol: string) (timeframe: string) (c: OkxCandlestick) : Candlestick =
+    let toCandlestick (instrument: string) (timeframe: string) (c: OkxCandlestick) : Candlestick =
         { Id = 0
-          Symbol = symbol
+          Instrument = instrument
           MarketType = int MarketType.Okx
           Timestamp = c.Timestamp
           Open = c.Open
@@ -36,22 +36,22 @@ module CandlestickSync =
         (fetch: string -> Http.CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>)
         (db: IDbConnection)
         (logger: ILogger)
-        (symbol: string)
+        (instrument: string)
         (afterMs: string option)
         (beforeMs: string option)
         (ct: CancellationToken)
         =
         task {
-            let! result = fetch symbol { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
+            let! result = fetch instrument { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
 
             match result with
             | Ok candles when candles.Length > 0 ->
-                let mapped = candles |> Array.map (toCandlestick symbol "1m") |> Array.toList
+                let mapped = candles |> Array.map (toCandlestick instrument "1m") |> Array.toList
                 let! _ = CandlestickRepository.save db mapped ct
                 return candles.Length
             | Ok _ -> return 0
             | Error err ->
-                logger.LogError("Fetch failed for {Symbol}: {Error}", symbol, serviceMessage err)
+                logger.LogError("Fetch failed for {Instrument}: {Error}", instrument, serviceMessage err)
                 return 0
         }
 
@@ -59,7 +59,7 @@ module CandlestickSync =
         (fetch: string -> Http.CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>)
         (db: IDbConnection)
         (logger: ILogger)
-        (symbol: string)
+        (instrument: string)
         (startTs: DateTimeOffset)
         (stopTs: DateTimeOffset)
         (ct: CancellationToken)
@@ -71,7 +71,7 @@ module CandlestickSync =
 
             while keepGoing && not ct.IsCancellationRequested && cursor > stopTs do
                 let afterMs = cursor.ToUnixTimeMilliseconds().ToString()
-                let! count = fetchAndSave fetch db logger symbol (Some afterMs) None ct
+                let! count = fetchAndSave fetch db logger instrument (Some afterMs) None ct
 
                 if count = 0 then
                     keepGoing <- false
@@ -82,16 +82,16 @@ module CandlestickSync =
             return total
         }
 
-    let syncRecent (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
+    let syncRecent (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: string) (ct: CancellationToken) =
         task {
-            match! CandlestickRepository.getLatest db symbol MarketType.Okx "1m" ct with
+            match! CandlestickRepository.getLatest db instrument MarketType.Okx "1m" ct with
             | Ok(Some latest) ->
                 let gap = DateTime.UtcNow - latest.Timestamp
 
                 if gap <= recentCandleThreshold then
                     let afterMs = DateTimeOffset(latest.Timestamp).ToUnixTimeMilliseconds().ToString()
 
-                    let! _ = fetchAndSave http.getCandlesticks db logger symbol (Some afterMs) None ct
+                    let! _ = fetchAndSave http.getCandlesticks db logger instrument (Some afterMs) None ct
                     ()
                 else
                     let! count =
@@ -99,25 +99,29 @@ module CandlestickSync =
                             http.getCandlesticks
                             db
                             logger
-                            symbol
+                            instrument
                             DateTimeOffset.UtcNow
                             (DateTimeOffset(latest.Timestamp))
                             ct
 
                     if count > 0 then
-                        logger.LogInformation("Recent catchup for {Symbol}: {Count} candles saved", symbol, count)
+                        logger.LogInformation(
+                            "Recent catchup for {Instrument}: {Count} candles saved",
+                            instrument,
+                            count
+                        )
             | Ok None ->
-                let! _ = fetchAndSave http.getCandlesticks db logger symbol None None ct
+                let! _ = fetchAndSave http.getCandlesticks db logger instrument None None ct
                 ()
             | Error err ->
-                logger.LogError("Failed to get latest candle for {Symbol}: {Error}", symbol, serviceMessage err)
+                logger.LogError("Failed to get latest candle for {Instrument}: {Error}", instrument, serviceMessage err)
         }
 
-    let syncHistory (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
+    let syncHistory (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: string) (ct: CancellationToken) =
         task {
             let monthAgo = DateTimeOffset.UtcNow.AddDays(-365)
 
-            match! CandlestickRepository.getOldest db symbol MarketType.Okx "1m" ct with
+            match! CandlestickRepository.getOldest db instrument MarketType.Okx "1m" ct with
             | Ok(Some oldest) when DateTimeOffset(oldest.Timestamp) <= monthAgo -> ()
             | Ok maybeOldest ->
                 let startFrom =
@@ -125,19 +129,19 @@ module CandlestickSync =
                     | Some oldest -> DateTimeOffset(oldest.Timestamp)
                     | None -> DateTimeOffset.UtcNow
 
-                let! count = pageBackward http.getHistoryCandlesticks db logger symbol startFrom monthAgo ct
+                let! count = pageBackward http.getHistoryCandlesticks db logger instrument startFrom monthAgo ct
 
                 if count > 0 then
-                    logger.LogInformation("History backfill for {Symbol}: {Count} candles saved", symbol, count)
+                    logger.LogInformation("History backfill for {Instrument}: {Count} candles saved", instrument, count)
             | Error err ->
-                logger.LogError("Failed to get oldest candle for {Symbol}: {Error}", symbol, serviceMessage err)
+                logger.LogError("Failed to get oldest candle for {Instrument}: {Error}", instrument, serviceMessage err)
         }
 
-    let syncGaps (http: Http.T) (db: IDbConnection) (logger: ILogger) (symbol: string) (ct: CancellationToken) =
+    let syncGaps (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: string) (ct: CancellationToken) =
         task {
-            match! CandlestickRepository.findGaps db symbol MarketType.Okx "1m" ct with
+            match! CandlestickRepository.findGaps db instrument MarketType.Okx "1m" ct with
             | Ok gaps when gaps.Length > 0 ->
-                logger.LogInformation("Found {Count} gaps for {Symbol}", gaps.Length, symbol)
+                logger.LogInformation("Found {Count} gaps for {Instrument}", gaps.Length, instrument)
 
                 for gap in gaps do
                     if not ct.IsCancellationRequested then
@@ -151,15 +155,16 @@ module CandlestickSync =
                             else
                                 http.getCandlesticks
 
-                        let! _ = pageBackward fetch db logger symbol gapEnd gapStart ct
+                        let! _ = pageBackward fetch db logger instrument gapEnd gapStart ct
                         ()
             | Ok _ -> ()
-            | Error err -> logger.LogError("Failed to find gaps for {Symbol}: {Error}", symbol, serviceMessage err)
+            | Error err ->
+                logger.LogError("Failed to find gaps for {Instrument}: {Error}", instrument, serviceMessage err)
         }
 
-    let getEnabledSymbols (db: IDbConnection) (ct: CancellationToken) =
+    let getEnabledInstruments (db: IDbConnection) (ct: CancellationToken) =
         task {
-            let symbols = HashSet<string>()
+            let instruments = HashSet<string>()
 
             match! PipelineRepository.getAll db ct with
             | Ok pipelines ->
@@ -173,13 +178,16 @@ module CandlestickSync =
                         |> List.filter (fun x -> x.StepTypeKey = "trend-following-signal")
                         |> List.iter (fun x ->
                             match x.Parameters.TryGetValue("instruments") with
-                            | true, s -> s.Split(';') |> Array.iter (fun s -> symbols.Add(s.Trim()) |> ignore)
+                            | true, s -> s.Split(';') |> Array.iter (fun s -> instruments.Add(s.Trim()) |> ignore)
                             | _ -> ()
                         )
 
-                pipelines |> List.map _.Symbol |> List.distinct |> List.iter (fun s -> symbols.Add s |> ignore)
+                pipelines
+                |> List.map _.Instrument
+                |> List.distinct
+                |> List.iter (fun s -> instruments.Add s |> ignore)
 
-                return symbols |> Seq.toArray
+                return instruments |> Seq.toArray
             | Error _ -> return Array.empty
         }
 
@@ -192,12 +200,12 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
             let http = scope.ServiceProvider.GetRequiredService<Http.T>()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            let! symbols = CandlestickSync.getEnabledSymbols db ct
+            let! instruments = CandlestickSync.getEnabledInstruments db ct
 
-            for symbol in symbols do
+            for instrument in instruments do
                 if not ct.IsCancellationRequested then
-                    do! CandlestickSync.syncHistory http db logger symbol ct
-                    do! CandlestickSync.syncGaps http db logger symbol ct
+                    do! CandlestickSync.syncHistory http db logger instrument ct
+                    do! CandlestickSync.syncGaps http db logger instrument ct
 
             logger.LogInformation("Initial candlestick sync complete")
 
@@ -208,17 +216,17 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
                 try
                     let! _ = timer.WaitForNextTickAsync(ct)
                     tickCount <- tickCount + 1
-                    let! currentSymbols = CandlestickSync.getEnabledSymbols db ct
+                    let! currentInstruments = CandlestickSync.getEnabledInstruments db ct
 
-                    for symbol in currentSymbols do
+                    for instrument in currentInstruments do
                         if not ct.IsCancellationRequested then
-                            do! CandlestickSync.syncRecent http db logger symbol ct
+                            do! CandlestickSync.syncRecent http db logger instrument ct
 
                     if tickCount % 60 = 0 then
-                        for symbol in currentSymbols do
+                        for instrument in currentInstruments do
                             if not ct.IsCancellationRequested then
-                                do! CandlestickSync.syncGaps http db logger symbol ct
-                                do! CandlestickSync.syncHistory http db logger symbol ct
+                                do! CandlestickSync.syncGaps http db logger instrument ct
+                                do! CandlestickSync.syncHistory http db logger instrument ct
                 with
                 | :? OperationCanceledException -> ()
                 | ex -> logger.LogError(ex, "Error in candlestick sync loop")

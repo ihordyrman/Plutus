@@ -16,7 +16,7 @@ open Plutus.Core.Shared
 
 type PipelineListItem =
     { Id: int
-      Symbol: string
+      Instrument: string
       MarketType: MarketType
       Enabled: bool
       Tags: string list
@@ -43,7 +43,7 @@ type PipelineFilters =
           Tag = None
           MarketType = None
           Status = None
-          SortBy = "symbol"
+          SortBy = "instrument"
           Page = 1
           PageSize = 20 }
 
@@ -120,7 +120,7 @@ module Data =
                     pipelines
                     |> List.map (fun p ->
                         { Id = p.Id
-                          Symbol = p.Symbol
+                          Instrument = p.Instrument
                           MarketType = p.MarketType
                           Enabled = p.Enabled
                           Tags = p.Tags
@@ -163,7 +163,7 @@ module Data =
                     result.Pipelines
                     |> List.map (fun p ->
                         { Id = p.Id
-                          Symbol = p.Symbol
+                          Instrument = p.Instrument
                           MarketType = p.MarketType
                           Enabled = p.Enabled
                           Tags = p.Tags
@@ -234,11 +234,11 @@ module View =
                               [ _class_ "flex-1 min-w-[200px]" ]
                               [ _label
                                     [ _class_ "block text-xs font-medium text-slate-500 mb-1" ]
-                                    [ Text.raw "Search Symbol" ]
+                                    [ Text.raw "Search Instrument" ]
                                 _input
                                     [ _type_ "text"
                                       _name_ "searchTerm"
-                                      _placeholder_ "Search by symbol..."
+                                      _placeholder_ "Search by instrument..."
                                       _class_
                                           "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ] ]
                           filterSelect "filterTag" "Tag" data.Tags
@@ -250,8 +250,8 @@ module View =
                           filterSelectLabeled
                               "sortBy"
                               "Sort By"
-                              [ ("symbol", "Symbol A-Z")
-                                ("symbol-desc", "Symbol Z-A")
+                              [ ("instrument", "Instrument A-Z")
+                                ("instrument-desc", "Instrument Z-A")
                                 ("account", "Account A-Z")
                                 ("account-desc", "Account Z-A")
                                 ("status", "Status Asc")
@@ -265,7 +265,7 @@ module View =
             [ _tr
                   []
                   [ for (text, align) in
-                        [ "Symbol", "left"
+                        [ "Instrument", "left"
                           "Account", "left"
                           "Status", "left"
                           "Tags", "left"
@@ -287,7 +287,7 @@ module View =
             [ _id_ $"pipeline-{pipeline.Id}"; _class_ "hover:bg-slate-50" ]
             [ _td
                   [ _class_ "px-4 py-3 whitespace-nowrap" ]
-                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw pipeline.Symbol ] ]
+                  [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw pipeline.Instrument ] ]
               _td
                   [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ]
                   [ Text.raw (pipeline.MarketType.ToString()) ]
@@ -491,7 +491,7 @@ module Handler =
                           Tag = tryGetQueryStringValue ctx.Request.Query "filterTag"
                           MarketType = tryGetQueryStringValue ctx.Request.Query "filterAccount"
                           Status = tryGetQueryStringValue ctx.Request.Query "filterStatus"
-                          SortBy = tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "symbol"
+                          SortBy = tryGetQueryStringValue ctx.Request.Query "sortBy" |> Option.defaultValue "instrument"
                           Page = tryGetQueryStringInt ctx.Request.Query "page" 1
                           PageSize = tryGetQueryStringInt ctx.Request.Query "pageSize" 20 }
 

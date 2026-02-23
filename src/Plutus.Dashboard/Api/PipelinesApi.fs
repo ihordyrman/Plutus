@@ -44,11 +44,11 @@ module PipelinesApi =
                     | Error _ -> return! ApiResponse.ok (ApiDtos.toPipelineDetailDto pipeline []) ctx
             }
 
-    let private validatePipeline (symbol: string) (marketType: int) (intervalMinutes: int) =
+    let private validatePipeline (instrument: string) (marketType: int) (intervalMinutes: int) =
         let errors = ResizeArray<string>()
 
-        if String.IsNullOrWhiteSpace(symbol) then
-            errors.Add("symbol is required")
+        if String.IsNullOrWhiteSpace(instrument) then
+            errors.Add("instrument is required")
 
         if marketType < 0 || marketType > 2 then
             errors.Add("marketType must be 0 (Okx), 1 (Binance), or 2 (IBKR)")
@@ -64,13 +64,13 @@ module PipelinesApi =
                 match! ApiResponse.readBody<ApiDtos.CreatePipelineRequest> ctx with
                 | Error msg -> return! ApiResponse.validationFailed "Invalid request body" msg ctx
                 | Ok req ->
-                    match validatePipeline req.Symbol req.MarketType req.ExecutionIntervalMinutes with
+                    match validatePipeline req.Instrument req.MarketType req.ExecutionIntervalMinutes with
                     | Error errors -> return! ApiResponse.validationFailed "Validation failed" errors ctx
                     | Ok() ->
                         let pipeline: Pipeline =
                             { Id = 0
-                              Name = req.Symbol
-                              Symbol = req.Symbol
+                              Name = req.Instrument
+                              Instrument = req.Instrument
                               MarketType = enum<MarketType> req.MarketType
                               Enabled = req.Enabled
                               ExecutionInterval = TimeSpan.FromMinutes(float req.ExecutionIntervalMinutes)
@@ -105,12 +105,12 @@ module PipelinesApi =
                         match! ApiResponse.readBody<ApiDtos.UpdatePipelineRequest> ctx with
                         | Error msg -> return! ApiResponse.validationFailed "Invalid request body" msg ctx
                         | Ok req ->
-                            match validatePipeline req.Symbol req.MarketType req.ExecutionIntervalMinutes with
+                            match validatePipeline req.Instrument req.MarketType req.ExecutionIntervalMinutes with
                             | Error errors -> return! ApiResponse.validationFailed "Validation failed" errors ctx
                             | Ok() ->
                                 let updated =
                                     { existing with
-                                        Symbol = req.Symbol
+                                        Instrument = req.Instrument
                                         MarketType = enum<MarketType> req.MarketType
                                         Enabled = req.Enabled
                                         ExecutionInterval = TimeSpan.FromMinutes(float req.ExecutionIntervalMinutes)

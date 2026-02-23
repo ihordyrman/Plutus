@@ -11,7 +11,7 @@ type PositionStatus =
 type Position =
     { Id: int
       PipelineId: int
-      Symbol: string
+      Instrument: string
       EntryPrice: decimal
       Quantity: decimal
       BuyOrderId: int

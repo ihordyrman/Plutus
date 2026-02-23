@@ -22,6 +22,7 @@ let private mkStepDef
       Category = StepCategory.Signal
       Icon = ""
       ParameterSchema = { Parameters = schemaDefs }
+      RequiredCandleData = fun _ -> []
       Create = createFn }
 
 let private simpleCreate key : ValidatedParams -> IServiceProvider -> Step<string> =

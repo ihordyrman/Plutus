@@ -49,7 +49,7 @@ module JobsManager =
 
     type SyncJobState =
         { Id: int
-          Symbol: string
+          Instrument: string
           MarketType: MarketType
           Timeframe: string
           FromDate: DateTimeOffset
@@ -60,7 +60,7 @@ module JobsManager =
 
     let private fromDbJob (job: SyncJob) : SyncJobState =
         { Id = job.Id
-          Symbol = job.Symbol
+          Instrument = job.Instrument
           MarketType = enum<MarketType> job.MarketType
           Timeframe = job.Timeframe
           FromDate = job.FromDate
@@ -136,7 +136,7 @@ module JobsManager =
         (logger: ILogger)
         (post: SyncMessage -> unit)
         (jobId: int)
-        (symbol: string)
+        (instrument: string)
         (timeframe: string)
         (fromDate: DateTimeOffset)
         (startCursor: DateTimeOffset)
@@ -176,13 +176,15 @@ module JobsManager =
 
                         let! result =
                             fetch
-                                symbol
+                                instrument
                                 { Bar = Some timeframe; After = Some afterMs; Before = None; Limit = Some 100 }
 
                         match result with
                         | Ok candles when candles.Length > 0 ->
                             let mapped =
-                                candles |> Array.map (CandlestickSync.toCandlestick symbol timeframe) |> Array.toList
+                                candles
+                                |> Array.map (CandlestickSync.toCandlestick instrument timeframe)
+                                |> Array.toList
 
                             let! _ = CandlestickRepository.save db mapped ct
 
@@ -279,9 +281,9 @@ module JobsManager =
                         pauses <- Map.add dbJob.Id pauseEvent pauses
 
                         logger.LogInformation(
-                            "Loaded sync job {JobId} for {Symbol} as Paused (was {OriginalStatus})",
+                            "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
                             dbJob.Id,
-                            dbJob.Symbol,
+                            dbJob.Instrument,
                             enum<SyncJobStatus> dbJob.Status
                         )
 
@@ -317,13 +319,13 @@ module JobsManager =
                         let! msg = inbox.Receive()
 
                         match msg with
-                        | StartJob(symbol, marketType, timeframe, fromDate, toDate, reply) ->
+                        | StartJob(instrument, marketType, timeframe, fromDate, toDate, reply) ->
                             let now = DateTime.UtcNow
                             let estimatedMinutes = int (toDate - fromDate).TotalMinutes
 
                             let dbJob: SyncJob =
                                 { Id = 0
-                                  Symbol = symbol
+                                  Instrument = instrument
                                   MarketType = int marketType
                                   Timeframe = timeframe
                                   FromDate = fromDate
@@ -347,7 +349,7 @@ module JobsManager =
 
                                 let job: SyncJobState =
                                     { Id = id
-                                      Symbol = symbol
+                                      Instrument = instrument
                                       MarketType = marketType
                                       Timeframe = timeframe
                                       FromDate = fromDate
@@ -369,7 +371,7 @@ module JobsManager =
                                     logger
                                     inbox.Post
                                     id
-                                    symbol
+                                    instrument
                                     timeframe
                                     fromDate
                                     toDate
@@ -427,7 +429,7 @@ module JobsManager =
                                         logger
                                         inbox.Post
                                         id
-                                        job.Symbol
+                                        job.Instrument
                                         job.Timeframe
                                         job.FromDate
                                         job.Progress.CurrentTimestamp
@@ -505,8 +507,8 @@ module JobsManager =
             )
 
         { startJob =
-            fun symbol marketType timeframe fromDate toDate ->
-                agent.PostAndReply(fun reply -> StartJob(symbol, marketType, timeframe, fromDate, toDate, reply))
+            fun instrument marketType timeframe fromDate toDate ->
+                agent.PostAndReply(fun reply -> StartJob(instrument, marketType, timeframe, fromDate, toDate, reply))
           stopJob = fun id -> agent.PostAndReply(fun reply -> StopJob(id, reply))
           pauseJob = fun id -> agent.PostAndReply(fun reply -> PauseJob(id, reply))
           resumeJob = fun id -> agent.PostAndReply(fun reply -> ResumeJob(id, reply))

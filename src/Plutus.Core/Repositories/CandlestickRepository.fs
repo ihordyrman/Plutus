@@ -11,7 +11,7 @@ open Plutus.Core.Shared.Errors
 type Gap = { GapStart: DateTime; GapEnd: DateTime }
 
 [<CLIMutable>]
-type WeeklyCoverage = { Symbol: string; WeekStart: DateTime; Count: int }
+type WeeklyCoverage = { Instrument: string; WeekStart: DateTime; Count: int }
 
 [<RequireQualifiedAccess>]
 module CandlestickRepository =
@@ -37,7 +37,7 @@ module CandlestickRepository =
 
     let getLatest
         (db: IDbConnection)
-        (symbol: string)
+        (instrument: string)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -48,10 +48,10 @@ module CandlestickRepository =
                     db.QueryAsync<Candlestick>(
                         CommandDefinition(
                             """SELECT * FROM candlesticks
-                           WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe
+                           WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe
                            ORDER BY timestamp DESC
                            LIMIT 1""",
-                            {| Symbol = symbol; MarketType = int marketType; Timeframe = timeframe |},
+                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
                             cancellationToken = token
                         )
                     )
@@ -65,7 +65,7 @@ module CandlestickRepository =
 
     let getOldest
         (db: IDbConnection)
-        (symbol: string)
+        (instrument: string)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -76,10 +76,10 @@ module CandlestickRepository =
                     db.QueryAsync<Candlestick>(
                         CommandDefinition(
                             """SELECT * FROM candlesticks
-                           WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe
+                           WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe
                            ORDER BY timestamp ASC
                            LIMIT 1""",
-                            {| Symbol = symbol; MarketType = int marketType; Timeframe = timeframe |},
+                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
                             cancellationToken = token
                         )
                     )
@@ -93,7 +93,7 @@ module CandlestickRepository =
 
     let findGaps
         (db: IDbConnection)
-        (symbol: string)
+        (instrument: string)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -106,13 +106,13 @@ module CandlestickRepository =
                             """WITH ordered AS (
                                 SELECT timestamp, LEAD(timestamp) OVER (ORDER BY timestamp) as next_ts
                                 FROM candlesticks
-                                WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe
+                                WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe
                             )
                             SELECT timestamp + interval '1 minute' as gap_start,
                                    next_ts - interval '1 minute' as gap_end
                             FROM ordered
                             WHERE next_ts - timestamp > interval '2 minutes'""",
-                            {| Symbol = symbol; MarketType = int marketType; Timeframe = timeframe |},
+                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
                             cancellationToken = token
                         )
                     )
@@ -124,7 +124,7 @@ module CandlestickRepository =
 
     let query
         (db: IDbConnection)
-        (symbol: string)
+        (instrument: string)
         (marketType: MarketType)
         (timeframe: string)
         (fromDate: DateTime option)
@@ -135,11 +135,11 @@ module CandlestickRepository =
         task {
             try
                 let baseSql =
-                    "SELECT * FROM candlesticks WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe"
+                    "SELECT * FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe"
 
                 let conditions = ResizeArray<string>()
                 let parameters = DynamicParameters()
-                parameters.Add("Symbol", symbol)
+                parameters.Add("Instrument", instrument)
                 parameters.Add("MarketType", int marketType)
                 parameters.Add("Timeframe", timeframe)
 
@@ -181,9 +181,9 @@ module CandlestickRepository =
                         db.ExecuteAsync(
                             CommandDefinition(
                                 """INSERT INTO candlesticks
-                               (symbol, market_type, timeframe, timestamp, open, high, low, close, volume, volume_quote, is_completed)
-                               VALUES (@Symbol, @MarketType, @Timeframe, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
-                               ON CONFLICT (symbol, market_type, timeframe, timestamp)
+                               (instrument, market_type, timeframe, timestamp, open, high, low, close, volume, volume_quote, is_completed)
+                               VALUES (@Instrument, @MarketType, @Timeframe, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
+                               ON CONFLICT (instrument, market_type, timeframe, timestamp)
                                DO UPDATE SET open = @Open, high = @High, low = @Low, close = @Close,
                                              volume = @Volume, volume_quote = @VolumeQuote, is_completed = @IsCompleted""",
                                 candlesticks,
@@ -203,9 +203,9 @@ module CandlestickRepository =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
                             """INSERT INTO candlesticks
-                           (symbol, market_type, timeframe, timestamp, open, high, low, close, volume, volume_quote, is_completed)
-                           VALUES (@Symbol, @MarketType, @Timeframe, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
-                           ON CONFLICT (symbol, market_type, timeframe, timestamp)
+                           (instrument, market_type, timeframe, timestamp, open, high, low, close, volume, volume_quote, is_completed)
+                           VALUES (@Instrument, @MarketType, @Timeframe, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
+                           ON CONFLICT (instrument, market_type, timeframe, timestamp)
                            DO UPDATE SET open = @Open, high = @High, low = @Low, close = @Close,
                                          volume = @Volume, volume_quote = @VolumeQuote, is_completed = @IsCompleted
                            RETURNING id""",
@@ -236,14 +236,14 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
-    let deleteAllBySymbol (db: IDbConnection) (symbol: string) (token: CancellationToken) =
+    let deleteAllByInstrument (db: IDbConnection) (instrument: string) (token: CancellationToken) =
         task {
             try
                 let! rowsAffected =
                     db.ExecuteAsync(
                         CommandDefinition(
-                            "DELETE FROM candlesticks WHERE symbol = @Symbol",
-                            {| Symbol = symbol |},
+                            "DELETE FROM candlesticks WHERE instrument = @Instrument",
+                            {| Instrument = instrument |},
                             cancellationToken = token
                         )
                     )
@@ -253,14 +253,19 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
-    let deleteBySymbol (db: IDbConnection) (symbol: string) (marketType: MarketType) (token: CancellationToken) =
+    let deleteByInstrument
+        (db: IDbConnection)
+        (instrument: string)
+        (marketType: MarketType)
+        (token: CancellationToken)
+        =
         task {
             try
                 let! rowsAffected =
                     db.ExecuteAsync(
                         CommandDefinition(
-                            "DELETE FROM candlesticks WHERE symbol = @Symbol AND market_type = @MarketType",
-                            {| Symbol = symbol; MarketType = int marketType |},
+                            "DELETE FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType",
+                            {| Instrument = instrument; MarketType = int marketType |},
                             cancellationToken = token
                         )
                     )
@@ -289,7 +294,7 @@ module CandlestickRepository =
 
     let count
         (db: IDbConnection)
-        (symbol: string)
+        (instrument: string)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -299,8 +304,8 @@ module CandlestickRepository =
                 let! result =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
-                            "SELECT COUNT(*) FROM candlesticks WHERE symbol = @Symbol AND market_type = @MarketType AND timeframe = @Timeframe",
-                            {| Symbol = symbol; MarketType = int marketType; Timeframe = timeframe |},
+                            "SELECT COUNT(*) FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe",
+                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
                             cancellationToken = token
                         )
                     )
@@ -326,13 +331,13 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
-    let getDistinctSymbolCount (db: IDbConnection) (timeframe: string) (token: CancellationToken) =
+    let getDistinctInstrumentCount (db: IDbConnection) (timeframe: string) (token: CancellationToken) =
         task {
             try
                 let! result =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
-                            "SELECT COUNT(DISTINCT symbol) FROM candlesticks WHERE timeframe = @Timeframe",
+                            "SELECT COUNT(DISTINCT instrument) FROM candlesticks WHERE timeframe = @Timeframe",
                             {| Timeframe = timeframe |},
                             cancellationToken = token
                         )
@@ -355,18 +360,18 @@ module CandlestickRepository =
                 let! results =
                     db.QueryAsync<WeeklyCoverage>(
                         CommandDefinition(
-                            """WITH symbols AS (
-                                   SELECT DISTINCT symbol FROM candlesticks
+                            """WITH instruments AS (
+                                   SELECT DISTINCT instrument FROM candlesticks
                                    WHERE timeframe = @Timeframe
-                                   ORDER BY symbol
+                                   ORDER BY instrument
                                    LIMIT @Limit OFFSET @Offset
                                )
-                               SELECT c.symbol, date_trunc('week', c.timestamp) as week_start, COUNT(*) as count
+                               SELECT c.instrument, date_trunc('week', c.timestamp) as week_start, COUNT(*) as count
                                FROM candlesticks c
-                               INNER JOIN symbols s ON c.symbol = s.symbol
+                               INNER JOIN instruments s ON c.instrument = s.instrument
                                WHERE c.timeframe = @Timeframe
-                               GROUP BY c.symbol, date_trunc('week', c.timestamp)
-                               ORDER BY c.symbol, week_start""",
+                               GROUP BY c.instrument, date_trunc('week', c.timestamp)
+                               ORDER BY c.instrument, week_start""",
                             {| Timeframe = timeframe; Limit = limit; Offset = offset |},
                             cancellationToken = token
                         )
@@ -383,11 +388,11 @@ module CandlestickRepository =
                 let! results =
                     db.QueryAsync<WeeklyCoverage>(
                         CommandDefinition(
-                            """SELECT symbol, date_trunc('week', timestamp) as week_start, COUNT(*) as count
+                            """SELECT Instrument, date_trunc('week', timestamp) as week_start, COUNT(*) as count
                                FROM candlesticks
                                WHERE timeframe = @Timeframe
-                               GROUP BY symbol, date_trunc('week', timestamp)
-                               ORDER BY symbol, week_start""",
+                               GROUP BY Instrument, date_trunc('week', timestamp)
+                               ORDER BY Instrument, week_start""",
                             {| Timeframe = timeframe |},
                             cancellationToken = token
                         )

@@ -58,7 +58,7 @@ type StepEditorViewModel =
 
 type EditPipelineViewModel =
     { Id: int
-      Symbol: string
+      Instrument: string
       BaseCurrency: string
       QuoteCurrency: string
       MarketType: MarketType
@@ -73,12 +73,13 @@ type EditPipelineViewModel =
 
 type EditFormData =
     { MarketType: int option
-      Symbol: string option
+      Instrument: string option
       Tags: string option
       ExecutionInterval: int option
       Enabled: bool }
 
-    static member Empty = { MarketType = None; Symbol = None; Tags = None; ExecutionInterval = None; Enabled = false }
+    static member Empty =
+        { MarketType = None; Instrument = None; Tags = None; ExecutionInterval = None; Enabled = false }
 
 type EditResult =
     | Success
@@ -174,9 +175,9 @@ module Data =
                     )
 
                 let baseCurrency, quoteCurrency =
-                    match pipeline.Symbol.Split('-') with
+                    match pipeline.Instrument.Split('-') with
                     | [| b; q |] -> b, q
-                    | _ -> pipeline.Symbol, ""
+                    | _ -> pipeline.Instrument, ""
 
                 let! baseCurrencies = InstrumentRepository.getBaseCurrencies db (int pipeline.MarketType) "SPOT" ct
 
@@ -196,7 +197,7 @@ module Data =
                 return
                     Option.Some
                         { Id = pipeline.Id
-                          Symbol = pipeline.Symbol
+                          Instrument = pipeline.Instrument
                           BaseCurrency = baseCurrency
                           QuoteCurrency = quoteCurrency
                           MarketType = pipeline.MarketType
@@ -314,7 +315,7 @@ module Data =
 
     let parseFormData (form: FormData) : EditFormData =
         { MarketType = form.TryGetInt "marketType"
-          Symbol = form.TryGetString "symbol"
+          Instrument = form.TryGetString "instrument"
           Tags = form.TryGetString "tags"
           ExecutionInterval = form.TryGetInt "executionInterval"
           Enabled = form.TryGetString "enabled" |> Option.map (fun _ -> true) |> Option.defaultValue false }
@@ -327,10 +328,11 @@ module Data =
         : Task<EditResult>
         =
         task {
-            match formData.Symbol with
-            | None -> return ValidationError "Symbol is required"
-            | Some symbol when String.IsNullOrWhiteSpace(symbol) -> return ValidationError "Symbol is required"
-            | Some symbol ->
+            match formData.Instrument with
+            | None -> return ValidationError "Instrument is required"
+            | Some instrument when String.IsNullOrWhiteSpace(instrument) ->
+                return ValidationError "Instrument is required"
+            | Some instrument ->
                 use scope = scopeFactory.CreateScope()
                 use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                 let! result = PipelineRepository.getById db pipelineId ct
@@ -358,7 +360,7 @@ module Data =
 
                     let updated =
                         { pipeline with
-                            Symbol = symbol.Trim().ToUpperInvariant()
+                            Instrument = instrument.Trim().ToUpperInvariant()
                             MarketType = marketType
                             Tags = tags
                             ExecutionInterval = interval
@@ -1022,15 +1024,15 @@ module View =
                                 Hx.swap HxSwap.InnerHTML
                                 Attr.create
                                     "hx-on::after-settle"
-                                    "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('symbol');if(s)s.value=''" ]
+                                    "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('instrument');if(s)s.value=''" ]
                               [ for mt in vm.MarketTypes do
                                     if mt = vm.MarketType then
                                         _option [ _value_ (string (int mt)); _selected_ ] [ Text.raw (mt.ToString()) ]
                                     else
                                         _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ] ] ]
 
-                    // symbol (base + quote dropdowns)
-                    _input [ _id_ "symbol"; _name_ "symbol"; _type_ "hidden"; _value_ vm.Symbol ]
+                    // instrument (base + quote dropdowns)
+                    _input [ _id_ "instrument"; _name_ "instrument"; _type_ "hidden"; _value_ vm.Instrument ]
                     _div
                         []
                         [ _label
@@ -1048,7 +1050,7 @@ module View =
                                 Hx.swap HxSwap.InnerHTML
                                 Attr.create
                                     "hx-on::after-settle"
-                                    "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
+                                    "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('instrument');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
                               [ _option [ _value_ "" ] [ Text.raw "-- Select --" ]
                                 for c in vm.BaseCurrencies do
                                     if c = vm.BaseCurrency then
@@ -1067,7 +1069,7 @@ module View =
                                     "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
                                 Attr.create
                                     "hx-on:change"
-                                    "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('symbol');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
+                                    "var b=document.getElementById('baseCurrency'),q=document.getElementById('quoteCurrency'),s=document.getElementById('instrument');if(b&&q&&s&&b.value&&q.value)s.value=b.value+'-'+q.value;else if(s)s.value=''" ]
                               [ _option [ _value_ "" ] [ Text.raw "-- Select --" ]
                                 for c in vm.QuoteCurrencies do
                                     if c = vm.QuoteCurrency then
@@ -1162,7 +1164,7 @@ module View =
                                                         Text.raw "Edit Pipeline" ]
                                                   _p
                                                       [ _class_ "text-slate-500 text-sm mt-1" ]
-                                                      [ Text.raw $"{vm.Symbol} • ID: {vm.Id}" ] ]
+                                                      [ Text.raw $"{vm.Instrument} • ID: {vm.Id}" ] ]
                                             closeModalButton ] ]
 
                                 // content

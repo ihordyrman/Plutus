@@ -17,9 +17,9 @@ module SyncJobRepository =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
                             """INSERT INTO candlestick_sync_jobs
-                               (symbol, market_type, timeframe, from_date, to_date, status, fetched_count,
+                               (instrument, market_type, timeframe, from_date, to_date, status, fetched_count,
                                 estimated_total, current_cursor, started_at, last_update_at, created_at)
-                               VALUES (@Symbol, @MarketType, @Timeframe, @FromDate, @ToDate, @Status, @FetchedCount,
+                               VALUES (@Instrument, @MarketType, @Timeframe, @FromDate, @ToDate, @Status, @FetchedCount,
                                        @EstimatedTotal, @CurrentCursor, @StartedAt, @LastUpdateAt, @CreatedAt)
                                RETURNING id""",
                             job,

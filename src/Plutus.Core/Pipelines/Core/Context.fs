@@ -11,7 +11,7 @@ type TradingAction =
 type TradingContext =
     { PipelineId: int
       ExecutionId: string
-      Symbol: string
+      Instrument: string
       MarketType: MarketType
       CurrentPrice: decimal
       Action: TradingAction
@@ -28,10 +28,10 @@ module TradingContext =
     // see no reason to save whole guid, just need some random string to identify execution in logs
     let private getRandomExecutionId = fun () -> System.Guid.CreateVersion7().ToString().Substring(24, 12)
 
-    let empty pipelineId symbol marketType =
+    let empty pipelineId instrument marketType =
         { PipelineId = pipelineId
           ExecutionId = getRandomExecutionId ()
-          Symbol = symbol
+          Instrument = instrument
           MarketType = marketType
           CurrentPrice = 0m
           Action = NoAction

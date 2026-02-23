@@ -14,7 +14,7 @@ open Plutus.Core.Repositories
 
 type PipelineDetailsInfo =
     { Id: int
-      Symbol: string
+      Instrument: string
       MarketType: MarketType
       Enabled: bool
       ExecutionInterval: TimeSpan
@@ -48,7 +48,7 @@ module Data =
                 return
                     Some
                         { Id = pipeline.Id
-                          Symbol = pipeline.Symbol
+                          Instrument = pipeline.Instrument
                           MarketType = pipeline.MarketType
                           Enabled = pipeline.Enabled
                           ExecutionInterval = pipeline.ExecutionInterval
@@ -108,7 +108,7 @@ module View =
                             [ _class_ "inline-flex items-center px-3 py-1 rounded-md bg-slate-100 text-slate-700" ]
                             [ _i [ _class_ "fas fa-exchange-alt mr-2" ] []; Text.raw (pipeline.MarketType.ToString()) ])
 
-                    infoRow "Symbol" (_span [] [ Text.raw pipeline.Symbol ])
+                    infoRow "Instrument" (_span [] [ Text.raw pipeline.Instrument ])
 
                     infoRow
                         "Status"
@@ -135,7 +135,9 @@ module View =
                   [ _class_ "space-y-3" ]
                   [ infoRow "Pipeline ID" (_span [] [ Text.raw (string pipeline.Id) ])
 
-                    infoRow "Market Configuration" (_span [] [ Text.raw $"{pipeline.MarketType} / {pipeline.Symbol}" ])
+                    infoRow
+                        "Market Configuration"
+                        (_span [] [ Text.raw $"{pipeline.MarketType} / {pipeline.Instrument}" ])
 
                     infoRow "Created" (_span [] [ Text.raw (pipeline.CreatedAt.ToString("MMM dd, yyyy HH:mm")) ])
 
@@ -218,7 +220,7 @@ module View =
                                                         Text.raw "Pipeline Details" ]
                                                   _p
                                                       [ _class_ "text-slate-500 text-sm mt-1" ]
-                                                      [ Text.raw $"{pipeline.Symbol} • ID: {pipeline.Id}" ] ]
+                                                      [ Text.raw $"{pipeline.Instrument} • ID: {pipeline.Id}" ] ]
                                             _div
                                                 [ _class_ "flex items-center space-x-3" ]
                                                 [ statusBadge pipeline.Enabled; closeModalButton ] ] ]
