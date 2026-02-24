@@ -26,63 +26,6 @@ type SearchResult = { Orders: Order list; TotalCount: int }
 
 [<RequireQualifiedAccess>]
 module OrderRepository =
-    let getById (db: IDbConnection) (orderId: int) (token: CancellationToken) =
-        task {
-            try
-                let! order =
-                    db.QueryFirstOrDefaultAsync<Order>(
-                        CommandDefinition(
-                            "SELECT * FROM orders WHERE id = @Id",
-                            {| Id = orderId |},
-                            cancellationToken = token
-                        )
-                    )
-
-                match box order with
-                | null -> return Ok None
-                | _ -> return Ok(Some order)
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let getByExchangeId (db: IDbConnection) (exchangeOrderId: string) (market: MarketType) (token: CancellationToken) =
-        task {
-            try
-                let! order =
-                    db.QueryFirstOrDefaultAsync<Order>(
-                        CommandDefinition(
-                            "SELECT * FROM orders WHERE exchange_order_id = @ExchangeOrderId AND market_type = @MarketType",
-                            {| ExchangeOrderId = exchangeOrderId; MarketType = int market |},
-                            cancellationToken = token
-                        )
-                    )
-
-                match box order with
-                | null -> return Ok None
-                | _ -> return Ok(Some order)
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let getByPipeline (db: IDbConnection) (pipelineId: int) (status: OrderStatus option) (token: CancellationToken) =
-        task {
-            try
-                let query =
-                    match status with
-                    | Some s ->
-                        "SELECT * FROM orders WHERE pipeline_id = @PipelineId AND status = @Status ORDER BY created_at DESC"
-                    | None -> "SELECT * FROM orders WHERE pipeline_id = @PipelineId ORDER BY created_at DESC"
-
-                let parameters: obj =
-                    match status with
-                    | Some s -> {| PipelineId = pipelineId; Status = int s |}
-                    | None -> {| PipelineId = pipelineId |}
-
-                let! orders = db.QueryAsync<Order>(CommandDefinition(query, parameters, cancellationToken = token))
-                return Ok(orders |> Seq.toList)
-            with ex ->
-                return Error(Unexpected ex)
-        }
 
     let getActive (db: IDbConnection) (token: CancellationToken) =
         task {
@@ -101,55 +44,6 @@ module OrderRepository =
                     )
 
                 return Ok(orders |> Seq.toList)
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let getHistory (db: IDbConnection) (skip: int) (take: int) (token: CancellationToken) =
-        task {
-            try
-                let! orders =
-                    db.QueryAsync<Order>(
-                        CommandDefinition(
-                            "SELECT * FROM orders ORDER BY created_at DESC OFFSET @Skip LIMIT @Take",
-                            {| Skip = skip; Take = take |},
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok(orders |> Seq.toList)
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let getTotalExposure (db: IDbConnection) (market: MarketType option) (token: CancellationToken) =
-        task {
-            try
-                let sql, parameters =
-                    match market with
-                    | Some m ->
-                        """SELECT COALESCE(SUM(quantity * COALESCE(price, 0)), 0)
-                           FROM orders
-                           WHERE status IN (@Placed, @PartiallyFilled, @Filled)
-                           AND market_type = @MarketType""",
-                        {| Placed = int OrderStatus.Placed
-                           PartiallyFilled = int OrderStatus.PartiallyFilled
-                           Filled = int OrderStatus.Filled
-                           MarketType = int m |}
-                        :> obj
-                    | None ->
-                        """SELECT COALESCE(SUM(quantity * COALESCE(price, 0)), 0)
-                           FROM orders
-                           WHERE status IN (@Placed, @PartiallyFilled, @Filled)""",
-                        {| Placed = int OrderStatus.Placed
-                           PartiallyFilled = int OrderStatus.PartiallyFilled
-                           Filled = int OrderStatus.Filled |}
-                        :> obj
-
-                let! result =
-                    db.QuerySingleAsync<decimal>(CommandDefinition(sql, parameters, cancellationToken = token))
-
-                return Ok result
             with ex ->
                 return Error(Unexpected ex)
         }

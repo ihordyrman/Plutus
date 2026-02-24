@@ -1,6 +1,5 @@
 namespace Plutus.Core.Repositories
 
-open System
 open System.Data
 open System.Threading
 open Dapper
@@ -14,13 +13,6 @@ type CreatePositionRequest =
       Quantity: decimal
       BuyOrderId: int
       Status: PositionStatus }
-
-type UpdatePositionRequest =
-    { Id: int
-      ExitPrice: decimal option
-      SellOrderId: int option
-      Status: PositionStatus
-      ClosedAt: DateTime option }
 
 [<RequireQualifiedAccess>]
 module PositionRepository =
@@ -67,45 +59,6 @@ module PositionRepository =
                                Quantity = request.Quantity
                                BuyOrderId = request.BuyOrderId
                                Status = int request.Status |},
-                            cancellationToken = cancellation,
-                            transaction = tnx
-                        )
-                    )
-
-                return Ok result
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let update
-        (db: IDbConnection)
-        (tnx: IDbTransaction)
-        (request: UpdatePositionRequest)
-        (cancellation: CancellationToken)
-        =
-        task {
-            try
-                let closedAt =
-                    match request.ClosedAt with
-                    | Some dt -> box dt
-                    | None -> null
-
-                let! result =
-                    db.QuerySingleAsync<Position>(
-                        CommandDefinition(
-                            "UPDATE positions
-                             SET exit_price = @ExitPrice,
-                                 sell_order_id = @SellOrderId,
-                                 status = @Status,
-                                 closed_at = @ClosedAt,
-                                 updated_at = NOW()
-                             WHERE id = @Id
-                             RETURNING *",
-                            {| Id = request.Id
-                               ExitPrice = request.ExitPrice
-                               SellOrderId = request.SellOrderId
-                               Status = int request.Status
-                               ClosedAt = closedAt |},
                             cancellationToken = cancellation,
                             transaction = tnx
                         )

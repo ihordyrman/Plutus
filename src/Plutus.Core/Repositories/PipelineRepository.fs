@@ -51,22 +51,6 @@ module PipelineRepository =
                 return Error(Unexpected ex)
         }
 
-    let getEnabled (db: IDbConnection) (token: CancellationToken) =
-        task {
-            try
-                let! pipelines =
-                    db.QueryAsync<Pipeline>(
-                        CommandDefinition(
-                            "SELECT * FROM pipelines WHERE enabled = true ORDER BY id",
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok(pipelines |> Seq.toList)
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
     let create (db: IDbConnection) (pipeline: Pipeline) (token: CancellationToken) =
         task {
             try
@@ -143,63 +127,6 @@ module PipelineRepository =
                     )
 
                 if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {id}")
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let setEnabled (db: IDbConnection) (pipelineId: int) (enabled: bool) (token: CancellationToken) =
-        task {
-            try
-                let now = DateTime.UtcNow
-
-                let! rowsAffected =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            "UPDATE pipelines SET enabled = @Enabled, updated_at = @UpdatedAt WHERE id = @Id",
-                            {| Enabled = enabled; UpdatedAt = now; Id = pipelineId |},
-                            cancellationToken = token
-                        )
-                    )
-
-                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {pipelineId}")
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let updateLastExecuted (db: IDbConnection) (pipelineId: int) (lastExecutedAt: DateTime) (token: CancellationToken) =
-        task {
-            try
-                let now = DateTime.UtcNow
-
-                let! rowsAffected =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            "UPDATE pipelines SET last_executed_at = @LastExecutedAt, updated_at = @UpdatedAt WHERE id = @Id",
-                            {| LastExecutedAt = lastExecutedAt; UpdatedAt = now; Id = pipelineId |},
-                            cancellationToken = token
-                        )
-                    )
-
-                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {pipelineId}")
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let updateStatus (db: IDbConnection) (pipelineId: int) (status: PipelineStatus) (token: CancellationToken) =
-        task {
-            try
-                let now = DateTime.UtcNow
-
-                let! rowsAffected =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            "UPDATE pipelines SET status = @Status, updated_at = @UpdatedAt WHERE id = @Id",
-                            {| Status = int status; UpdatedAt = now; Id = pipelineId |},
-                            cancellationToken = token
-                        )
-                    )
-
-                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Pipeline with id {pipelineId}")
             with ex ->
                 return Error(Unexpected ex)
         }

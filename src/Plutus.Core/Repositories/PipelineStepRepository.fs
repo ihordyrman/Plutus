@@ -185,39 +185,6 @@ module PipelineStepRepository =
                 return Error(Unexpected ex)
         }
 
-    let reorderSteps (db: IDbConnection) (pipelineId: int) (stepIds: int list) (token: CancellationToken) =
-        task {
-            try
-                let now = DateTime.UtcNow
-
-                // todo: optimize. for now it's simpler to implement like this
-                let! _ =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            // temp large offset
-                            "UPDATE pipeline_steps SET \"order\" = -\"order\" - 10000 WHERE pipeline_id = @PipelineId",
-                            {| PipelineId = pipelineId |},
-                            cancellationToken = token
-                        )
-                    )
-
-                for i, stepId in stepIds |> List.indexed do
-                    let! _ =
-                        db.ExecuteAsync(
-                            CommandDefinition(
-                                "UPDATE pipeline_steps SET \"order\" = @Order, updated_at = @UpdatedAt WHERE id = @Id AND pipeline_id = @PipelineId",
-                                {| Order = i; UpdatedAt = now; Id = stepId; PipelineId = pipelineId |},
-                                cancellationToken = token
-                            )
-                        )
-
-                    ()
-
-                return Ok()
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
     let getMaxOrder (db: IDbConnection) (pipelineId: int) (token: CancellationToken) =
         task {
             try

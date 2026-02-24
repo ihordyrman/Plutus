@@ -83,20 +83,3 @@ module InstrumentRepository =
             with ex ->
                 return Error(Unexpected ex)
         }
-
-    let exists (db: IDbConnection) (marketType: int) (instrumentId: string) (token: CancellationToken) =
-        task {
-            try
-                let! count =
-                    db.QuerySingleAsync<int>(
-                        CommandDefinition(
-                            "SELECT COUNT(1) FROM instruments WHERE market_type = @MarketType AND instrument_id = @InstrumentId",
-                            {| MarketType = marketType; InstrumentId = instrumentId |},
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok(count > 0)
-            with ex ->
-                return Error(Unexpected ex)
-        }

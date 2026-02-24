@@ -16,25 +16,6 @@ type WeeklyCoverage = { Instrument: string; WeekStart: DateTime; Count: int }
 [<RequireQualifiedAccess>]
 module CandlestickRepository =
 
-    let getById (db: IDbConnection) (id: int64) (token: CancellationToken) =
-        task {
-            try
-                let! candlesticks =
-                    db.QueryAsync<Candlestick>(
-                        CommandDefinition(
-                            "SELECT * FROM candlesticks WHERE id = @Id LIMIT 1",
-                            {| Id = id |},
-                            cancellationToken = token
-                        )
-                    )
-
-                match candlesticks |> Seq.tryHead with
-                | Some candle -> return Ok candle
-                | None -> return Error(NotFound $"Candlestick with id {id}")
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
     let getLatest
         (db: IDbConnection)
         (instrument: string)
@@ -196,46 +177,6 @@ module CandlestickRepository =
                     return Error(Unexpected ex)
         }
 
-    let saveOne (db: IDbConnection) (candlestick: Candlestick) (token: CancellationToken) =
-        task {
-            try
-                let! result =
-                    db.QuerySingleAsync<int>(
-                        CommandDefinition(
-                            """INSERT INTO candlesticks
-                           (instrument, market_type, timeframe, timestamp, open, high, low, close, volume, volume_quote, is_completed)
-                           VALUES (@Instrument, @MarketType, @Timeframe, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
-                           ON CONFLICT (instrument, market_type, timeframe, timestamp)
-                           DO UPDATE SET open = @Open, high = @High, low = @Low, close = @Close,
-                                         volume = @Volume, volume_quote = @VolumeQuote, is_completed = @IsCompleted
-                           RETURNING id""",
-                            candlestick,
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok { candlestick with Id = result }
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let delete (db: IDbConnection) (id: int64) (token: CancellationToken) =
-        task {
-            try
-                let! rowsAffected =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            "DELETE FROM candlesticks WHERE id = @Id",
-                            {| Id = id |},
-                            cancellationToken = token
-                        )
-                    )
-
-                if rowsAffected > 0 then return Ok() else return Error(NotFound $"Candlestick with id {id}")
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
     let deleteAllByInstrument (db: IDbConnection) (instrument: string) (token: CancellationToken) =
         task {
             try
@@ -249,68 +190,6 @@ module CandlestickRepository =
                     )
 
                 return Ok rowsAffected
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let deleteByInstrument
-        (db: IDbConnection)
-        (instrument: string)
-        (marketType: MarketType)
-        (token: CancellationToken)
-        =
-        task {
-            try
-                let! rowsAffected =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            "DELETE FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType",
-                            {| Instrument = instrument; MarketType = int marketType |},
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok rowsAffected
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let deleteOlderThan (db: IDbConnection) (before: DateTime) (token: CancellationToken) =
-        task {
-            try
-                let! rowsAffected =
-                    db.ExecuteAsync(
-                        CommandDefinition(
-                            "DELETE FROM candlesticks WHERE timestamp < @Before",
-                            {| Before = before |},
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok rowsAffected
-            with ex ->
-                return Error(Unexpected ex)
-        }
-
-    let count
-        (db: IDbConnection)
-        (instrument: string)
-        (marketType: MarketType)
-        (timeframe: string)
-        (token: CancellationToken)
-        =
-        task {
-            try
-                let! result =
-                    db.QuerySingleAsync<int>(
-                        CommandDefinition(
-                            "SELECT COUNT(*) FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe",
-                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
-                            cancellationToken = token
-                        )
-                    )
-
-                return Ok result
             with ex ->
                 return Error(Unexpected ex)
         }
@@ -388,11 +267,11 @@ module CandlestickRepository =
                 let! results =
                     db.QueryAsync<WeeklyCoverage>(
                         CommandDefinition(
-                            """SELECT Instrument, date_trunc('week', timestamp) as week_start, COUNT(*) as count
+                            """SELECT instrument, date_trunc('week', timestamp) as week_start, COUNT(*) as count
                                FROM candlesticks
                                WHERE timeframe = @Timeframe
-                               GROUP BY Instrument, date_trunc('week', timestamp)
-                               ORDER BY Instrument, week_start""",
+                               GROUP BY instrument, date_trunc('week', timestamp)
+                               ORDER BY instrument, week_start""",
                             {| Timeframe = timeframe |},
                             cancellationToken = token
                         )
