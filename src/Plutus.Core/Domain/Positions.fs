@@ -1,6 +1,7 @@
 namespace Plutus.Core.Domain
 
 open System
+open Plutus.Core.Shared
 
 type PositionStatus =
     | Open = 0
@@ -11,7 +12,7 @@ type PositionStatus =
 type Position =
     { Id: int
       PipelineId: int
-      Instrument: string
+      Instrument: Instrument
       EntryPrice: decimal
       Quantity: decimal
       BuyOrderId: int

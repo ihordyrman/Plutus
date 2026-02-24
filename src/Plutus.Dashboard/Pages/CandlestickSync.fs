@@ -5,6 +5,7 @@ open Falco
 open Falco.Htmx
 open Falco.Markup
 open Plutus.Core.Domain
+open Plutus.Core.Shared
 open Plutus.Core.Workers
 
 module View =
@@ -321,7 +322,9 @@ module View =
                   [ _class_ "min-w-0 flex-1" ]
                   [ _div
                         [ _class_ "flex items-center gap-2 mb-1" ]
-                        [ _span [ _class_ "font-medium text-sm text-slate-900" ] [ Text.raw job.Instrument ]
+                        [ _span
+                              [ _class_ "font-medium text-sm text-slate-900" ]
+                              [ Text.raw (job.Instrument.ToString()) ]
                           statusBadge job.Status
                           _span [ _class_ "text-xs text-slate-400" ] [ Text.raw $"{fromStr} → {toStr}" ] ]
                     _div
@@ -390,7 +393,7 @@ module Handler =
                         let toDate = DateTimeOffset(DateTime.Parse(toDateStr), TimeSpan.Zero).AddDays(1.0)
 
                         let manager = ctx.Plug<JobsManager.T>()
-                        let _jobId = manager.startJob instrument marketType "1m" fromDate toDate
+                        let _jobId = manager.startJob (Instrument.parse instrument) marketType "1m" fromDate toDate
                         return! Response.ofHtml (View.successResponse instrument) ctx
                 with ex ->
                     return! Response.ofHtml (View.errorResponse $"Failed to start sync: {ex.Message}") ctx

@@ -1,11 +1,12 @@
 namespace Plutus.Core.Domain
 
 open System
+open Plutus.Core.Shared
 
 [<CLIMutable>]
 type Candlestick =
     { Id: int
-      Instrument: string
+      Instrument: Instrument
       MarketType: int
       Timestamp: DateTime
       Open: decimal
@@ -28,7 +29,7 @@ type SyncJobStatus =
 [<CLIMutable>]
 type SyncJob =
     { Id: int
-      Instrument: string
+      Instrument: Instrument
       MarketType: int
       Timeframe: string
       FromDate: DateTimeOffset

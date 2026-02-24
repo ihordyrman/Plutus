@@ -9,6 +9,7 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
 
 module JobsManager =
@@ -49,7 +50,7 @@ module JobsManager =
 
     type SyncJobState =
         { Id: int
-          Instrument: string
+          Instrument: Instrument
           MarketType: MarketType
           Timeframe: string
           FromDate: DateTimeOffset
@@ -75,7 +76,7 @@ module JobsManager =
           CreatedAt = job.CreatedAt }
 
     type private SyncMessage =
-        | StartJob of string * MarketType * string * DateTimeOffset * DateTimeOffset * AsyncReplyChannel<int>
+        | StartJob of Instrument * MarketType * string * DateTimeOffset * DateTimeOffset * AsyncReplyChannel<int>
         | StopJob of int * AsyncReplyChannel<bool>
         | PauseJob of int * AsyncReplyChannel<bool>
         | ResumeJob of int * AsyncReplyChannel<bool>
@@ -136,7 +137,7 @@ module JobsManager =
         (logger: ILogger)
         (post: SyncMessage -> unit)
         (jobId: int)
-        (instrument: string)
+        (instrument: Instrument)
         (timeframe: string)
         (fromDate: DateTimeOffset)
         (startCursor: DateTimeOffset)
@@ -176,7 +177,7 @@ module JobsManager =
 
                         let! result =
                             fetch
-                                instrument
+                                (instrument.ToString())
                                 { Bar = Some timeframe; After = Some afterMs; Before = None; Limit = Some 100 }
 
                         match result with
@@ -238,7 +239,7 @@ module JobsManager =
         |> ignore
 
     type T =
-        { startJob: string -> MarketType -> string -> DateTimeOffset -> DateTimeOffset -> int
+        { startJob: Instrument -> MarketType -> string -> DateTimeOffset -> DateTimeOffset -> int
           stopJob: int -> bool
           pauseJob: int -> bool
           resumeJob: int -> bool

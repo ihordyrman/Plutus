@@ -25,7 +25,7 @@ module BacktestExport =
         let dateFmt (d: DateTime) = d.ToString("yyyy-MM-dd")
 
         let rows =
-            [ "Instrument", pipeline.Instrument
+            [ "Instrument", pipeline.Instrument.ToString()
               "Period", $"{dateFmt run.StartDate} to {dateFmt run.EndDate}"
               "Interval", $"{run.IntervalMinutes} min"
               "Initial Capital", $"%.2f{run.InitialCapital}"

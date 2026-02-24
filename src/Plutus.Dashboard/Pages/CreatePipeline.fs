@@ -103,7 +103,7 @@ module Data =
                 let pipeline: Pipeline =
                     { Id = 0
                       Name = instrumentInstrument // consider custom naming in the future
-                      Instrument = instrumentInstrument
+                      Instrument = Instrument.parse instrumentInstrument
                       MarketType = input.MarketType
                       Enabled = input.Enabled
                       ExecutionInterval = input.ExecutionInterval
@@ -116,7 +116,7 @@ module Data =
                 let! result = PipelineRepository.create db pipeline ct
 
                 match result with
-                | Ok created -> return Success created.Instrument
+                | Ok created -> return Success(created.Instrument.ToString())
                 | Error err ->
                     let message = Errors.serviceMessage err
                     return ServerError message

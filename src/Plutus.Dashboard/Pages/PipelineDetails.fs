@@ -48,7 +48,7 @@ module Data =
                 return
                     Some
                         { Id = pipeline.Id
-                          Instrument = pipeline.Instrument
+                          Instrument = pipeline.Instrument.ToString()
                           MarketType = pipeline.MarketType
                           Enabled = pipeline.Enabled
                           ExecutionInterval = pipeline.ExecutionInterval

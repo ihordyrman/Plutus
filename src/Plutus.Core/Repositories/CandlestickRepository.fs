@@ -5,20 +5,21 @@ open System.Data
 open System.Threading
 open Dapper
 open Plutus.Core.Domain
+open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
 
 [<CLIMutable>]
 type Gap = { GapStart: DateTime; GapEnd: DateTime }
 
 [<CLIMutable>]
-type WeeklyCoverage = { Instrument: string; WeekStart: DateTime; Count: int }
+type WeeklyCoverage = { Instrument: Instrument; WeekStart: DateTime; Count: int }
 
 [<RequireQualifiedAccess>]
 module CandlestickRepository =
 
     let getLatest
         (db: IDbConnection)
-        (instrument: string)
+        (instrument: Instrument)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -46,7 +47,7 @@ module CandlestickRepository =
 
     let getOldest
         (db: IDbConnection)
-        (instrument: string)
+        (instrument: Instrument)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -74,7 +75,7 @@ module CandlestickRepository =
 
     let findGaps
         (db: IDbConnection)
-        (instrument: string)
+        (instrument: Instrument)
         (marketType: MarketType)
         (timeframe: string)
         (token: CancellationToken)
@@ -105,7 +106,7 @@ module CandlestickRepository =
 
     let query
         (db: IDbConnection)
-        (instrument: string)
+        (instrument: Instrument)
         (marketType: MarketType)
         (timeframe: string)
         (fromDate: DateTime option)

@@ -2,6 +2,7 @@ namespace Plutus.Core.Domain
 
 open System
 open System.Collections.Generic
+open Plutus.Core.Shared
 
 type PipelineStatus =
     | Idle = 0
@@ -13,7 +14,7 @@ type PipelineStatus =
 type Pipeline =
     { Id: int
       Name: string
-      Instrument: string
+      Instrument: Instrument
       MarketType: MarketType
       Enabled: bool
       ExecutionInterval: TimeSpan

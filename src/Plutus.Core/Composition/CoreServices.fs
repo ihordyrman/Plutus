@@ -21,30 +21,44 @@ open Plutus.Core.Markets.Stores
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Orchestration
 open Plutus.Core.Pipelines.Trading
+open Plutus.Core.Shared
 open Plutus.Core.Workers
 
 module CoreServices =
 
-    type private StringListTypeHandler() =
-        inherit SqlMapper.TypeHandler<string list>()
+    type private InstrumentTypeHandler() =
+        inherit SqlMapper.TypeHandler<Instrument>()
 
-        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize(value)
+        override _.SetValue(parameter, value) = parameter.Value <- value.ToString()
 
         override _.Parse(value) =
             match value with
-            | :? string as json when not (String.IsNullOrEmpty(json)) -> JsonSerializer.Deserialize<string list>(json)
-            | _ -> []
+            | :? string as str when not (String.IsNullOrEmpty str) ->
+                match str.Split '-' with
+                | [| baseCcy; quoteCcy |] -> { Base = baseCcy; Quote = quoteCcy }
+                | _ -> failwith $"Invalid instrument format: {str}"
+            | _ -> failwith "Invalid value for Instrument type"
+
+    type private StringListTypeHandler() =
+        inherit SqlMapper.TypeHandler<string list>()
+
+        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize value
+
+        override _.Parse(value) =
+            match value with
+            | :? string as json when not (String.IsNullOrEmpty json) -> JsonSerializer.Deserialize<string list> json
+            | _ -> failwith "Invalid value for string list type"
 
     type private DictionaryStringStringTypeHandler() =
         inherit SqlMapper.TypeHandler<Dictionary<string, string>>()
 
-        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize(value)
+        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize value
 
         override _.Parse(value) =
             match value with
-            | :? string as json when not (String.IsNullOrEmpty(json)) ->
-                JsonSerializer.Deserialize<Dictionary<string, string>>(json)
-            | _ -> Dictionary<string, string>()
+            | :? string as json when not (String.IsNullOrEmpty json) ->
+                JsonSerializer.Deserialize<Dictionary<string, string>> json
+            | _ -> failwith "Invalid value for dictionary<string, string> type"
 
     let private pipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
@@ -153,6 +167,7 @@ module CoreServices =
         |> ignore
 
         DefaultTypeMap.MatchNamesWithUnderscores <- true
+        SqlMapper.AddTypeHandler(InstrumentTypeHandler())
         SqlMapper.AddTypeHandler(StringListTypeHandler())
         SqlMapper.AddTypeHandler(DictionaryStringStringTypeHandler())
 

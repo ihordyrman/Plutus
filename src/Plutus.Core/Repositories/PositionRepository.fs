@@ -4,11 +4,12 @@ open System.Data
 open System.Threading
 open Dapper
 open Plutus.Core.Domain
+open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
 
 type CreatePositionRequest =
     { PipelineId: int
-      Instrument: string
+      Instrument: Instrument
       EntryPrice: decimal
       Quantity: decimal
       BuyOrderId: int

@@ -1,7 +1,5 @@
 namespace Plutus.Core.Shared
 
-open Plutus.Core.Domain
-
 module Errors =
     type ExternalError =
         | HttpError of message: string * statusCode: int option
@@ -17,7 +15,7 @@ module Errors =
     type ServiceError =
         | ApiError of message: string * statusCode: int option
         | NotFound of entity: string
-        | NoProvider of MarketType
+        | NoProvider of marketType: obj
         | Unexpected of exn
 
     let serviceMessage =

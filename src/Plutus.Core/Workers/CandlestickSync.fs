@@ -11,6 +11,7 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
 
 module CandlestickSync =
@@ -18,7 +19,7 @@ module CandlestickSync =
     let private recentCandleThreshold = TimeSpan.FromMinutes 5.0
     let private historyBoundaryDays = 30
 
-    let toCandlestick (instrument: string) (timeframe: string) (c: OkxCandlestick) : Candlestick =
+    let toCandlestick (instrument: Instrument) (timeframe: string) (c: OkxCandlestick) : Candlestick =
         { Id = 0
           Instrument = instrument
           MarketType = int MarketType.Okx
@@ -36,13 +37,14 @@ module CandlestickSync =
         (fetch: string -> Http.CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>)
         (db: IDbConnection)
         (logger: ILogger)
-        (instrument: string)
+        (instrument: Instrument)
         (afterMs: string option)
         (beforeMs: string option)
         (ct: CancellationToken)
         =
         task {
-            let! result = fetch instrument { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
+            let! result =
+                fetch (instrument.ToString()) { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
 
             match result with
             | Ok candles when candles.Length > 0 ->
@@ -59,7 +61,7 @@ module CandlestickSync =
         (fetch: string -> Http.CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>)
         (db: IDbConnection)
         (logger: ILogger)
-        (instrument: string)
+        (instrument: Instrument)
         (startTs: DateTimeOffset)
         (stopTs: DateTimeOffset)
         (ct: CancellationToken)
@@ -82,7 +84,13 @@ module CandlestickSync =
             return total
         }
 
-    let syncRecent (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: string) (ct: CancellationToken) =
+    let syncRecent
+        (http: Http.T)
+        (db: IDbConnection)
+        (logger: ILogger)
+        (instrument: Instrument)
+        (ct: CancellationToken)
+        =
         task {
             match! CandlestickRepository.getLatest db instrument MarketType.Okx "1m" ct with
             | Ok(Some latest) ->
@@ -117,7 +125,13 @@ module CandlestickSync =
                 logger.LogError("Failed to get latest candle for {Instrument}: {Error}", instrument, serviceMessage err)
         }
 
-    let syncHistory (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: string) (ct: CancellationToken) =
+    let syncHistory
+        (http: Http.T)
+        (db: IDbConnection)
+        (logger: ILogger)
+        (instrument: Instrument)
+        (ct: CancellationToken)
+        =
         task {
             let monthAgo = DateTimeOffset.UtcNow.AddDays(-365)
 
@@ -137,7 +151,7 @@ module CandlestickSync =
                 logger.LogError("Failed to get oldest candle for {Instrument}: {Error}", instrument, serviceMessage err)
         }
 
-    let syncGaps (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: string) (ct: CancellationToken) =
+    let syncGaps (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: Instrument) (ct: CancellationToken) =
         task {
             match! CandlestickRepository.findGaps db instrument MarketType.Okx "1m" ct with
             | Ok gaps when gaps.Length > 0 ->
@@ -164,7 +178,7 @@ module CandlestickSync =
 
     let getEnabledInstruments (db: IDbConnection) (ct: CancellationToken) =
         task {
-            let instruments = HashSet<string>()
+            let instruments = HashSet<Instrument>()
 
             match! PipelineRepository.getAll db ct with
             | Ok pipelines ->
@@ -178,14 +192,16 @@ module CandlestickSync =
                         |> List.filter (fun x -> x.StepTypeKey = "trend-following-signal")
                         |> List.iter (fun x ->
                             match x.Parameters.TryGetValue("instruments") with
-                            | true, s -> s.Split(';') |> Array.iter (fun s -> instruments.Add(s.Trim()) |> ignore)
+                            | true, s ->
+                                s.Split(';')
+                                |> Array.iter (fun s -> instruments.Add(Instrument.parse (s.Trim())) |> ignore)
                             | _ -> ()
                         )
 
                 pipelines
                 |> List.map _.Instrument
                 |> List.distinct
-                |> List.iter (fun s -> instruments.Add s |> ignore)
+                |> List.iter (fun i -> instruments.Add i |> ignore)
 
                 return instruments |> Seq.toArray
             | Error _ -> return Array.empty

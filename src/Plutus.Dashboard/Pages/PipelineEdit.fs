@@ -174,10 +174,8 @@ module Data =
                         mapStepToViewModel pipelineId def step (i = 0) (i = stepCount - 1)
                     )
 
-                let baseCurrency, quoteCurrency =
-                    match pipeline.Instrument.Split('-') with
-                    | [| b; q |] -> b, q
-                    | _ -> pipeline.Instrument, ""
+                let baseCurrency = pipeline.Instrument.Base
+                let quoteCurrency = pipeline.Instrument.Quote
 
                 let! baseCurrencies = InstrumentRepository.getBaseCurrencies db (int pipeline.MarketType) "SPOT" ct
 
@@ -197,7 +195,7 @@ module Data =
                 return
                     Option.Some
                         { Id = pipeline.Id
-                          Instrument = pipeline.Instrument
+                          Instrument = pipeline.Instrument.ToString()
                           BaseCurrency = baseCurrency
                           QuoteCurrency = quoteCurrency
                           MarketType = pipeline.MarketType
@@ -360,7 +358,7 @@ module Data =
 
                     let updated =
                         { pipeline with
-                            Instrument = instrument.Trim().ToUpperInvariant()
+                            Instrument = Instrument.parse (instrument.Trim().ToUpperInvariant())
                             MarketType = marketType
                             Tags = tags
                             ExecutionInterval = interval

@@ -1,6 +1,7 @@
 namespace Plutus.Core.Pipelines.Core
 
 open Plutus.Core.Domain
+open Plutus.Core.Shared
 
 type TradingAction =
     | NoAction
@@ -11,7 +12,7 @@ type TradingAction =
 type TradingContext =
     { PipelineId: int
       ExecutionId: string
-      Instrument: string
+      Instrument: Instrument
       MarketType: MarketType
       CurrentPrice: decimal
       Action: TradingAction

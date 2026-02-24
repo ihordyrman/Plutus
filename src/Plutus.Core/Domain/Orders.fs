@@ -1,6 +1,7 @@
 namespace Plutus.Core.Domain
 
 open System
+open Plutus.Core.Shared
 
 type OrderSide =
     | Buy = 0
@@ -20,7 +21,7 @@ type Order =
       PipelineId: Nullable<int>
       MarketType: MarketType
       ExchangeOrderId: string
-      Instrument: string
+      Instrument: Instrument
       Side: OrderSide
       Status: OrderStatus
       Quantity: decimal

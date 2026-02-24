@@ -6,6 +6,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 module PipelinesApi =
 
@@ -70,7 +71,7 @@ module PipelinesApi =
                         let pipeline: Pipeline =
                             { Id = 0
                               Name = req.Instrument
-                              Instrument = req.Instrument
+                              Instrument = Instrument.parse req.Instrument
                               MarketType = enum<MarketType> req.MarketType
                               Enabled = req.Enabled
                               ExecutionInterval = TimeSpan.FromMinutes(float req.ExecutionIntervalMinutes)
@@ -110,7 +111,7 @@ module PipelinesApi =
                             | Ok() ->
                                 let updated =
                                     { existing with
-                                        Instrument = req.Instrument
+                                        Instrument = Instrument.parse req.Instrument
                                         MarketType = enum<MarketType> req.MarketType
                                         Enabled = req.Enabled
                                         ExecutionInterval = TimeSpan.FromMinutes(float req.ExecutionIntervalMinutes)

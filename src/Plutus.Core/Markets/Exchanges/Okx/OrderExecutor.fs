@@ -18,7 +18,7 @@ module OrderExecutor =
     let mapToRequest (order: Order) =
         let isLimitOrder = order.Price.HasValue && order.Price.Value > 0m
 
-        { InstrumentId = order.Instrument
+        { InstrumentId = order.Instrument.ToString()
           TradeMode = "cash"
           Side = toOkxSide order.Side
           OrderType = if isLimitOrder then "limit" else "market"

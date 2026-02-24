@@ -120,7 +120,7 @@ module Data =
                     pipelines
                     |> List.map (fun p ->
                         { Id = p.Id
-                          Instrument = p.Instrument
+                          Instrument = p.Instrument.ToString()
                           MarketType = p.MarketType
                           Enabled = p.Enabled
                           Tags = p.Tags
@@ -163,7 +163,7 @@ module Data =
                     result.Pipelines
                     |> List.map (fun p ->
                         { Id = p.Id
-                          Instrument = p.Instrument
+                          Instrument = p.Instrument.ToString()
                           MarketType = p.MarketType
                           Enabled = p.Enabled
                           Tags = p.Tags

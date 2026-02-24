@@ -114,7 +114,7 @@ module Data =
                     |> List.map (fun o ->
                         { Id = o.Id
                           PipelineId = if o.PipelineId.HasValue then Some o.PipelineId.Value else None
-                          Instrument = o.Instrument
+                          Instrument = o.Instrument.ToString()
                           Side = o.Side
                           Status = o.Status
                           MarketType = o.MarketType

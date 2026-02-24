@@ -5,6 +5,7 @@ open System.Data
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Pipelines.Core
+open Plutus.Core.Shared
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Repositories
@@ -17,7 +18,11 @@ module TrendFollowingSignal =
 
     let trendFollowing: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
-            let selectedInstruments = params' |> ValidatedParams.getList "instruments" [ instruments |> List.head ]
+            let selectedInstruments =
+                params'
+                |> ValidatedParams.getList "instruments" [ instruments |> List.head ]
+                |> List.map Instrument.parse
+
             let lookbackPeriod = params' |> ValidatedParams.getInt "lookbackPeriod" 20
             let momentumThreshold = params' |> ValidatedParams.getDecimal "momentumThreshold" 2.0m
             let timeframe = params' |> ValidatedParams.getString "timeframe" "1m"
