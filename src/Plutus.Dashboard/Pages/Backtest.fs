@@ -65,7 +65,7 @@ module Data =
 
                             let instrument =
                                 match pipeline with
-                                | Ok p -> p.Instrument.ToString()
+                                | Ok p -> string p.Instrument
                                 | Error _ -> $"Pipeline #{run.PipelineId}"
 
                             result <-
@@ -985,7 +985,7 @@ module Handler =
                     let! pipeline = PipelineRepository.getById db pipelineId ctx.RequestAborted
 
                     match pipeline with
-                    | Ok p -> return! Response.ofHtml (View.configureModal pipelineId (p.Instrument.ToString())) ctx
+                    | Ok p -> return! Response.ofHtml (View.configureModal pipelineId (string p.Instrument)) ctx
                     | Error _ -> return! Response.ofHtml (View.errorResult "Pipeline not found") ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Backtest")
@@ -1059,7 +1059,7 @@ module Handler =
 
                         let instrument =
                             match pipeline with
-                            | Ok p -> p.Instrument.ToString()
+                            | Ok p -> string p.Instrument
                             | Error _ -> $"Pipeline #{run.PipelineId}"
 
                         let item: BacktestGridItem =

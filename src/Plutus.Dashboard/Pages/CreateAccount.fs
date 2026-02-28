@@ -77,7 +77,7 @@ module Data =
                 | Error err -> return ServerError $"Failed to check existing accounts: {err}"
                 | Ok exist ->
                     if exist then
-                        return AlreadyExists(input.MarketType.ToString())
+                        return AlreadyExists(string input.MarketType)
                     else
                         let! market =
                             MarketRepository.create
@@ -91,7 +91,7 @@ module Data =
 
                         match market with
                         | Error err -> return ServerError $"Failed to create account: {err}"
-                        | Ok market -> return Success(market.Type.ToString())
+                        | Ok market -> return Success(string market.Type)
             with ex ->
                 return ServerError $"Failed to create account: {ex.Message}"
         }
@@ -111,7 +111,7 @@ module View =
                     _class_
                         "w-full px-3 py-2 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300" ]
                   [ for marketType in marketTypes do
-                        _option [ _value_ (string (int marketType)) ] [ Text.raw (marketType.ToString()) ] ] ]
+                        _option [ _value_ (string (int marketType)) ] [ Text.raw (string marketType) ] ] ]
 
     let private apiKeyField =
         _div

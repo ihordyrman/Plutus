@@ -1,16 +1,6 @@
 namespace Plutus.Core.Shared
 
 module Errors =
-    type ExternalError =
-        | HttpError of message: string * statusCode: int option
-        | Timeout of operation: string
-        | Unexpected of exn
-
-    let externalMessage =
-        function
-        | HttpError(msg, _) -> msg
-        | Timeout operation -> $"{operation} timed out"
-        | Unexpected ex -> ex.Message
 
     type ServiceError =
         | ApiError of message: string * statusCode: int option

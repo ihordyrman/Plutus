@@ -44,7 +44,7 @@ module CandlestickSync =
         =
         task {
             let! result =
-                fetch (instrument.ToString()) { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
+                fetch (string instrument) { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
 
             match result with
             | Ok candles when candles.Length > 0 ->

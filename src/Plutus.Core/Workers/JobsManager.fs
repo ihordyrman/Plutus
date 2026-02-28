@@ -177,7 +177,7 @@ module JobsManager =
 
                         let! result =
                             fetch
-                                (instrument.ToString())
+                                (string instrument)
                                 { Bar = Some timeframe; After = Some afterMs; Before = None; Limit = Some 100 }
 
                         match result with

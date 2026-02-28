@@ -6,6 +6,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="Shared\Errors.fs" />
         <Compile Include="Shared\Instrument.fs" />
 
         <Compile Include="Domain\Common.fs" />
@@ -23,8 +24,6 @@
         <Compile Include="Infrastructure\Tracing.fs" />
         <Compile Include="Infrastructure\ExecutionLogger.fs" />
         <Compile Include="Infrastructure\CacheStore.fs" />
-
-        <Compile Include="Shared\Errors.fs" />
 
         <Compile Include="Repositories\PipelineRepository.fs" />
         <Compile Include="Repositories\PipelineStepRepository.fs" />

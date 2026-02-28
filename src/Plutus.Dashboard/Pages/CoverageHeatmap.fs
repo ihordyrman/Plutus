@@ -229,7 +229,7 @@ module Data =
                     rows
                     |> List.map (fun r -> { WeekStart = r.WeekStart; Coverage = min 1.0 (float r.Count / expected) })
 
-                { Instrument = instrument.ToString(); Cells = cells }
+                { Instrument = string instrument; Cells = cells }
             )
 
         { Instruments = instrumentRows
@@ -327,7 +327,7 @@ module Data =
                                 { WeekStart = r.WeekStart; Coverage = min 1.0 (float r.Count / expected) }
                             )
 
-                        { Instrument = instrument.ToString(); Cells = cells }
+                        { Instrument = string instrument; Cells = cells }
                     )
 
                 return

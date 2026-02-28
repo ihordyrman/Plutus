@@ -40,7 +40,7 @@ module Data =
                     |> List.map (fun x ->
                         { Id = x.Id
                           Type = x.Type
-                          Name = x.Type.ToString()
+                          Name = string x.Type
                           Enabled = true
                           HasCredentials = true // tf is this
                         }

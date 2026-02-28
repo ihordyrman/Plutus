@@ -29,15 +29,12 @@ module CoreServices =
     type private InstrumentTypeHandler() =
         inherit SqlMapper.TypeHandler<Instrument>()
 
-        override _.SetValue(parameter, value) = parameter.Value <- value.ToString()
+        override _.SetValue(parameter, value) = parameter.Value <- string value
 
         override _.Parse(value) =
             match value with
-            | :? string as str when not (String.IsNullOrEmpty str) ->
-                match str.Split '-' with
-                | [| baseCcy; quoteCcy |] -> { Base = baseCcy; Quote = quoteCcy }
-                | _ -> failwith $"Invalid instrument format: {str}"
-            | _ -> failwith "Invalid value for Instrument type"
+            | :? string as str when not (String.IsNullOrEmpty str) -> Instrument.parse str
+            | _ -> failwith $"Invalid value for Instrument type: {value}"
 
     type private StringListTypeHandler() =
         inherit SqlMapper.TypeHandler<string list>()

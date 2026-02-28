@@ -159,7 +159,7 @@ module Data =
                         { Key = d.Key
                           Name = d.Name
                           Description = d.Description
-                          Category = d.Category.ToString()
+                          Category = string d.Category
                           Icon = d.Icon
                           IsAlreadyInPipeline = existingKeys.Contains d.Key }
                     )
@@ -195,7 +195,7 @@ module Data =
                 return
                     Option.Some
                         { Id = pipeline.Id
-                          Instrument = pipeline.Instrument.ToString()
+                          Instrument = string pipeline.Instrument
                           BaseCurrency = baseCurrency
                           QuoteCurrency = quoteCurrency
                           MarketType = pipeline.MarketType
@@ -260,7 +260,7 @@ module Data =
                     { Key = d.Key
                       Name = d.Name
                       Description = d.Description
-                      Category = d.Category.ToString()
+                      Category = string d.Category
                       Icon = d.Icon
                       IsAlreadyInPipeline = existingKeys.Contains d.Key }
                 )
@@ -1025,9 +1025,9 @@ module View =
                                     "var q=document.getElementById('quoteCurrency');if(q)htmx.trigger(q,'change');var s=document.getElementById('instrument');if(s)s.value=''" ]
                               [ for mt in vm.MarketTypes do
                                     if mt = vm.MarketType then
-                                        _option [ _value_ (string (int mt)); _selected_ ] [ Text.raw (mt.ToString()) ]
+                                        _option [ _value_ (string (int mt)); _selected_ ] [ Text.raw (string mt) ]
                                     else
-                                        _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ] ] ]
+                                        _option [ _value_ (string (int mt)) ] [ Text.raw (string mt) ] ] ]
 
                     // instrument (base + quote dropdowns)
                     _input [ _id_ "instrument"; _name_ "instrument"; _type_ "hidden"; _value_ vm.Instrument ]

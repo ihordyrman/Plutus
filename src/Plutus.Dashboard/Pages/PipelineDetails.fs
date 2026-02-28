@@ -48,7 +48,7 @@ module Data =
                 return
                     Some
                         { Id = pipeline.Id
-                          Instrument = pipeline.Instrument.ToString()
+                          Instrument = string pipeline.Instrument
                           MarketType = pipeline.MarketType
                           Enabled = pipeline.Enabled
                           ExecutionInterval = pipeline.ExecutionInterval
@@ -106,7 +106,7 @@ module View =
                         "Market Type"
                         (_span
                             [ _class_ "inline-flex items-center px-3 py-1 rounded-md bg-slate-100 text-slate-700" ]
-                            [ _i [ _class_ "fas fa-exchange-alt mr-2" ] []; Text.raw (pipeline.MarketType.ToString()) ])
+                            [ _i [ _class_ "fas fa-exchange-alt mr-2" ] []; Text.raw (string pipeline.MarketType) ])
 
                     infoRow "Instrument" (_span [] [ Text.raw pipeline.Instrument ])
 

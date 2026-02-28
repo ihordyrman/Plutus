@@ -116,7 +116,7 @@ module Data =
                 let! result = PipelineRepository.create db pipeline ct
 
                 match result with
-                | Ok created -> return Success(created.Instrument.ToString())
+                | Ok created -> return Success(string created.Instrument)
                 | Error err ->
                     let message = Errors.serviceMessage err
                     return ServerError message
@@ -142,7 +142,7 @@ module View =
                         "hx-on:change"
                         "var b=document.getElementById('baseCurrency');if(b)htmx.trigger(b,'load')" ]
                   [ for marketType in marketTypes do
-                        _option [ _value_ (string (int marketType)) ] [ Text.raw (marketType.ToString()) ] ] ]
+                        _option [ _value_ (string (int marketType)) ] [ Text.raw (string marketType) ] ] ]
 
     let private instrumentFields =
         let selectClass =

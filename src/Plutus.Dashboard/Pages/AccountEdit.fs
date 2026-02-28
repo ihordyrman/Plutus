@@ -267,7 +267,7 @@ module View =
                                                       [ _class_
                                                             "w-full px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-slate-700" ]
                                                       [ _i [ _class_ "fas fa-exchange-alt mr-2" ] []
-                                                        Text.raw (vm.MarketType.ToString()) ] ]
+                                                        Text.raw (string vm.MarketType) ] ]
 
                                             apiKeyField vm.ApiKeyMasked
                                             secretKeyField

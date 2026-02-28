@@ -122,7 +122,7 @@ module View =
                   [ Text.raw "Account Information" ]
               _dl
                   [ _class_ "space-y-3" ]
-                  [ infoRow "Exchange" (_span [] [ Text.raw (account.MarketType.ToString()) ])
+                  [ infoRow "Exchange" (_span [] [ Text.raw (string account.MarketType) ])
 
                     infoRow
                         "API Key"
@@ -192,7 +192,7 @@ module View =
                                                 []
                                                 [ _h2
                                                       [ _class_ "text-xl font-bold text-slate-900" ]
-                                                      [ Text.raw (account.MarketType.ToString()) ]
+                                                      [ Text.raw (string account.MarketType) ]
                                                   _p
                                                       [ _class_ "text-slate-500" ]
                                                       [ Text.raw (

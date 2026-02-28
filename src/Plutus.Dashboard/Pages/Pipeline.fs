@@ -120,7 +120,7 @@ module Data =
                     pipelines
                     |> List.map (fun p ->
                         { Id = p.Id
-                          Instrument = p.Instrument.ToString()
+                          Instrument = string p.Instrument
                           MarketType = p.MarketType
                           Enabled = p.Enabled
                           Tags = p.Tags
@@ -163,7 +163,7 @@ module Data =
                     result.Pipelines
                     |> List.map (fun p ->
                         { Id = p.Id
-                          Instrument = p.Instrument.ToString()
+                          Instrument = string p.Instrument
                           MarketType = p.MarketType
                           Enabled = p.Enabled
                           Tags = p.Tags
@@ -290,7 +290,7 @@ module View =
                   [ _span [ _class_ "font-medium text-slate-900 text-sm" ] [ Text.raw pipeline.Instrument ] ]
               _td
                   [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ]
-                  [ Text.raw (pipeline.MarketType.ToString()) ]
+                  [ Text.raw (string pipeline.MarketType) ]
               _td
                   [ _class_ "px-4 py-3 whitespace-nowrap" ]
                   [ _span [ _class_ $"px-2 py-0.5 text-xs font-medium rounded {statusClass}" ] [ Text.raw statusText ] ]

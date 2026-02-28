@@ -28,7 +28,7 @@ module View =
                         "hx-on:change"
                         "var b=document.getElementById('syncBaseCurrency');if(b)htmx.trigger(b,'load')" ]
                   [ for mt in marketTypes do
-                        _option [ _value_ (string (int mt)) ] [ Text.raw (mt.ToString()) ] ] ]
+                        _option [ _value_ (string (int mt)) ] [ Text.raw (string mt) ] ] ]
 
     let private instrumentFields =
         _div
@@ -322,9 +322,7 @@ module View =
                   [ _class_ "min-w-0 flex-1" ]
                   [ _div
                         [ _class_ "flex items-center gap-2 mb-1" ]
-                        [ _span
-                              [ _class_ "font-medium text-sm text-slate-900" ]
-                              [ Text.raw (job.Instrument.ToString()) ]
+                        [ _span [ _class_ "font-medium text-sm text-slate-900" ] [ Text.raw (string job.Instrument) ]
                           statusBadge job.Status
                           _span [ _class_ "text-xs text-slate-400" ] [ Text.raw $"{fromStr} → {toStr}" ] ]
                     _div
