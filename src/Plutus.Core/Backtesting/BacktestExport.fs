@@ -77,8 +77,8 @@ module BacktestExport =
 
         for i, pair in pairs |> List.indexed do
             let row = i + 2
-            let buy = pair.[0]
-            let sell = pair.[1]
+            let buy = pair[0]
+            let sell = pair[1]
             let pnl = (sell.Price - buy.Price) * sell.Quantity
             let fee = buy.Fee + sell.Fee
             balance <- balance + pnl - fee

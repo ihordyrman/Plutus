@@ -82,6 +82,6 @@ module Indicators =
             None
         else
             let current = List.last series
-            let past = series.[series.Length - lookback - 1]
+            let past = series[series.Length - lookback - 1]
 
             if past = 0m then None else Some((current - past) / past * 100m)

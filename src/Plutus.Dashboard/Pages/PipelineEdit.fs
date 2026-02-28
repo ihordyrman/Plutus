@@ -513,8 +513,8 @@ module Data =
                     match targetIdx with
                     | None -> return! getSteps scopeFactory pipelineId ct
                     | Some tIdx ->
-                        let current = sortedSteps.[idx]
-                        let target = sortedSteps.[tIdx]
+                        let current = sortedSteps[idx]
+                        let target = sortedSteps[tIdx]
 
                         let! _ = PipelineStepRepository.swapOrders db target current ct
 
@@ -578,12 +578,12 @@ module Data =
                         match form.TryGetString param.Key with
                         | Some value ->
                             match param.Type with
-                            | Parameters.Bool -> newParams.[param.Key] <- if value = "true" then "true" else "false"
+                            | Parameters.Bool -> newParams[param.Key] <- if value = "true" then "true" else "false"
                             | Parameters.MultiChoice _ when String.IsNullOrWhiteSpace(value) -> ()
-                            | _ -> newParams.[param.Key] <- value
+                            | _ -> newParams[param.Key] <- value
                         | None ->
                             match param.Type with
-                            | Parameters.Bool -> newParams.[param.Key] <- "false"
+                            | Parameters.Bool -> newParams[param.Key] <- "false"
                             | _ -> ()
 
                     let rawMap = newParams |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq

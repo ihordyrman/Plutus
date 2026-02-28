@@ -41,7 +41,7 @@ type InstrumentSyncWorker
                                   InstrumentType = i.InstrumentType
                                   BaseCurrency = i.BaseCurrency
                                   QuoteCurrency = i.QuoteCurrency
-                                  MarketType = int MarketType.Okx
+                                  MarketType = MarketType.Okx
                                   SyncedAt = now
                                   CreatedAt = now }
                             )

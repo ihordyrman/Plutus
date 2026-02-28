@@ -111,8 +111,8 @@ module Data =
         |> List.chunkBySize 2
         |> List.filter (fun chunk -> chunk.Length = 2)
         |> List.map (fun pair ->
-            let buy = pair.[0]
-            let sell = pair.[1]
+            let buy = pair[0]
+            let sell = pair[1]
 
             { EntryTime = buy.CandleTime
               ExitTime = sell.CandleTime
@@ -724,7 +724,7 @@ module View =
                                                   "px-4 py-2 font-mono text-xs text-slate-500 truncate max-w-[12rem]" ]
                                             [ Text.raw (
                                                   if s.ExecutionId.Length > 12 then
-                                                      s.ExecutionId.[..11] + "..."
+                                                      s.ExecutionId[..11] + "..."
                                                   else
                                                       s.ExecutionId
                                               ) ]
@@ -970,7 +970,7 @@ module Handler =
     let private tryGetQueryInt (query: IQueryCollection) (key: string) (defaultValue: int) =
         match query.TryGetValue key with
         | true, values when values.Count > 0 ->
-            match Int32.TryParse values.[0] with
+            match Int32.TryParse values[0] with
             | true, v -> v
             | false, _ -> defaultValue
         | _ -> defaultValue

@@ -33,7 +33,7 @@ type CacheWorker
                     if now - last >= refresher.Interval then
                         try
                             do! refresher.Refresh store scopeFactory logger ct
-                            lastRefresh.[refresher.Key] <- now
+                            lastRefresh[refresher.Key] <- now
                             logger.LogDebug("Cache refreshed: {Key}", refresher.Key)
                         with ex ->
                             logger.LogError(ex, "Cache refresh failed: {Key}", refresher.Key)

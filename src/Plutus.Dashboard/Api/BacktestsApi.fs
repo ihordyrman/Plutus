@@ -137,17 +137,17 @@ module BacktestsApi =
 
                 let pipelineId =
                     match query.TryGetValue "pipelineId" with
-                    | true, v -> Some(int v.[0])
+                    | true, v -> Some(int v[0])
                     | _ -> None
 
                 let limit =
                     match query.TryGetValue "limit" with
-                    | true, v -> int v.[0]
+                    | true, v -> int v[0]
                     | _ -> 50
 
                 let offset =
                     match query.TryGetValue "offset" with
-                    | true, v -> int v.[0]
+                    | true, v -> int v[0]
                     | _ -> 0
 
                 let scopeFactory = ctx.RequestServices.GetRequiredService<IServiceScopeFactory>()
@@ -172,12 +172,12 @@ module BacktestsApi =
 
                 let limit =
                     match query.TryGetValue "limit" with
-                    | true, v -> int v.[0]
+                    | true, v -> int v[0]
                     | _ -> 100
 
                 let offset =
                     match query.TryGetValue "offset" with
-                    | true, v -> int v.[0]
+                    | true, v -> int v[0]
                     | _ -> 0
 
                 let scopeFactory = ctx.RequestServices.GetRequiredService<IServiceScopeFactory>()
@@ -196,7 +196,7 @@ module BacktestsApi =
                             |> List.sortBy _.CandleTime
                             |> List.chunkBySize 2
                             |> List.filter (fun chunk -> chunk.Length = 2)
-                            |> List.map (fun pair -> ApiDtos.toTradeDto pair.[0] pair.[1])
+                            |> List.map (fun pair -> ApiDtos.toTradeDto pair[0] pair[1])
 
                         let paged = pairs |> List.skip (min offset pairs.Length) |> List.truncate limit
                         return! ApiResponse.okList paged pairs.Length ctx

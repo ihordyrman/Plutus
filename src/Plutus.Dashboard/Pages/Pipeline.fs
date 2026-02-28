@@ -469,13 +469,13 @@ module Handler =
 
     let tryGetQueryStringValue (query: IQueryCollection) (key: string) : string option =
         match query.TryGetValue key with
-        | true, values when values.Count > 0 && not (String.IsNullOrEmpty values.[0]) -> Some values.[0]
+        | true, values when values.Count > 0 && not (String.IsNullOrEmpty values[0]) -> Some values[0]
         | _ -> None
 
     let tryGetQueryStringInt (query: IQueryCollection) (key: string) (defaultValue: int) : int =
         match query.TryGetValue key with
         | true, values when values.Count > 0 ->
-            match Int32.TryParse values.[0] with
+            match Int32.TryParse values[0] with
             | true, v -> v
             | false, _ -> defaultValue
         | _ -> defaultValue

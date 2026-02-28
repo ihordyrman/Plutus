@@ -86,7 +86,7 @@ module View =
         let labels =
             weeks
             |> List.mapi (fun i w ->
-                let showLabel = i = 0 || w.Month <> (weeks.[i - 1]).Month
+                let showLabel = i = 0 || w.Month <> (weeks[i - 1]).Month
 
                 (i, if showLabel then w.ToString("MMM") else "")
             )

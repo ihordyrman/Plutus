@@ -8,10 +8,10 @@
     <ItemGroup>
         <Compile Include="Shared\Errors.fs" />
         <Compile Include="Shared\Instrument.fs" />
+        <Compile Include="Domain\Markets.fs" />
 
         <Compile Include="Domain\Common.fs" />
         <Compile Include="Domain\Instruments.fs" />
-        <Compile Include="Domain\Markets.fs" />
         <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />

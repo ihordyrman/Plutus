@@ -14,10 +14,10 @@ module CacheStore =
 
         member _.Get<'a>(key: string) : 'a option =
             match store.TryGetValue key with
-            | true, value -> Some(value :?> 'a)
+            | true, (:? 'a as typed) -> Some typed
             | _ -> None
 
-        member _.Set(key: string, value: 'a) = store.[key] <- box value
+        member _.Set(key: string, value: 'a) = store[key] <- box value
 
 
 type CacheRefresher =

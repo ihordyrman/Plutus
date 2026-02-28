@@ -9,7 +9,7 @@ type ExchangeInstrument =
       InstrumentType: string
       BaseCurrency: string
       QuoteCurrency: string
-      MarketType: int
+      MarketType: MarketType
       SyncedAt: DateTime
       CreatedAt: DateTime }
 

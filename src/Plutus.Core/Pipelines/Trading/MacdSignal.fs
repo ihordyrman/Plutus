@@ -69,10 +69,10 @@ module MacdSignal =
                                     let macdOffset = macdLine.Length - signalLine.Length
                                     let macdAligned = macdLine |> List.skip macdOffset
 
-                                    let macdCurr = macdAligned.[macdAligned.Length - 1]
-                                    let macdPrev = macdAligned.[macdAligned.Length - 2]
-                                    let sigCurr = signalLine.[signalLine.Length - 1]
-                                    let sigPrev = signalLine.[signalLine.Length - 2]
+                                    let macdCurr = macdAligned[macdAligned.Length - 1]
+                                    let macdPrev = macdAligned[macdAligned.Length - 2]
+                                    let sigCurr = signalLine[signalLine.Length - 1]
+                                    let sigPrev = signalLine[signalLine.Length - 2]
 
                                     let rawDirection =
                                         if macdPrev <= sigPrev && macdCurr > sigCurr then 1.0m

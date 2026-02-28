@@ -435,7 +435,7 @@ module View =
                         let widthPct =
                             if totalMs > 0.0 then max 0.5 (step.Duration.TotalMilliseconds / totalMs * 100.0) else 100.0
 
-                        let prevSnapshot = if i > 0 then Some detail.Steps.[i - 1].ContextSnapshot else None
+                        let prevSnapshot = if i > 0 then Some detail.Steps[i - 1].ContextSnapshot else None
 
                         let stepId = $"step-detail-{i}"
                         let chevronId = $"step-chevron-{i}"
@@ -516,14 +516,14 @@ module Handler =
     let private tryGetQueryInt (query: IQueryCollection) (key: string) (defaultValue: int) =
         match query.TryGetValue key with
         | true, values when values.Count > 0 ->
-            match Int32.TryParse values.[0] with
+            match Int32.TryParse values[0] with
             | true, v -> v
             | false, _ -> defaultValue
         | _ -> defaultValue
 
     let private tryGetQueryString (query: IQueryCollection) (key: string) : string option =
         match query.TryGetValue key with
-        | true, values when values.Count > 0 && not (String.IsNullOrEmpty values.[0]) -> Some values.[0]
+        | true, values when values.Count > 0 && not (String.IsNullOrEmpty values[0]) -> Some values[0]
         | _ -> None
 
     let private parseFilters (query: IQueryCollection) : TraceFilters =

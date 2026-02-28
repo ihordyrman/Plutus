@@ -37,8 +37,8 @@ module BacktestMetrics =
         let pnls =
             pairs
             |> List.map (fun pair ->
-                let buy = pair.[0]
-                let sell = pair.[1]
+                let buy = pair[0]
+                let sell = pair[1]
                 (sell.Price - buy.Price) * sell.Quantity, sell.Price > buy.Price, sell.CandleTime - buy.CandleTime
             )
 

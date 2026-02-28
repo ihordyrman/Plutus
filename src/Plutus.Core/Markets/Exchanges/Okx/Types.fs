@@ -216,7 +216,7 @@ type OkxCandlestick =
         if x.Data.Length > 0 then
             DateTimeOffset
                 .FromUnixTimeMilliseconds(
-                    int64 (Double.Parse(x.Data.[0], NumberStyles.Any, NumberFormatInfo.InvariantInfo))
+                    int64 (Double.Parse(x.Data[0], NumberStyles.Any, NumberFormatInfo.InvariantInfo))
                 )
                 .UtcDateTime
         else
@@ -224,49 +224,49 @@ type OkxCandlestick =
 
     member x.Open =
         if x.Data.Length > 1 then
-            Decimal.Parse(x.Data.[1], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[1], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.High =
         if x.Data.Length > 2 then
-            Decimal.Parse(x.Data.[2], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[2], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.Low =
         if x.Data.Length > 3 then
-            Decimal.Parse(x.Data.[3], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[3], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.Close =
         if x.Data.Length > 4 then
-            Decimal.Parse(x.Data.[4], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[4], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.Volume =
         if x.Data.Length > 5 then
-            Decimal.Parse(x.Data.[5], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[5], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.VolumeCurrency =
         if x.Data.Length > 6 then
-            Decimal.Parse(x.Data.[6], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[6], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.VolumeQuoteCurrency =
         if x.Data.Length > 7 then
-            Decimal.Parse(x.Data.[7], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
+            Decimal.Parse(x.Data[7], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
         else
             0m
 
     member x.IsCompleted =
         if x.Data.Length > 8 then
-            String.Equals(x.Data.[8], "1", StringComparison.OrdinalIgnoreCase)
+            String.Equals(x.Data[8], "1", StringComparison.OrdinalIgnoreCase)
         else
             false
 

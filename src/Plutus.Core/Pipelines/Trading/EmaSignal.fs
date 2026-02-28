@@ -60,10 +60,10 @@ module ExponentialMovingAverageSignal =
                                 if minLen < 2 then
                                     return Continue(ctx, "Not enough EMA values for crossover detection.")
                                 else
-                                    let fastCurr = fastEma.[fastEma.Length - 1]
-                                    let fastPrev = fastEma.[fastEma.Length - 2]
-                                    let slowCurr = slowEma.[slowEma.Length - 1]
-                                    let slowPrev = slowEma.[slowEma.Length - 2]
+                                    let fastCurr = fastEma[fastEma.Length - 1]
+                                    let fastPrev = fastEma[fastEma.Length - 2]
+                                    let slowCurr = slowEma[slowEma.Length - 1]
+                                    let slowPrev = slowEma[slowEma.Length - 2]
 
                                     let rawDirection =
                                         if fastPrev <= slowPrev && fastCurr > slowCurr then 1.0m

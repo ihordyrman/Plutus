@@ -7,7 +7,7 @@ open Plutus.Core.Shared
 type Candlestick =
     { Id: int
       Instrument: Instrument
-      MarketType: int
+      MarketType: MarketType
       Timestamp: DateTime
       Open: decimal
       High: decimal
@@ -30,7 +30,7 @@ type SyncJobStatus =
 type SyncJob =
     { Id: int
       Instrument: Instrument
-      MarketType: int
+      MarketType: MarketType
       Timeframe: string
       FromDate: DateTimeOffset
       ToDate: DateTimeOffset
