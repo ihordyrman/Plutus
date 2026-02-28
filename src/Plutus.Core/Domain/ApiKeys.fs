@@ -9,5 +9,5 @@ type ApiKey =
       KeyHash: string
       KeyPrefix: string
       IsActive: bool
-      LastUsed: Nullable<DateTime>
+      LastUsed: DateTime option
       CreatedAt: DateTime }

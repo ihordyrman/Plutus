@@ -1,10 +1,13 @@
 ﻿// For more information see https://aka.ms/fsharp-console-apps
 
+open System.Data
 open System.IO
+open System.Threading
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core
-open Plutus.Core.Markets.Exchanges.Okx
+open Plutus.Core.Domain
+open Plutus.Core.Repositories
 
 type Pipeline = { Id: int; Name: string; Instrument: string }
 
@@ -19,8 +22,11 @@ let configuration = builder.Build()
 serviceCollection.AddSingleton<IConfiguration>(configuration) |> ignore
 CoreServices.registerSlim serviceCollection configuration
 let serviceProvider = serviceCollection.BuildServiceProvider()
-let http = serviceProvider.GetRequiredService<Http.T>()
+let db = serviceProvider.GetRequiredService<IDbConnection>()
 
-let instruments = http.getInstruments InstrumentType.Spot |> Async.AwaitTask |> Async.RunSynchronously
+let gaps =
+    CandlestickRepository.findGaps db { Base = "BTC"; Quote = "USDT" } MarketType.Okx "1m" CancellationToken.None
 
-printfn $"%A{instruments}"
+let res = Async.AwaitTask gaps |> Async.RunSynchronously
+
+printfn $"%A{res}"

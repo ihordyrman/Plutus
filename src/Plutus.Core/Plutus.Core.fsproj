@@ -24,6 +24,7 @@
         <Compile Include="Infrastructure\Tracing.fs" />
         <Compile Include="Infrastructure\ExecutionLogger.fs" />
         <Compile Include="Infrastructure\CacheStore.fs" />
+        <Compile Include="Infrastructure\TypeHandlers.fs" />
 
         <Compile Include="Repositories\PipelineRepository.fs" />
         <Compile Include="Repositories\PipelineStepRepository.fs" />

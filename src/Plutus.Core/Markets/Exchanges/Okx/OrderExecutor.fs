@@ -16,7 +16,7 @@ module OrderExecutor =
         | _ -> failwith "unknown side"
 
     let mapToRequest (order: Order) =
-        let isLimitOrder = order.Price.HasValue && order.Price.Value > 0m
+        let isLimitOrder = order.Price.IsSome && order.Price.Value > 0m
 
         { InstrumentId = string order.Instrument
           TradeMode = "cash"

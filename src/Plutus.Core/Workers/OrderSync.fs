@@ -16,11 +16,11 @@ module OrderSync =
     let applyUpdate (order: Order) (update: OrderSyncer.OrderUpdate) =
         { order with
             Status = update.Status
-            Fee = update.Fee |> Option.map Nullable |> Option.defaultValue order.Fee
-            Price = update.AveragePrice |> Option.map Nullable |> Option.defaultValue order.Price
+            Fee = update.Fee
+            Price = update.AveragePrice
             Quantity = update.FilledQuantity |> Option.defaultValue order.Quantity
-            ExecutedAt = update.ExecutedAt |> Option.map Nullable |> Option.defaultValue order.ExecutedAt
-            CancelledAt = update.CancelledAt |> Option.map Nullable |> Option.defaultValue order.CancelledAt
+            ExecutedAt = update.ExecutedAt
+            CancelledAt = update.CancelledAt
             UpdatedAt = DateTime.UtcNow }
 
     let hasChanges (original: Order) (updated: Order) =

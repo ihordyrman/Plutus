@@ -61,14 +61,14 @@ module BacktestEngine =
                       EndDate = config.EndDate
                       IntervalMinutes = config.IntervalMinutes
                       InitialCapital = config.InitialCapital
-                      FinalCapital = Nullable()
+                      FinalCapital = None
                       TotalTrades = 0
-                      WinRate = Nullable()
-                      MaxDrawdown = Nullable()
-                      SharpeRatio = Nullable()
+                      WinRate = None
+                      MaxDrawdown = None
+                      SharpeRatio = None
                       ErrorMessage = null
                       CreatedAt = DateTime.UtcNow
-                      CompletedAt = Nullable() }
+                      CompletedAt = None }
                     ct
 
             match! PipelineRepository.getById db config.PipelineId ct with
@@ -109,14 +109,14 @@ module BacktestEngine =
                                   EndDate = config.EndDate
                                   IntervalMinutes = config.IntervalMinutes
                                   InitialCapital = config.InitialCapital
-                                  FinalCapital = Nullable()
+                                  FinalCapital = None
                                   TotalTrades = 0
-                                  WinRate = Nullable()
-                                  MaxDrawdown = Nullable()
-                                  SharpeRatio = Nullable()
+                                  WinRate = None
+                                  MaxDrawdown = None
+                                  SharpeRatio = None
                                   ErrorMessage = msg
                                   CreatedAt = DateTime.UtcNow
-                                  CompletedAt = Nullable DateTime.UtcNow }
+                                  CompletedAt = Some DateTime.UtcNow }
                                 ct
 
                         return Error $"Failed to build steps: {msg}"
@@ -235,14 +235,14 @@ module BacktestEngine =
                                       EndDate = config.EndDate
                                       IntervalMinutes = config.IntervalMinutes
                                       InitialCapital = config.InitialCapital
-                                      FinalCapital = Nullable metrics.FinalCapital
+                                      FinalCapital = Some metrics.FinalCapital
                                       TotalTrades = metrics.TotalTrades
-                                      WinRate = Nullable metrics.WinRate
-                                      MaxDrawdown = Nullable metrics.MaxDrawdownPct
-                                      SharpeRatio = Nullable metrics.SharpeRatio
+                                      WinRate = Some metrics.WinRate
+                                      MaxDrawdown = Some metrics.MaxDrawdownPct
+                                      SharpeRatio = Some metrics.SharpeRatio
                                       ErrorMessage = null
                                       CreatedAt = DateTime.UtcNow
-                                      CompletedAt = Nullable DateTime.UtcNow }
+                                      CompletedAt = Some DateTime.UtcNow }
                                     ct
 
                             return

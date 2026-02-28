@@ -18,7 +18,7 @@ type Position =
       BuyOrderId: int
       SellOrderId: int
       Status: PositionStatus
-      ExitPrice: Nullable<decimal>
-      ClosedAt: Nullable<DateTime>
+      ExitPrice: decimal option
+      ClosedAt: DateTime option
       CreatedAt: DateTime
       UpdatedAt: DateTime }

@@ -18,7 +18,7 @@ type Pipeline =
       MarketType: MarketType
       Enabled: bool
       ExecutionInterval: TimeSpan
-      LastExecutedAt: Nullable<DateTime>
+      LastExecutedAt: DateTime option
       Status: PipelineStatus
       Tags: string list
       CreatedAt: DateTime

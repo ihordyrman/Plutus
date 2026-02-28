@@ -113,16 +113,16 @@ module Data =
                     result.Orders
                     |> List.map (fun o ->
                         { Id = o.Id
-                          PipelineId = if o.PipelineId.HasValue then Some o.PipelineId.Value else None
+                          PipelineId = o.PipelineId
                           Instrument = string o.Instrument
                           Side = o.Side
                           Status = o.Status
                           MarketType = o.MarketType
                           Quantity = o.Quantity
-                          Price = if o.Price.HasValue then Some o.Price.Value else None
-                          Fee = if o.Fee.HasValue then Some o.Fee.Value else None
+                          Price = o.Price
+                          Fee = o.Fee
                           CreatedAt = o.CreatedAt
-                          ExecutedAt = if o.ExecutedAt.HasValue then Some o.ExecutedAt.Value else None }
+                          ExecutedAt = o.ExecutedAt }
                     )
 
                 return

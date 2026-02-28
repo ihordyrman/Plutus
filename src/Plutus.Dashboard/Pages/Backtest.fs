@@ -22,9 +22,9 @@ type BacktestGridItem =
       EndDate: DateTime
       IntervalMinutes: int
       InitialCapital: decimal
-      FinalCapital: Nullable<decimal>
+      FinalCapital: decimal option
       TotalTrades: int
-      WinRate: Nullable<decimal>
+      WinRate: decimal option
       ErrorMessage: string
       CreatedAt: DateTime }
 
@@ -867,7 +867,7 @@ module View =
                   [ _class_ "px-4 py-3 whitespace-nowrap text-sm text-slate-500" ]
                   [ if item.Status = BacktestStatus.Completed then
                         let returnPct =
-                            if item.InitialCapital > 0m && item.FinalCapital.HasValue then
+                            if item.InitialCapital > 0m && item.FinalCapital.IsSome then
                                 (item.FinalCapital.Value - item.InitialCapital) / item.InitialCapital * 100m
                             else
                                 0m
@@ -877,7 +877,7 @@ module View =
                         _span
                             [ _class_ "flex items-center gap-3" ]
                             [ _span [ _class_ $"font-medium {returnColor}" ] [ Text.raw $"{returnPct:F2}%%" ]
-                              if item.WinRate.HasValue then
+                              if item.WinRate.IsSome then
                                   _span [ _class_ "text-slate-400" ] [ Text.raw $"WR {item.WinRate.Value:F1}%%" ]
                               _span [ _class_ "text-slate-400" ] [ Text.raw $"{item.TotalTrades} trades" ] ]
                     elif item.Status = BacktestStatus.Failed then
@@ -1140,14 +1140,14 @@ module Handler =
                                                           EndDate = config.EndDate
                                                           IntervalMinutes = config.IntervalMinutes
                                                           InitialCapital = config.InitialCapital
-                                                          FinalCapital = Nullable()
+                                                          FinalCapital = None
                                                           TotalTrades = 0
-                                                          WinRate = Nullable()
-                                                          MaxDrawdown = Nullable()
-                                                          SharpeRatio = Nullable()
+                                                          WinRate = None
+                                                          MaxDrawdown = None
+                                                          SharpeRatio = None
                                                           ErrorMessage = ex.Message
                                                           CreatedAt = DateTime.UtcNow
-                                                          CompletedAt = Nullable DateTime.UtcNow }
+                                                          CompletedAt = Some DateTime.UtcNow }
                                                         CancellationToken.None
 
                                                 ()

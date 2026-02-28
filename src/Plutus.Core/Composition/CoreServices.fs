@@ -1,8 +1,5 @@
 namespace Plutus.Core
 
-open System.Collections.Generic
-open System.Text.Json
-open Dapper
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
@@ -21,41 +18,9 @@ open Plutus.Core.Markets.Stores
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Orchestration
 open Plutus.Core.Pipelines.Trading
-open Plutus.Core.Shared
 open Plutus.Core.Workers
 
 module CoreServices =
-
-    type private InstrumentTypeHandler() =
-        inherit SqlMapper.TypeHandler<Instrument>()
-
-        override _.SetValue(parameter, value) = parameter.Value <- string value
-
-        override _.Parse(value) =
-            match value with
-            | :? string as str when not (String.IsNullOrEmpty str) -> Instrument.parse str
-            | _ -> failwith $"Invalid value for Instrument type: {value}"
-
-    type private StringListTypeHandler() =
-        inherit SqlMapper.TypeHandler<string list>()
-
-        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize value
-
-        override _.Parse(value) =
-            match value with
-            | :? string as json when not (String.IsNullOrEmpty json) -> JsonSerializer.Deserialize<string list> json
-            | _ -> failwith "Invalid value for string list type"
-
-    type private DictionaryStringStringTypeHandler() =
-        inherit SqlMapper.TypeHandler<Dictionary<string, string>>()
-
-        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize value
-
-        override _.Parse(value) =
-            match value with
-            | :? string as json when not (String.IsNullOrEmpty json) ->
-                JsonSerializer.Deserialize<Dictionary<string, string>> json
-            | _ -> failwith "Invalid value for dictionary<string, string> type"
 
     let private pipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
@@ -163,10 +128,7 @@ module CoreServices =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
 
-        DefaultTypeMap.MatchNamesWithUnderscores <- true
-        SqlMapper.AddTypeHandler(InstrumentTypeHandler())
-        SqlMapper.AddTypeHandler(StringListTypeHandler())
-        SqlMapper.AddTypeHandler(DictionaryStringStringTypeHandler())
+        TypeHandlers.registerTypeHandlers ()
 
         services.AddScoped<IDbConnection>(fun sp ->
             let settings = sp.GetRequiredService<IOptions<DatabaseSettings>>().Value

@@ -92,14 +92,14 @@ module BacktestsApi =
                                                                       EndDate = config.EndDate
                                                                       IntervalMinutes = config.IntervalMinutes
                                                                       InitialCapital = config.InitialCapital
-                                                                      FinalCapital = Nullable()
+                                                                      FinalCapital = None
                                                                       TotalTrades = 0
-                                                                      WinRate = Nullable()
-                                                                      MaxDrawdown = Nullable()
-                                                                      SharpeRatio = Nullable()
+                                                                      WinRate = None
+                                                                      MaxDrawdown = None
+                                                                      SharpeRatio = None
                                                                       ErrorMessage = ex.Message
                                                                       CreatedAt = DateTime.UtcNow
-                                                                      CompletedAt = Nullable DateTime.UtcNow }
+                                                                      CompletedAt = Some DateTime.UtcNow }
                                                                     CancellationToken.None
 
                                                             ()

@@ -75,7 +75,7 @@ module LiveAdapters =
                                     { order with
                                         ExchangeOrderId = exchangeOrderId
                                         Status = OrderStatus.Placed
-                                        PlacedAt = Nullable DateTime.UtcNow }
+                                        PlacedAt = Some DateTime.UtcNow }
 
                                 let! _ = OrderRepository.update db txn placedOrder ct
 

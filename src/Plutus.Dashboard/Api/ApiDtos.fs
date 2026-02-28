@@ -114,14 +114,14 @@ module ApiDtos =
           EndDate: DateTime
           IntervalMinutes: int
           InitialCapital: decimal
-          FinalCapital: Nullable<decimal>
+          FinalCapital: decimal option
           TotalTrades: int
-          WinRate: Nullable<decimal>
-          MaxDrawdown: Nullable<decimal>
-          SharpeRatio: Nullable<decimal>
+          WinRate: decimal option
+          MaxDrawdown: decimal option
+          SharpeRatio: decimal option
           ErrorMessage: string
           CreatedAt: DateTime
-          CompletedAt: Nullable<DateTime> }
+          CompletedAt: DateTime option }
 
     // Mapping functions
 

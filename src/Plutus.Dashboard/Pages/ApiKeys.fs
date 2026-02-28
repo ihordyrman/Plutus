@@ -30,7 +30,7 @@ module View =
               _td
                   [ _class_ "px-4 py-3 text-sm text-slate-500" ]
                   [ Text.raw (
-                        if key.LastUsed.HasValue then key.LastUsed.Value.ToString("yyyy-MM-dd HH:mm") else "Never"
+                        if Option.isSome key.LastUsed then key.LastUsed.Value.ToString("yyyy-MM-dd HH:mm") else "Never"
                     ) ]
               _td
                   [ _class_ "px-4 py-3 text-sm text-slate-500" ]
