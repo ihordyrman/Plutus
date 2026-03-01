@@ -21,7 +21,7 @@ module CandlestickRepository =
         (db: IDbConnection)
         (instrument: Instrument)
         (marketType: MarketType)
-        (timeframe: string)
+        (interval: Interval)
         (token: CancellationToken)
         =
         task {
@@ -30,10 +30,10 @@ module CandlestickRepository =
                     db.QueryAsync<Candlestick>(
                         CommandDefinition(
                             """SELECT * FROM candlesticks
-                           WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe
+                           WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval
                            ORDER BY timestamp DESC
                            LIMIT 1""",
-                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
+                            {| Instrument = instrument; MarketType = int marketType; Interval = interval |},
                             cancellationToken = token
                         )
                     )
@@ -49,7 +49,7 @@ module CandlestickRepository =
         (db: IDbConnection)
         (instrument: Instrument)
         (marketType: MarketType)
-        (timeframe: string)
+        (interval: Interval)
         (token: CancellationToken)
         =
         task {
@@ -58,10 +58,10 @@ module CandlestickRepository =
                     db.QueryAsync<Candlestick>(
                         CommandDefinition(
                             """SELECT * FROM candlesticks
-                           WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe
+                           WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval
                            ORDER BY timestamp ASC
                            LIMIT 1""",
-                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
+                            {| Instrument = instrument; MarketType = int marketType; Interval = interval |},
                             cancellationToken = token
                         )
                     )
@@ -77,7 +77,7 @@ module CandlestickRepository =
         (db: IDbConnection)
         (instrument: Instrument)
         (marketType: MarketType)
-        (timeframe: string)
+        (interval: Interval)
         (token: CancellationToken)
         =
         task {
@@ -88,13 +88,13 @@ module CandlestickRepository =
                             """WITH ordered AS (
                                 SELECT timestamp, LEAD(timestamp) OVER (ORDER BY timestamp) as next_ts
                                 FROM candlesticks
-                                WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe
+                                WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval
                             )
                             SELECT timestamp + interval '1 minute' as gap_start,
                                    next_ts - interval '1 minute' as gap_end
                             FROM ordered
                             WHERE next_ts - timestamp > interval '2 minutes'""",
-                            {| Instrument = instrument; MarketType = int marketType; Timeframe = timeframe |},
+                            {| Instrument = instrument; MarketType = int marketType; Interval = interval |},
                             cancellationToken = token
                         )
                     )
@@ -108,7 +108,7 @@ module CandlestickRepository =
         (db: IDbConnection)
         (instrument: Instrument)
         (marketType: MarketType)
-        (timeframe: string)
+        (interval: Interval)
         (fromDate: DateTime option)
         (toDate: DateTime option)
         (limit: int option)
@@ -117,13 +117,13 @@ module CandlestickRepository =
         task {
             try
                 let baseSql =
-                    "SELECT * FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND timeframe = @Timeframe"
+                    "SELECT * FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval"
 
                 let conditions = ResizeArray<string>()
                 let parameters = DynamicParameters()
                 parameters.Add("Instrument", instrument)
                 parameters.Add("MarketType", int marketType)
-                parameters.Add("Timeframe", timeframe)
+                parameters.Add("Interval", interval)
 
                 match fromDate with
                 | Some from ->
@@ -163,9 +163,9 @@ module CandlestickRepository =
                         db.ExecuteAsync(
                             CommandDefinition(
                                 """INSERT INTO candlesticks
-                               (instrument, market_type, timeframe, timestamp, open, high, low, close, volume, volume_quote, is_completed)
-                               VALUES (@Instrument, @MarketType, @Timeframe, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
-                               ON CONFLICT (instrument, market_type, timeframe, timestamp)
+                               (instrument, market_type, interval, timestamp, open, high, low, close, volume, volume_quote, is_completed)
+                               VALUES (@Instrument, @MarketType, @Interval, @Timestamp, @Open, @High, @Low, @Close, @Volume, @VolumeQuote, @IsCompleted)
+                               ON CONFLICT (instrument, market_type, interval, timestamp)
                                DO UPDATE SET open = @Open, high = @High, low = @Low, close = @Close,
                                              volume = @Volume, volume_quote = @VolumeQuote, is_completed = @IsCompleted""",
                                 candlesticks,
@@ -195,13 +195,13 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
-    let getDistinctTimeframes (db: IDbConnection) (token: CancellationToken) =
+    let getDistinctIntervals (db: IDbConnection) (token: CancellationToken) =
         task {
             try
                 let! results =
                     db.QueryAsync<string>(
                         CommandDefinition(
-                            "SELECT DISTINCT timeframe FROM candlesticks ORDER BY timeframe",
+                            "SELECT DISTINCT interval FROM candlesticks ORDER BY interval",
                             cancellationToken = token
                         )
                     )
@@ -211,14 +211,14 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
-    let getDistinctInstrumentCount (db: IDbConnection) (timeframe: string) (token: CancellationToken) =
+    let getDistinctInstrumentCount (db: IDbConnection) (interval: Interval) (token: CancellationToken) =
         task {
             try
                 let! result =
                     db.QuerySingleAsync<int>(
                         CommandDefinition(
-                            "SELECT COUNT(DISTINCT instrument) FROM candlesticks WHERE timeframe = @Timeframe",
-                            {| Timeframe = timeframe |},
+                            "SELECT COUNT(DISTINCT instrument) FROM candlesticks WHERE interval = @Interval",
+                            {| Interval = interval |},
                             cancellationToken = token
                         )
                     )
@@ -230,7 +230,7 @@ module CandlestickRepository =
 
     let getWeeklyCoveragePaged
         (db: IDbConnection)
-        (timeframe: string)
+        (interval: Interval)
         (offset: int)
         (limit: int)
         (token: CancellationToken)
@@ -242,17 +242,17 @@ module CandlestickRepository =
                         CommandDefinition(
                             """WITH instruments AS (
                                    SELECT DISTINCT instrument FROM candlesticks
-                                   WHERE timeframe = @Timeframe
+                                   WHERE interval = @Interval
                                    ORDER BY instrument
                                    LIMIT @Limit OFFSET @Offset
                                )
                                SELECT c.instrument, date_trunc('week', c.timestamp) as week_start, COUNT(*) as count
                                FROM candlesticks c
                                INNER JOIN instruments s ON c.instrument = s.instrument
-                               WHERE c.timeframe = @Timeframe
+                               WHERE c.interval = @Interval
                                GROUP BY c.instrument, date_trunc('week', c.timestamp)
                                ORDER BY c.instrument, week_start""",
-                            {| Timeframe = timeframe; Limit = limit; Offset = offset |},
+                            {| Interval = interval; Limit = limit; Offset = offset |},
                             cancellationToken = token
                         )
                     )
@@ -262,7 +262,7 @@ module CandlestickRepository =
                 return Error(Unexpected ex)
         }
 
-    let getWeeklyCoverage (db: IDbConnection) (timeframe: string) (token: CancellationToken) =
+    let getWeeklyCoverage (db: IDbConnection) (interval: Interval) (token: CancellationToken) =
         task {
             try
                 let! results =
@@ -270,10 +270,10 @@ module CandlestickRepository =
                         CommandDefinition(
                             """SELECT instrument, date_trunc('week', timestamp) as week_start, COUNT(*) as count
                                FROM candlesticks
-                               WHERE timeframe = @Timeframe
+                               WHERE interval = @Interval
                                GROUP BY instrument, date_trunc('week', timestamp)
                                ORDER BY instrument, week_start""",
-                            {| Timeframe = timeframe |},
+                            {| Interval = interval |},
                             cancellationToken = token
                         )
                     )

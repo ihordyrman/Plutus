@@ -52,7 +52,7 @@ module JobsManager =
         { Id: int
           Instrument: Instrument
           MarketType: MarketType
-          Timeframe: string
+          Interval: Interval
           FromDate: DateTimeOffset
           ToDate: DateTimeOffset
           Status: JobStatus
@@ -63,7 +63,7 @@ module JobsManager =
         { Id = job.Id
           Instrument = job.Instrument
           MarketType = job.MarketType
-          Timeframe = job.Timeframe
+          Interval = job.Interval
           FromDate = job.FromDate
           ToDate = job.ToDate
           Status = fromDbStatus job.Status job.ErrorMessage
@@ -76,7 +76,7 @@ module JobsManager =
           CreatedAt = job.CreatedAt }
 
     type private SyncMessage =
-        | StartJob of Instrument * MarketType * string * DateTimeOffset * DateTimeOffset * AsyncReplyChannel<int>
+        | StartJob of Instrument * MarketType * Interval * DateTimeOffset * DateTimeOffset * AsyncReplyChannel<int>
         | StopJob of int * AsyncReplyChannel<bool>
         | PauseJob of int * AsyncReplyChannel<bool>
         | ResumeJob of int * AsyncReplyChannel<bool>
@@ -138,7 +138,7 @@ module JobsManager =
         (post: SyncMessage -> unit)
         (jobId: int)
         (instrument: Instrument)
-        (timeframe: string)
+        (interval: Interval)
         (fromDate: DateTimeOffset)
         (startCursor: DateTimeOffset)
         (startFetchedCount: int)
@@ -178,13 +178,13 @@ module JobsManager =
                         let! result =
                             fetch
                                 (string instrument)
-                                { Bar = Some timeframe; After = Some afterMs; Before = None; Limit = Some 100 }
+                                { Bar = Some interval; After = Some afterMs; Before = None; Limit = Some 100 }
 
                         match result with
                         | Ok candles when candles.Length > 0 ->
                             let mapped =
                                 candles
-                                |> Array.map (CandlestickSync.toCandlestick instrument timeframe)
+                                |> Array.map (CandlestickSync.toCandlestick instrument interval)
                                 |> Array.toList
 
                             let! _ = CandlestickRepository.save db mapped ct
@@ -239,7 +239,7 @@ module JobsManager =
         |> ignore
 
     type T =
-        { startJob: Instrument -> MarketType -> string -> DateTimeOffset -> DateTimeOffset -> int
+        { startJob: Instrument -> MarketType -> Interval -> DateTimeOffset -> DateTimeOffset -> int
           stopJob: int -> bool
           pauseJob: int -> bool
           resumeJob: int -> bool
@@ -320,7 +320,7 @@ module JobsManager =
                         let! msg = inbox.Receive()
 
                         match msg with
-                        | StartJob(instrument, marketType, timeframe, fromDate, toDate, reply) ->
+                        | StartJob(instrument, marketType, interval, fromDate, toDate, reply) ->
                             let now = DateTime.UtcNow
                             let estimatedMinutes = int (toDate - fromDate).TotalMinutes
 
@@ -328,7 +328,7 @@ module JobsManager =
                                 { Id = 0
                                   Instrument = instrument
                                   MarketType = marketType
-                                  Timeframe = timeframe
+                                  Interval = interval
                                   FromDate = fromDate
                                   ToDate = toDate
                                   Status = int SyncJobStatus.Pending
@@ -352,7 +352,7 @@ module JobsManager =
                                     { Id = id
                                       Instrument = instrument
                                       MarketType = marketType
-                                      Timeframe = timeframe
+                                      Interval = interval
                                       FromDate = fromDate
                                       ToDate = toDate
                                       Status = Pending
@@ -373,7 +373,7 @@ module JobsManager =
                                     inbox.Post
                                     id
                                     instrument
-                                    timeframe
+                                    interval
                                     fromDate
                                     toDate
                                     0
@@ -431,7 +431,7 @@ module JobsManager =
                                         inbox.Post
                                         id
                                         job.Instrument
-                                        job.Timeframe
+                                        job.Interval
                                         job.FromDate
                                         job.Progress.CurrentTimestamp
                                         job.Progress.FetchedCount
@@ -508,8 +508,8 @@ module JobsManager =
             )
 
         { startJob =
-            fun instrument marketType timeframe fromDate toDate ->
-                agent.PostAndReply(fun reply -> StartJob(instrument, marketType, timeframe, fromDate, toDate, reply))
+            fun instrument marketType interval fromDate toDate ->
+                agent.PostAndReply(fun reply -> StartJob(instrument, marketType, interval, fromDate, toDate, reply))
           stopJob = fun id -> agent.PostAndReply(fun reply -> StopJob(id, reply))
           pauseJob = fun id -> agent.PostAndReply(fun reply -> PauseJob(id, reply))
           resumeJob = fun id -> agent.PostAndReply(fun reply -> ResumeJob(id, reply))

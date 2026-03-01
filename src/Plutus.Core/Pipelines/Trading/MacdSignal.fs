@@ -8,16 +8,25 @@ open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 module MacdSignal =
-    let private timeframes = [ "1m"; "5m"; "15m"; "30m"; "1H"; "4H"; "1Dutc" ]
+    let private intervals =
+        [ Interval.OneMinute
+          Interval.FiveMinutes
+          Interval.FifteenMinutes
+          Interval.ThirtyMinutes
+          Interval.OneHour
+          Interval.FourHours
+          Interval.OneDay ]
+        |> List.map string
 
     let macd: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
             let fastPeriod = params' |> ValidatedParams.getInt "fastPeriod" 12
             let slowPeriod = params' |> ValidatedParams.getInt "slowPeriod" 26
             let signalPeriod = params' |> ValidatedParams.getInt "signalPeriod" 9
-            let timeframe = params' |> ValidatedParams.getString "timeframe" "1m"
+            let interval = params' |> ValidatedParams.getString "interval" "1m" |> Interval.parse
             let signalWeight = params' |> ValidatedParams.getDecimal "signalWeight" 1.0m
 
             { key = "macd-signal"
@@ -37,7 +46,7 @@ module MacdSignal =
                                     db
                                     ctx.Instrument
                                     ctx.MarketType
-                                    timeframe
+                                    interval
                                     None
                                     toDate
                                     (Some candleCount)
@@ -123,10 +132,10 @@ module MacdSignal =
                     Required = false
                     DefaultValue = Some(IntValue 9)
                     Group = Some "Indicator" }
-                  { Key = "timeframe"
-                    Name = "Timeframe"
-                    Description = "Candlestick timeframe"
-                    Type = Choice timeframes
+                  { Key = "interval"
+                    Name = "Interval"
+                    Description = "Candlestick interval"
+                    Type = Choice intervals
                     Required = false
                     DefaultValue = Some(ChoiceValue "1m")
                     Group = Some "General" }

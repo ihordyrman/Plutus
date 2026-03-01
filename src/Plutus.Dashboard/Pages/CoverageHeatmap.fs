@@ -10,6 +10,7 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Infrastructure
 open Plutus.Core.Queries
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 type HeatmapCell = { WeekStart: DateTime; Coverage: float }
 
@@ -18,30 +19,30 @@ type InstrumentRow = { Instrument: string; Cells: HeatmapCell list }
 type HeatmapData =
     { Instruments: InstrumentRow list
       Weeks: DateTime list
-      Timeframe: string
-      AvailableTimeframes: string list
+      Interval: string
+      AvailableIntervals: string list
       Page: int
       PageSize: int
       TotalInstruments: int }
 
 module Shared =
-    let expectedCandlesPerWeek (timeframe: string) =
+    let expectedCandlesPerWeek (interval: string) =
         let minutesPerWeek = 7.0 * 24.0 * 60.0
 
         let intervalMinutes =
-            match timeframe with
+            match interval with
             | "1m" -> 1.0
             | "3m" -> 3.0
             | "5m" -> 5.0
             | "15m" -> 15.0
             | "30m" -> 30.0
-            | "1H" -> 60.0
-            | "2H" -> 120.0
-            | "4H" -> 240.0
-            | "6H" -> 360.0
-            | "12H" -> 720.0
-            | "1D" -> 1440.0
-            | "1W" -> 10080.0
+            | "1h" -> 60.0
+            | "2h" -> 120.0
+            | "4h" -> 240.0
+            | "6h" -> 360.0
+            | "12h" -> 720.0
+            | "1d" -> 1440.0
+            | "1w" -> 10080.0
             | _ -> 60.0
 
         minutesPerWeek / intervalMinutes
@@ -55,9 +56,9 @@ module View =
         elif coverage < 1.0 then "bg-green-300"
         else "bg-green-500"
 
-    let private timeframeDropdown (selected: string) (available: string list) =
+    let private intervalDropdown (selected: string) (available: string list) =
         _select
-            [ _name_ "timeframe"
+            [ _name_ "interval"
               _class_
                   "px-3 py-1.5 border border-slate-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-slate-300"
               Hx.get "/coverage-heatmap"
@@ -114,7 +115,7 @@ module View =
                           Hx.confirm $"Delete all candlestick data for {row.Instrument}?"
                           Hx.targetCss "#data-coverage-content"
                           Hx.swapInnerHtml
-                          Hx.includeCss "[name=timeframe]" ]
+                          Hx.includeCss "[name=interval]" ]
                         [ Text.raw "\u00D7" ]
                     _span
                         [ _class_ "text-xs text-slate-600 truncate"; _title_ row.Instrument ]
@@ -157,7 +158,7 @@ module View =
                                   Hx.get $"/coverage-heatmap?page={data.Page - 1}"
                                   Hx.targetCss "#coverage-heatmap-container"
                                   Hx.swapInnerHtml
-                                  Hx.includeCss "[name=timeframe]"
+                                  Hx.includeCss "[name=interval]"
                               else
                                   _disabled_ ]
                             [ Text.raw "Previous" ]
@@ -172,7 +173,7 @@ module View =
                                   Hx.get $"/coverage-heatmap?page={data.Page + 1}"
                                   Hx.targetCss "#coverage-heatmap-container"
                                   Hx.swapInnerHtml
-                                  Hx.includeCss "[name=timeframe]"
+                                  Hx.includeCss "[name=interval]"
                               else
                                   _disabled_ ]
                             [ Text.raw "Next" ] ] ]
@@ -184,7 +185,7 @@ module View =
                   [ _class_ "flex items-center justify-between mb-4" ]
                   [ _div
                         [ _class_ "flex items-center gap-3" ]
-                        [ timeframeDropdown data.Timeframe data.AvailableTimeframes ]
+                        [ intervalDropdown data.Interval data.AvailableIntervals ]
                     legendBar ]
               match data.Instruments with
               | [] ->
@@ -208,11 +209,11 @@ module Data =
     let private buildFromCoverage
         (coverage: WeeklyCoverage list)
         (totalInstruments: int)
-        (selectedTimeframe: string)
-        (availableTimeframes: string list)
+        (selectedInterval: string)
+        (availableIntervals: string list)
         (page: int)
         =
-        let expected = Shared.expectedCandlesPerWeek selectedTimeframe
+        let expected = Shared.expectedCandlesPerWeek selectedInterval
         let grouped = coverage |> List.groupBy _.Instrument |> List.sortBy fst
         let totalPages = int (Math.Ceiling(float totalInstruments / float pageSize))
         let safePage = max 1 (min page totalPages)
@@ -234,32 +235,33 @@ module Data =
 
         { Instruments = instrumentRows
           Weeks = allWeeks
-          Timeframe = selectedTimeframe
-          AvailableTimeframes = availableTimeframes
+          Interval = selectedInterval
+          AvailableIntervals = availableIntervals
           Page = safePage
           PageSize = pageSize
           TotalInstruments = totalInstruments }
 
-    let private selectTimeframe (timeframe: string option) (available: string list) =
-        timeframe
+    let private selectInterval (interval: string option) (available: string list) =
+        interval
         |> Option.bind (fun tf -> if available |> List.contains tf then Some tf else None)
         |> Option.orElseWith (fun () -> available |> List.tryHead)
-        |> Option.defaultValue "1H"
+        |> Option.defaultValue "1h"
 
-    let loadFromCache (store: CacheStore.T) (timeframe: string option) (page: int) =
+    let loadFromCache (store: CacheStore.T) (interval: string option) (page: int) =
         match store.Get<CoverageHeatmapCache.CachedHeatmapData>(CoverageHeatmapCache.Key) with
         | Some cached ->
-            let selectedTimeframe = selectTimeframe timeframe cached.Timeframes
+            let availableStrings = cached.Intervals |> List.map string
+            let selectedInterval = selectInterval interval availableStrings
 
-            match cached.ByTimeframe |> Map.tryFind selectedTimeframe with
+            match cached.ByInterval |> Map.tryFind (Interval.parse selectedInterval) with
             | Some tfData ->
-                Some(buildFromCoverage tfData.Coverage tfData.InstrumentCount selectedTimeframe cached.Timeframes page)
+                Some(buildFromCoverage tfData.Coverage tfData.InstrumentCount selectedInterval availableStrings page)
             | None ->
                 Some
                     { Instruments = []
                       Weeks = []
-                      Timeframe = selectedTimeframe
-                      AvailableTimeframes = cached.Timeframes
+                      Interval = selectedInterval
+                      AvailableIntervals = availableStrings
                       Page = 1
                       PageSize = pageSize
                       TotalInstruments = 0 }
@@ -267,7 +269,7 @@ module Data =
 
     let loadFromDb
         (scopeFactory: IServiceScopeFactory)
-        (timeframe: string option)
+        (interval: string option)
         (page: int)
         (ct: Threading.CancellationToken)
         =
@@ -275,28 +277,29 @@ module Data =
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            let! timeframesResult = CandlestickRepository.getDistinctTimeframes db ct
+            let! intervalsResult = CandlestickRepository.getDistinctIntervals db ct
 
-            let availableTimeframes =
-                match timeframesResult with
-                | Ok tfs -> tfs
+            let availableIntervals =
+                match intervalsResult with
+                | Ok tfs -> tfs |> List.map string
                 | Error _ -> []
 
-            let selectedTimeframe = selectTimeframe timeframe availableTimeframes
-            let expected = Shared.expectedCandlesPerWeek selectedTimeframe
+            let selectedInterval = selectInterval interval availableIntervals
+            let expected = Shared.expectedCandlesPerWeek selectedInterval
 
-            match availableTimeframes with
+            match availableIntervals with
             | [] ->
                 return
                     { Instruments = []
                       Weeks = []
-                      Timeframe = selectedTimeframe
-                      AvailableTimeframes = []
+                      Interval = selectedInterval
+                      AvailableIntervals = []
                       Page = 1
                       PageSize = pageSize
                       TotalInstruments = 0 }
             | _ ->
-                let! countResult = CandlestickRepository.getDistinctInstrumentCount db selectedTimeframe ct
+                let selectedTf = Interval.parse selectedInterval
+                let! countResult = CandlestickRepository.getDistinctInstrumentCount db selectedTf ct
 
                 let totalInstruments =
                     match countResult with
@@ -307,8 +310,7 @@ module Data =
                 let safePage = max 1 (min page totalPages)
                 let offset = (safePage - 1) * pageSize
 
-                let! coverageResult =
-                    CandlestickRepository.getWeeklyCoveragePaged db selectedTimeframe offset pageSize ct
+                let! coverageResult = CandlestickRepository.getWeeklyCoveragePaged db selectedTf offset pageSize ct
 
                 let coverage =
                     match coverageResult with
@@ -333,8 +335,8 @@ module Data =
                 return
                     { Instruments = instrumentRows
                       Weeks = allWeeks
-                      Timeframe = selectedTimeframe
-                      AvailableTimeframes = availableTimeframes
+                      Interval = selectedInterval
+                      AvailableIntervals = availableIntervals
                       Page = safePage
                       PageSize = pageSize
                       TotalInstruments = totalInstruments }
@@ -347,15 +349,15 @@ module Handler =
                 try
                     let store = ctx.Plug<CacheStore.T>()
                     let query = Request.getQuery ctx
-                    let timeframe = query.TryGetString "timeframe"
+                    let interval = query.TryGetString "interval"
                     let page = query.TryGetInt "page" |> Option.defaultValue 1
 
                     let! data =
-                        match Data.loadFromCache store timeframe page with
+                        match Data.loadFromCache store interval page with
                         | Some cached -> task { return cached }
                         | None ->
                             let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                            Data.loadFromDb scopeFactory timeframe page ctx.RequestAborted
+                            Data.loadFromDb scopeFactory interval page ctx.RequestAborted
 
                     return! Response.ofHtml (View.heatmap data) ctx
                 with ex ->
@@ -383,10 +385,10 @@ module Handler =
                     let! _ = CandlestickRepository.deleteAllByInstrument db instrument ctx.RequestAborted
 
                     let query = Request.getQuery ctx
-                    let timeframe = query.TryGetString "timeframe"
+                    let interval = query.TryGetString "interval"
                     let page = query.TryGetInt "page" |> Option.defaultValue 1
 
-                    let! data = Data.loadFromDb scopeFactory timeframe page ctx.RequestAborted
+                    let! data = Data.loadFromDb scopeFactory interval page ctx.RequestAborted
                     return! Response.ofHtml (View.heatmap data) ctx
                 with ex ->
                     let logger = ctx.Plug<ILoggerFactory>().CreateLogger("CoverageHeatmap")

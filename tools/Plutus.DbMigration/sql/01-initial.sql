@@ -51,7 +51,7 @@ create table candlesticks
     instrument   varchar(20)     not null,
     market_type  int             not null,
     timestamp    timestamp       not null,
-    timeframe    varchar(10)     not null,
+    interval     varchar(10)     not null,
     open         decimal(28, 10) not null,
     high         decimal(28, 10) not null,
     low          decimal(28, 10) not null,
@@ -61,8 +61,8 @@ create table candlesticks
     is_completed boolean         not null default false
 );
 
-create unique index ix_candlesticks_instrument_market_timeframe_timestamp
-    on candlesticks (instrument, market_type, timeframe, timestamp);
+create unique index ix_candlesticks_instrument_market_interval_timestamp
+    on candlesticks (instrument, market_type, interval, timestamp);
 
 create index ix_candlesticks_timestamp on candlesticks (timestamp);
 
@@ -155,7 +155,7 @@ create table candlestick_sync_jobs
     id              serial primary key,
     instrument      varchar(20) not null,
     market_type     int         not null,
-    timeframe       varchar(10) not null,
+    interval        varchar(10) not null,
     from_date       timestamptz not null,
     to_date         timestamptz not null,
     status          int         not null default 0,

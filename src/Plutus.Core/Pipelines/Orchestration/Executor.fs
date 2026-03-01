@@ -96,7 +96,12 @@ module Executor =
 
                             | Ok steps ->
                                 let! latestCandle =
-                                    CandlestickRepository.getLatest db pipeline.Instrument pipeline.MarketType "1m" ct
+                                    CandlestickRepository.getLatest
+                                        db
+                                        pipeline.Instrument
+                                        pipeline.MarketType
+                                        Interval.OneMinute
+                                        ct
 
                                 match latestCandle with
                                 | Error error ->

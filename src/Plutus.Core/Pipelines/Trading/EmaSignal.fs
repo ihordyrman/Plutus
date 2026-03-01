@@ -8,15 +8,24 @@ open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 module ExponentialMovingAverageSignal =
-    let private timeframes = [ "1m"; "5m"; "15m"; "30m"; "1H"; "4H"; "1Dutc" ]
+    let private intervals =
+        [ Interval.OneMinute
+          Interval.FiveMinutes
+          Interval.FifteenMinutes
+          Interval.ThirtyMinutes
+          Interval.OneHour
+          Interval.FourHours
+          Interval.OneDay ]
+        |> List.map string
 
     let ema: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
             let fastPeriod = params' |> ValidatedParams.getInt "fastPeriod" 9
             let slowPeriod = params' |> ValidatedParams.getInt "slowPeriod" 21
-            let timeframe = params' |> ValidatedParams.getString "timeframe" "1m"
+            let interval = params' |> ValidatedParams.getString "interval" "1m" |> Interval.parse
             let signalWeight = params' |> ValidatedParams.getDecimal "signalWeight" 1.0m
 
             { key = "ema-signal"
@@ -36,7 +45,7 @@ module ExponentialMovingAverageSignal =
                                     db
                                     ctx.Instrument
                                     ctx.MarketType
-                                    timeframe
+                                    interval
                                     None
                                     toDate
                                     (Some candleCount)
@@ -107,10 +116,10 @@ module ExponentialMovingAverageSignal =
                     Required = false
                     DefaultValue = Some(IntValue 21)
                     Group = Some "Indicator" }
-                  { Key = "timeframe"
-                    Name = "Timeframe"
-                    Description = "Candlestick timeframe"
-                    Type = Choice timeframes
+                  { Key = "interval"
+                    Name = "Interval"
+                    Description = "Candlestick interval"
+                    Type = Choice intervals
                     Required = false
                     DefaultValue = Some(ChoiceValue "1m")
                     Group = Some "General" }

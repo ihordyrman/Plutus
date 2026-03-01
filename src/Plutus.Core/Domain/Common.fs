@@ -16,7 +16,7 @@ type Candlestick =
       Volume: decimal
       VolumeQuote: decimal
       IsCompleted: bool
-      Timeframe: string }
+      Interval: Interval }
 
 type SyncJobStatus =
     | Pending = 0
@@ -31,7 +31,7 @@ type SyncJob =
     { Id: int
       Instrument: Instrument
       MarketType: MarketType
-      Timeframe: string
+      Interval: Interval
       FromDate: DateTimeOffset
       ToDate: DateTimeOffset
       Status: int

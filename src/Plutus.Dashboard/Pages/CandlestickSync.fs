@@ -391,7 +391,10 @@ module Handler =
                         let toDate = DateTimeOffset(DateTime.Parse(toDateStr), TimeSpan.Zero).AddDays(1.0)
 
                         let manager = ctx.Plug<JobsManager.T>()
-                        let _jobId = manager.startJob (Instrument.parse instrument) marketType "1m" fromDate toDate
+
+                        let _jobId =
+                            manager.startJob (Instrument.parse instrument) marketType Interval.OneMinute fromDate toDate
+
                         return! Response.ofHtml (View.successResponse instrument) ctx
                 with ex ->
                     return! Response.ofHtml (View.errorResponse $"Failed to start sync: {ex.Message}") ctx

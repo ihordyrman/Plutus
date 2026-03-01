@@ -28,7 +28,7 @@ module Http =
 
     type Request = { Endpoint: string; Method: HttpMethod; Parameters: Map<string, string>; Body: obj option }
 
-    type CandlestickParams = { Bar: string option; After: string option; Before: string option; Limit: int option }
+    type CandlestickParams = { Bar: Interval option; After: string option; Before: string option; Limit: int option }
 
     type T =
         { getBalance: string option -> Task<Result<OkxBalanceDetail[], ServiceError>>
@@ -219,7 +219,7 @@ module Http =
             fun instId p ->
                 get "/api/v5/market/candles"
                 |> withParam "instId" instId
-                |> withParamOpt "bar" p.Bar
+                |> withParamOpt "bar" (p.Bar |> Option.map string)
                 |> withParamOpt "after" p.After
                 |> withParamOpt "before" p.Before
                 |> withParamOpt "limit" (p.Limit |> Option.map string)
@@ -229,7 +229,7 @@ module Http =
             fun instId p ->
                 get "/api/v5/market/history-candles"
                 |> withParam "instId" instId
-                |> withParamOpt "bar" p.Bar
+                |> withParamOpt "bar" (p.Bar |> Option.map string)
                 |> withParamOpt "after" p.After
                 |> withParamOpt "before" p.Before
                 |> withParamOpt "limit" (p.Limit |> Option.map string)

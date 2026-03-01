@@ -12,9 +12,25 @@ open Plutus.Core.Repositories
 
 module TrendFollowingSignal =
     let instruments =
-        [ "BTC-USDT"; "ETH-USDT"; "SOL-USDT"; "OKB-USDT"; "DOGE-USDT"; "XRP-USDT"; "BCH-USDT"; "LTC-USDT" ]
+        [ { Base = "BTC"; Quote = "USDT" }
+          { Base = "ETH"; Quote = "USDT" }
+          { Base = "SOL"; Quote = "USDT" }
+          { Base = "OKB"; Quote = "USDT" }
+          { Base = "DOGE"; Quote = "USDT" }
+          { Base = "XRP"; Quote = "USDT" }
+          { Base = "BCH"; Quote = "USDT" }
+          { Base = "LTC"; Quote = "USDT" } ]
+        |> List.map string
 
-    let private timeframes = [ "1m"; "5m"; "15m"; "30m"; "1H"; "4H"; "1Dutc" ]
+    let private intervals =
+        [ Interval.OneMinute
+          Interval.FiveMinutes
+          Interval.FifteenMinutes
+          Interval.ThirtyMinutes
+          Interval.OneHour
+          Interval.FourHours
+          Interval.OneDay ]
+        |> List.map string
 
     let trendFollowing: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
@@ -25,7 +41,7 @@ module TrendFollowingSignal =
 
             let lookbackPeriod = params' |> ValidatedParams.getInt "lookbackPeriod" 20
             let momentumThreshold = params' |> ValidatedParams.getDecimal "momentumThreshold" 2.0m
-            let timeframe = params' |> ValidatedParams.getString "timeframe" "1m"
+            let interval = params' |> ValidatedParams.getString "interval" "1m" |> Interval.parse
             let breadthThresholdPct = params' |> ValidatedParams.getDecimal "breadthThresholdPct" 50.0m
             let signalWeight = params' |> ValidatedParams.getDecimal "signalWeight" 1.0m
 
@@ -46,7 +62,7 @@ module TrendFollowingSignal =
                                     db
                                     ctx.Instrument
                                     ctx.MarketType
-                                    timeframe
+                                    interval
                                     None
                                     toDate
                                     (Some candleCount)
@@ -78,7 +94,7 @@ module TrendFollowingSignal =
                                                     db
                                                     instrument
                                                     ctx.MarketType
-                                                    timeframe
+                                                    interval
                                                     None
                                                     toDate
                                                     (Some candleCount)
@@ -157,10 +173,10 @@ module TrendFollowingSignal =
                     Required = false
                     DefaultValue = Some(DecimalValue 2.0m)
                     Group = Some "Indicator" }
-                  { Key = "timeframe"
-                    Name = "Timeframe"
-                    Description = "Candlestick timeframe"
-                    Type = Choice timeframes
+                  { Key = "interval"
+                    Name = "Interval"
+                    Description = "Candlestick interval"
+                    Type = Choice intervals
                     Required = false
                     DefaultValue = Some(ChoiceValue "1m")
                     Group = Some "General" }

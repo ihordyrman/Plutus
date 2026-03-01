@@ -8,6 +8,7 @@ open Microsoft.Extensions.DependencyInjection
 open Plutus.Core
 open Plutus.Core.Domain
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 type Pipeline = { Id: int; Name: string; Instrument: string }
 
@@ -25,7 +26,12 @@ let serviceProvider = serviceCollection.BuildServiceProvider()
 let db = serviceProvider.GetRequiredService<IDbConnection>()
 
 let gaps =
-    CandlestickRepository.findGaps db { Base = "BTC"; Quote = "USDT" } MarketType.Okx "1m" CancellationToken.None
+    CandlestickRepository.findGaps
+        db
+        { Base = "BTC"; Quote = "USDT" }
+        MarketType.Okx
+        Interval.OneMinute
+        CancellationToken.None
 
 let res = Async.AwaitTask gaps |> Async.RunSynchronously
 

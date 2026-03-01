@@ -13,6 +13,7 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Backtesting
 open Plutus.Core.Domain
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 type BacktestGridItem =
     { RunId: int
@@ -1332,7 +1333,7 @@ module Handler =
                                 db
                                 pipeline.Instrument
                                 pipeline.MarketType
-                                "1m"
+                                Interval.OneMinute
                                 (Some run.StartDate)
                                 (Some run.EndDate)
                                 (Some 50000)

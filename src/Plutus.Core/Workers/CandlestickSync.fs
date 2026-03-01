@@ -19,7 +19,7 @@ module CandlestickSync =
     let private recentCandleThreshold = TimeSpan.FromMinutes 5.0
     let private historyBoundaryDays = 30
 
-    let toCandlestick (instrument: Instrument) (timeframe: string) (c: OkxCandlestick) : Candlestick =
+    let toCandlestick (instrument: Instrument) (interval: Interval) (c: OkxCandlestick) : Candlestick =
         { Id = 0
           Instrument = instrument
           MarketType = MarketType.Okx
@@ -31,7 +31,7 @@ module CandlestickSync =
           Volume = c.Volume
           VolumeQuote = c.VolumeQuoteCurrency
           IsCompleted = c.IsCompleted
-          Timeframe = timeframe }
+          Interval = interval }
 
     let private fetchAndSave
         (fetch: string -> Http.CandlestickParams -> Task<Result<OkxCandlestick[], ServiceError>>)
@@ -44,11 +44,13 @@ module CandlestickSync =
         =
         task {
             let! result =
-                fetch (string instrument) { Bar = Some "1m"; After = afterMs; Before = beforeMs; Limit = Some 100 }
+                fetch
+                    (string instrument)
+                    { Bar = Some Interval.OneMinute; After = afterMs; Before = beforeMs; Limit = Some 100 }
 
             match result with
             | Ok candles when candles.Length > 0 ->
-                let mapped = candles |> Array.map (toCandlestick instrument "1m") |> Array.toList
+                let mapped = candles |> Array.map (toCandlestick instrument Interval.OneMinute) |> Array.toList
                 let! _ = CandlestickRepository.save db mapped ct
                 return candles.Length
             | Ok _ -> return 0
@@ -92,7 +94,7 @@ module CandlestickSync =
         (ct: CancellationToken)
         =
         task {
-            match! CandlestickRepository.getLatest db instrument MarketType.Okx "1m" ct with
+            match! CandlestickRepository.getLatest db instrument MarketType.Okx Interval.OneMinute ct with
             | Ok(Some latest) ->
                 let gap = DateTime.UtcNow - latest.Timestamp
 
@@ -133,9 +135,9 @@ module CandlestickSync =
         (ct: CancellationToken)
         =
         task {
-            let monthAgo = DateTimeOffset.UtcNow.AddDays(-365)
+            let monthAgo = DateTimeOffset.UtcNow.AddDays(-30)
 
-            match! CandlestickRepository.getOldest db instrument MarketType.Okx "1m" ct with
+            match! CandlestickRepository.getOldest db instrument MarketType.Okx Interval.OneMinute ct with
             | Ok(Some oldest) when DateTimeOffset(oldest.Timestamp) <= monthAgo -> ()
             | Ok maybeOldest ->
                 let startFrom =
@@ -153,7 +155,7 @@ module CandlestickSync =
 
     let syncGaps (http: Http.T) (db: IDbConnection) (logger: ILogger) (instrument: Instrument) (ct: CancellationToken) =
         task {
-            match! CandlestickRepository.findGaps db instrument MarketType.Okx "1m" ct with
+            match! CandlestickRepository.findGaps db instrument MarketType.Okx Interval.OneMinute ct with
             | Ok gaps when gaps.Length > 0 ->
                 logger.LogInformation("Found {Count} gaps for {Instrument}", gaps.Length, instrument)
 

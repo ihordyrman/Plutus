@@ -7,7 +7,7 @@
 
     <ItemGroup>
         <Compile Include="Shared\Errors.fs" />
-        <Compile Include="Shared\Instrument.fs" />
+        <Compile Include="Shared\Types.fs" />
         <Compile Include="Domain\Markets.fs" />
 
         <Compile Include="Domain\Common.fs" />

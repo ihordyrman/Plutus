@@ -7,11 +7,12 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Infrastructure
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 module CoverageHeatmapCache =
-    type CachedTimeframeData = { Coverage: WeeklyCoverage list; InstrumentCount: int }
+    type CachedIntervalData = { Coverage: WeeklyCoverage list; InstrumentCount: int }
 
-    type CachedHeatmapData = { Timeframes: string list; ByTimeframe: Map<string, CachedTimeframeData> }
+    type CachedHeatmapData = { Intervals: Interval list; ByInterval: Map<Interval, CachedIntervalData> }
 
     [<Literal>]
     let Key = "coverage-heatmap"
@@ -26,33 +27,33 @@ module CoverageHeatmapCache =
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            let! timeframesResult = CandlestickRepository.getDistinctTimeframes db ct
+            let! intervalsResult = CandlestickRepository.getDistinctIntervals db ct
 
-            let timeframes =
-                match timeframesResult with
-                | Ok tfs -> tfs
+            let intervals =
+                match intervalsResult with
+                | Ok intervals -> intervals |> List.map Interval.parse
                 | Error _ -> []
 
-            let mutable byTimeframe = Map.empty
+            let mutable byInterval = Map.empty
 
-            for tf in timeframes do
-                let! coverageResult = CandlestickRepository.getWeeklyCoverage db tf ct
+            for interval in intervals do
+                let! coverageResult = CandlestickRepository.getWeeklyCoverage db interval ct
 
                 let coverage =
                     match coverageResult with
                     | Ok c -> c
                     | Error _ -> []
 
-                let! countResult = CandlestickRepository.getDistinctInstrumentCount db tf ct
+                let! countResult = CandlestickRepository.getDistinctInstrumentCount db interval ct
 
                 let count =
                     match countResult with
                     | Ok c -> c
                     | Error _ -> 0
 
-                byTimeframe <- byTimeframe |> Map.add tf { Coverage = coverage; InstrumentCount = count }
+                byInterval <- byInterval |> Map.add interval { Coverage = coverage; InstrumentCount = count }
 
-            store.Set(Key, { Timeframes = timeframes; ByTimeframe = byTimeframe })
+            store.Set(Key, { Intervals = intervals; ByInterval = byInterval })
         }
 
     let refresher: CacheRefresher = { Key = Key; Interval = TimeSpan.FromSeconds(30.0); Refresh = refresh }
