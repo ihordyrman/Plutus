@@ -5,6 +5,7 @@ open System.Threading.Tasks
 open Falco
 open Falco.Markup
 open Microsoft.Extensions.DependencyInjection
+open FsToolkit.ErrorHandling
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 open Plutus.Core.Markets.Services
@@ -22,18 +23,17 @@ module Data =
         (ct: CancellationToken)
         : Task<Result<decimal, string>>
         =
-        task {
+        taskResult {
             use scope = scopeFactory.CreateScope()
             let balanceManager = scope.ServiceProvider.GetRequiredService<BalanceManager.T>()
-            let! result = BalanceManager.getTotalUsdtValue balanceManager marketType ct
 
-            return
-                match result with
-                | Ok value -> Ok value
-                | Error err ->
+            return!
+                BalanceManager.getTotalUsdtValue balanceManager marketType ct
+                |> TaskResult.mapError (fun err ->
                     let msg = Errors.serviceMessage err
                     logger.LogError("Error getting balance for {MarketType}: {Error}", marketType, msg)
-                    Error msg
+                    msg
+                )
         }
 
 module View =

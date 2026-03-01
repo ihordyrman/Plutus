@@ -13,7 +13,6 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Backtesting
 open Plutus.Core.Domain
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 type BacktestGridItem =
     { RunId: int

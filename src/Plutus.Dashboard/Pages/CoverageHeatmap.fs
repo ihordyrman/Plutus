@@ -32,18 +32,13 @@ module Shared =
         let intervalMinutes =
             match interval with
             | "1m" -> 1.0
-            | "3m" -> 3.0
             | "5m" -> 5.0
             | "15m" -> 15.0
             | "30m" -> 30.0
             | "1h" -> 60.0
-            | "2h" -> 120.0
             | "4h" -> 240.0
-            | "6h" -> 360.0
-            | "12h" -> 720.0
             | "1d" -> 1440.0
-            | "1w" -> 10080.0
-            | _ -> 60.0
+            | _ -> 1.0
 
         minutesPerWeek / intervalMinutes
 
