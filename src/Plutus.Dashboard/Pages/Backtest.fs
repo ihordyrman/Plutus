@@ -337,73 +337,6 @@ module View =
 
     let toUnixSeconds (dt: DateTime) = DateTimeOffset(dt, TimeSpan.Zero).ToUnixTimeSeconds()
 
-    let candlesJson (candles: Candlestick list) =
-        candles
-        |> List.map (fun c ->
-            let t = toUnixSeconds c.Timestamp
-            $"""{{"time":{t},"open":{c.Open},"high":{c.High},"low":{c.Low},"close":{c.Close}}}"""
-        )
-        |> String.concat ","
-        |> fun s -> $"[{s}]"
-
-    let equityJsonUnix (points: BacktestEquityPoint list) =
-        points
-        |> List.map (fun p -> $"""{{"time":{toUnixSeconds p.CandleTime},"value":{p.Equity}}}""")
-        |> String.concat ","
-        |> fun s -> $"[{s}]"
-
-    let markersJsonUnix (pairs: TradePair list) =
-        pairs
-        |> List.collect (fun p ->
-            [ $"""{{"time":{toUnixSeconds p.EntryTime},"position":"belowBar","color":"#22c55e","shape":"arrowUp","text":"BUY"}}"""
-              $"""{{"time":{toUnixSeconds p.ExitTime},"position":"aboveBar","color":"#ef4444","shape":"arrowDown","text":"SELL"}}""" ]
-        )
-        |> String.concat ","
-        |> fun s -> $"[{s}]"
-
-    let private chartScript (runId: int) =
-        $"""(function() {{
-    var el = document.getElementById('backtest-chart');
-    if (!el || !window.LightweightCharts) return;
-    var chart = LightweightCharts.createChart(el, {{
-        height: 400,
-        layout: {{ background: {{ color: '#fff' }}, textColor: '#64748b' }},
-        grid: {{ vertLines: {{ color: '#f1f5f9' }}, horzLines: {{ color: '#f1f5f9' }} }},
-        timeScale: {{ timeVisible: true }},
-        rightPriceScale: {{ visible: true }}
-    }});
-    var candleSeries = chart.addCandlestickSeries({{
-        upColor: '#22c55e', downColor: '#ef4444',
-        borderUpColor: '#22c55e', borderDownColor: '#ef4444',
-        wickUpColor: '#22c55e', wickDownColor: '#ef4444'
-    }});
-    var equitySeries = chart.addLineSeries({{
-        color: '#3b82f6', lineWidth: 2,
-        priceScaleId: 'equity',
-        lastValueVisible: false,
-        priceLineVisible: false
-    }});
-    chart.priceScale('equity').applyOptions({{
-        scaleMargins: {{ top: 0.1, bottom: 0.1 }}
-    }});
-    fetch('/backtests/{runId}/chart-data')
-        .then(function(r) {{ return r.json(); }})
-        .then(function(data) {{
-            if (data.candles && data.candles.length) candleSeries.setData(data.candles);
-            if (data.equity && data.equity.length) equitySeries.setData(data.equity);
-            if (data.markers && data.markers.length) candleSeries.setMarkers(data.markers);
-            chart.timeScale().fitContent();
-        }});
-    chart.subscribeClick(function(param) {{
-        if (!param.time) return;
-        htmx.ajax('GET', '/backtests/{runId}/traces/by-time?t=' + param.time,
-            {{target: '#trace-detail', swap: 'innerHTML'}});
-    }});
-    new ResizeObserver(function(entries) {{
-        chart.applyOptions({{ width: entries[0].contentRect.width }});
-    }}).observe(el);
-}})();"""
-
     let resultsView (vm: ResultsViewModel) =
         let m = vm.Metrics
 
@@ -535,15 +468,6 @@ module View =
                                                         _span
                                                             [ _class_ "font-medium text-slate-900" ]
                                                             [ Text.raw (formatDuration m.AverageHoldingPeriod) ] ] ] ]
-
-                                      // Chart
-                                      _div
-                                          [ _class_ "border border-slate-200 rounded-lg p-4" ]
-                                          [ _h4
-                                                [ _class_ "text-sm font-semibold text-slate-700 mb-3" ]
-                                                [ Text.raw "Price & Equity" ]
-                                            _div [ _id_ "backtest-chart"; _style_ "height:400px" ] []
-                                            _script [] [ Text.raw (chartScript vm.Run.Id) ] ]
 
                                       // Trade table
                                       _div
@@ -1313,49 +1237,6 @@ module Handler =
                                 [ _class_ "py-4 text-center text-red-400 text-sm" ]
                                 [ Text.raw "Error loading traces" ])
                             ctx
-            }
-
-    let chartData (runId: int) : HttpHandler =
-        fun ctx ->
-            task {
-                try
-                    let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    use scope = scopeFactory.CreateScope()
-                    use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-
-                    match! Data.getRunWithPipeline db runId ctx.RequestAborted with
-                    | Error _ ->
-                        ctx.Response.StatusCode <- 404
-                        return! Response.ofPlainText "Not found" ctx
-                    | Ok(run, pipeline) ->
-                        let! candlesResult =
-                            CandlestickRepository.query
-                                db
-                                pipeline.Instrument
-                                pipeline.MarketType
-                                Interval.OneMinute
-                                (Some run.StartDate)
-                                (Some run.EndDate)
-                                (Some 50000)
-                                ctx.RequestAborted
-
-                        let! tradesResult = BacktestRepository.getTradesByRun db run.Id ctx.RequestAborted
-                        let! equityResult = BacktestRepository.getEquityByRun db run.Id ctx.RequestAborted
-                        let candles = candlesResult |> Result.defaultValue [] |> List.rev
-                        let trades = tradesResult |> Result.defaultValue []
-                        let equity = equityResult |> Result.defaultValue []
-                        let pairs = Data.getTradePairs trades
-
-                        let json =
-                            $"""{{"candles":{View.candlesJson candles},"equity":{View.equityJsonUnix equity},"markers":{View.markersJsonUnix pairs}}}"""
-
-                        ctx.Response.ContentType <- "application/json"
-                        return! Response.ofPlainText json ctx
-                with ex ->
-                    let logger = ctx.Plug<ILoggerFactory>().CreateLogger("Backtest")
-                    logger.LogError(ex, "Error loading chart data {RunId}", runId)
-                    ctx.Response.StatusCode <- 500
-                    return! Response.ofPlainText """{"error":"Failed"}""" ctx
             }
 
     let tracesByTime (runId: int) : HttpHandler =

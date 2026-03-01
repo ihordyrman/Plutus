@@ -161,7 +161,6 @@ let backtests =
               let route = Request.getRoute ctx
               Backtest.Handler.traces (route.GetInt "runId") (route.GetString "executionId") ctx
           ))
-      mapGet "/backtests/{id:int}/chart-data" _.GetInt("id") (fun id -> requireAuth (Backtest.Handler.chartData id))
       mapGet
           "/backtests/{id:int}/traces/by-time"
           _.GetInt("id")
