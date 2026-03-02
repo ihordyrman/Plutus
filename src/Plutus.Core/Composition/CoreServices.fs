@@ -93,7 +93,8 @@ module CoreServices =
     let private credentialsStore (services: IServiceCollection) =
         services.AddScoped<CredentialsStore.T>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            CredentialsStore.create scopeFactory
+            let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
+            CredentialsStore.create scopeFactory loggerFactory
         )
         |> ignore
 

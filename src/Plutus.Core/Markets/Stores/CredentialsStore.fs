@@ -15,29 +15,20 @@ module CredentialsStore =
 
     type Credentials = { Key: string; Secret: string; Passphrase: string option; IsSandbox: bool }
 
-    let private cache = Dictionary<MarketType, Credentials>()
-
-    let private getCached (marketType: MarketType) : Credentials option =
-        let mutable creds = Unchecked.defaultof<Credentials>
-
-        match cache.TryGetValue(marketType, &creds) with
-        | true -> Some creds
-        | false -> None
-
     type T = { GetCredentials: MarketType -> CancellationToken -> Task<Result<Credentials, ServiceError>> }
 
-    let create (scopeFactory: IServiceScopeFactory) : T =
+    let create (scopeFactory: IServiceScopeFactory) (loggerFactory: ILoggerFactory) : T =
+        let cache = Dictionary<MarketType, Credentials>()
+        let logger = loggerFactory.CreateLogger("CredentialsStore")
+
         { GetCredentials =
             fun marketType ct ->
-                use scope = scopeFactory.CreateScope()
-                let loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>()
-                let logger = loggerFactory.CreateLogger("CredentialsStore")
-
                 task {
                     try
-                        match getCached marketType with
-                        | None ->
-                            use scope = scope.ServiceProvider.CreateScope()
+                        match cache.TryGetValue marketType with
+                        | true, creds -> return Ok creds
+                        | false, _ ->
+                            use scope = scopeFactory.CreateScope()
                             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
                             let! results = MarketRepository.getByType db marketType ct
@@ -55,19 +46,16 @@ module CredentialsStore =
                                 logger.LogWarning("No credentials found for {MarketType}", marketType)
                                 return Error(NotFound($"No credentials found for market type {marketType}"))
                             | Ok(Some credentials) ->
-                                logger.LogDebug("Retrieved credentials for {MarketType}", credentials.Type)
 
-                                return
-                                    Ok(
-                                        { Key = credentials.ApiKey
-                                          Secret = credentials.SecretKey
-                                          Passphrase =
-                                            if credentials.Passphrase = Some "" then None else credentials.Passphrase
-                                          IsSandbox = credentials.IsSandbox }
-                                    )
-                        | Some creds ->
-                            logger.LogDebug("Credentials for {MarketType} found in cache", marketType)
-                            return Ok creds
+                                let creds =
+                                    { Key = credentials.ApiKey
+                                      Secret = credentials.SecretKey
+                                      Passphrase =
+                                        if credentials.Passphrase = Some "" then None else credentials.Passphrase
+                                      IsSandbox = credentials.IsSandbox }
+
+                                cache.[marketType] <- creds
+                                return Ok(creds)
 
                     with ex ->
                         logger.LogError(ex, "Failed to get credentials for {MarketType}", marketType)
