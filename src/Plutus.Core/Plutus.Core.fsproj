@@ -44,8 +44,6 @@
         <Compile Include="Markets\Abstractions\OrderExecutor.fs" />
         <Compile Include="Markets\Abstractions\OrderSyncer.fs" />
 
-        <Compile Include="Markets\Stores\CredentialsStore.fs" />
-
         <Compile Include="Markets\Exchanges\Okx\Types.fs" />
         <Compile Include="Markets\Exchanges\Okx\Auth.fs" />
         <Compile Include="Markets\Exchanges\Okx\Http.fs" />
@@ -82,6 +80,7 @@
         <Compile Include="Backtesting\BacktestMetrics.fs" />
         <Compile Include="Backtesting\BacktestExport.fs" />
         <Compile Include="Backtesting\BacktestEngine.fs" />
+        <Compile Include="Workers\MarketSeeding.fs" />
         <Compile Include="Workers\CacheWorker.fs" />
         <Compile Include="Workers\CandlestickSync.fs" />
 

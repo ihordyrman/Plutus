@@ -14,7 +14,6 @@ open Plutus.Core.Infrastructure
 open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Markets.Services
-open Plutus.Core.Markets.Stores
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Orchestration
 open Plutus.Core.Pipelines.Trading
@@ -22,7 +21,14 @@ open Plutus.Core.Workers
 
 module CoreServices =
 
-    let private pipelineOrchestrator (services: IServiceCollection) =
+    let private useConfiguration (services: IServiceCollection) (configuration: IConfiguration) =
+        services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
+        |> ignore
+
+        services.Configure<MarketCredentialsSettings>(configuration.GetSection(MarketCredentialsSettings.SectionName))
+        |> ignore
+
+    let private usePipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
 
@@ -39,16 +45,18 @@ module CoreServices =
         )
         |> ignore
 
-    let private httpClient (services: IServiceCollection) =
+    let private useHttpClient (services: IServiceCollection) =
         services.AddScoped<Http.T>(fun provider ->
             let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxHttp")
             let httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient("Okx")
-            let credentialsStore = provider.GetRequiredService<CredentialsStore.T>()
-            Http.create httpClient credentialsStore logger
+            let creds = provider.GetRequiredService<IOptions<MarketCredentialsSettings>>().Value
+            let creds = creds.Credentials |> Array.find (fun x -> x.MarketType = "Okx")
+
+            Http.create httpClient creds logger
         )
         |> ignore
 
-    let private balanceManager (services: IServiceCollection) =
+    let private useBalanceManager (services: IServiceCollection) =
         services.AddScoped<BalanceManager.T>(fun provider ->
             let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
             let okxHttp = provider.GetRequiredService<Http.T>()
@@ -58,7 +66,7 @@ module CoreServices =
         )
         |> ignore
 
-    let private syncJobManager (services: IServiceCollection) =
+    let private useSyncJobManager (services: IServiceCollection) =
         services.AddSingleton<JobsManager.T>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
             let logger = provider.GetRequiredService<ILogger<JobsManager.T>>()
@@ -66,15 +74,16 @@ module CoreServices =
         )
         |> ignore
 
-    let private okxWorker (services: IServiceCollection) =
+    let private useOkxWorker (services: IServiceCollection) =
         services.AddHostedService<OkxSynchronizationWorker>() |> ignore
 
-    let private instrumentSyncWorker (services: IServiceCollection) =
+    let private useInstrumentSyncWorker (services: IServiceCollection) =
         services.AddHostedService<InstrumentSyncWorker>() |> ignore
 
-    let private orderSyncWorker (services: IServiceCollection) = services.AddHostedService<OrderSyncWorker>() |> ignore
+    let private useOrderSyncWorker (services: IServiceCollection) =
+        services.AddHostedService<OrderSyncWorker>() |> ignore
 
-    let private orderExecutor (services: IServiceCollection) =
+    let private useOrderExecutor (services: IServiceCollection) =
         services.AddScoped<OrderExecutor.T list>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
             let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderProvider")
@@ -82,7 +91,7 @@ module CoreServices =
         )
         |> ignore
 
-    let private orderSyncer (services: IServiceCollection) =
+    let private useOrderSyncer (services: IServiceCollection) =
         services.AddScoped<OrderSyncer.T list>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
             let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderSyncer")
@@ -90,18 +99,10 @@ module CoreServices =
         )
         |> ignore
 
-    let private credentialsStore (services: IServiceCollection) =
-        services.AddScoped<CredentialsStore.T>(fun provider ->
-            let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
-            let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
-            CredentialsStore.create scopeFactory loggerFactory
-        )
-        |> ignore
-
-    let private cacheStore (services: IServiceCollection) =
+    let private useCacheStore (services: IServiceCollection) =
         services.AddSingleton<CacheStore.T>(CacheStore.T()) |> ignore
 
-    let private cacheWorker (services: IServiceCollection) =
+    let private useCacheWorker (services: IServiceCollection) =
         services.AddHostedService<CacheWorker>(fun provider ->
             let store = provider.GetRequiredService<CacheStore.T>()
             let refreshers = provider.GetService<CacheRefresher list>()
@@ -112,7 +113,7 @@ module CoreServices =
         )
         |> ignore
 
-    let private executionLogger (services: IServiceCollection) =
+    let private useExecuteLogger (services: IServiceCollection) =
         services.AddSingleton<ExecutionLogger.T>(fun provider ->
             let scopeFactory = provider.GetRequiredService<IServiceScopeFactory>()
             let logger = provider.GetRequiredService<ILogger<ExecutionLogger.T>>()
@@ -125,10 +126,7 @@ module CoreServices =
         )
         |> ignore
 
-    let private database (services: IServiceCollection) (configuration: IConfiguration) =
-        services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
-        |> ignore
-
+    let private useDatabase (services: IServiceCollection) =
         TypeHandlers.registerTypeHandlers ()
 
         services.AddScoped<IDbConnection>(fun sp ->
@@ -137,7 +135,7 @@ module CoreServices =
         )
         |> ignore
 
-    let private httpClientFactory (services: IServiceCollection) =
+    let private useHttpClientFactory (services: IServiceCollection) =
         services
             .AddHttpClient("Okx")
             .ConfigureHttpClient(fun (client: HttpClient) ->
@@ -181,27 +179,32 @@ module CoreServices =
             )
         |> ignore
 
-    let register (services: IServiceCollection) (configuration: IConfiguration) =
-        database services configuration
+    let private useMarketSeeding (services: IServiceCollection) =
+        services.AddHostedService<MarketSeedingWorker>() |> ignore
 
-        [ cacheStore
-          cacheWorker
-          executionLogger
-          balanceManager
-          credentialsStore
-          httpClientFactory
-          httpClient
-          instrumentSyncWorker
-          okxWorker
-          orderExecutor
-          orderSyncer
-          orderSyncWorker
-          pipelineOrchestrator
-          syncJobManager ]
-        |> List.iter (fun addService -> addService services)
+    let register (services: IServiceCollection) (config: IConfiguration) =
+        useConfiguration services config
+        useDatabase services
 
-    let registerSlim (services: IServiceCollection) (configuration: IConfiguration) =
-        database services configuration
+        [ useMarketSeeding
+          useCacheStore
+          useCacheWorker
+          useExecuteLogger
+          useBalanceManager
+          useHttpClientFactory
+          useHttpClient
+          useInstrumentSyncWorker
+          useOkxWorker
+          useOrderExecutor
+          useOrderSyncer
+          useOrderSyncWorker
+          usePipelineOrchestrator
+          useSyncJobManager ]
+        |> List.iter (fun f -> f services)
 
-        [ credentialsStore; httpClientFactory; httpClient; orderExecutor ]
+    let registerSlim (services: IServiceCollection) (config: IConfiguration) =
+        useConfiguration services config
+        useDatabase services
+
+        [ useHttpClientFactory; useHttpClient; useOrderExecutor ]
         |> List.iter (fun addService -> addService services)

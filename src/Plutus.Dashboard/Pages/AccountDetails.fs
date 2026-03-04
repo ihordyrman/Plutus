@@ -10,28 +10,16 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 
-type AccountDetailsInfo =
-    { Id: int
-      MarketType: MarketType
-      HasCredentials: bool
-      IsSandbox: bool
-      ApiKeyMasked: string
-      CreatedAt: DateTime
-      UpdatedAt: DateTime }
+type AccountDetailsInfo = { Id: int; MarketType: MarketType; IsSandbox: bool; CreatedAt: DateTime; UpdatedAt: DateTime }
 
 module Data =
     open System.Threading
+    open Plutus.Core.Infrastructure
     open Plutus.Core.Repositories
-
-    let private maskApiKey (apiKey: string) =
-        match apiKey with
-        | "" -> "Not configured"
-        | key when String.IsNullOrEmpty key -> "Not configured"
-        | key when key.Length > 8 -> key.Substring(0, 4) + "****" + key.Substring(key.Length - 4)
-        | _ -> "****"
 
     let getAccountDetails
         (scopeFactory: IServiceScopeFactory)
+        (credentialsSettings: MarketCredentialsSettings)
         (marketId: int)
         (ct: CancellationToken)
         : Task<AccountDetailsInfo option>
@@ -44,16 +32,17 @@ module Data =
             match result with
             | Error _ -> return None
             | Ok data ->
-                let apiKey = data.ApiKey
-                let isSandbox = data.IsSandbox
+                let isSandbox =
+                    credentialsSettings.Credentials
+                    |> Array.tryFind (fun c -> c.MarketType = string data.Type)
+                    |> Option.map (fun c -> c.IsSandbox)
+                    |> Option.defaultValue false
 
                 return
                     Some
                         { Id = data.Id
                           MarketType = data.Type
-                          HasCredentials = true // is this needed? we always have apiKey
                           IsSandbox = isSandbox
-                          ApiKeyMasked = maskApiKey apiKey
                           CreatedAt = data.CreatedAt
                           UpdatedAt = data.UpdatedAt }
         }
@@ -75,16 +64,6 @@ module View =
               Hx.targetCss "#modal-container"
               Hx.swapInnerHtml ]
             []
-
-    let private statusBadge (hasCredentials: bool) =
-        if hasCredentials then
-            _span
-                [ _class_ "px-3 py-1 rounded text-sm font-medium bg-green-50 text-green-700" ]
-                [ _i [ _class_ "fas fa-check-circle mr-1" ] []; Text.raw "Connected" ]
-        else
-            _span
-                [ _class_ "px-3 py-1 rounded text-sm font-medium bg-slate-50 text-slate-500" ]
-                [ _i [ _class_ "fas fa-exclamation-circle mr-1" ] []; Text.raw "Not Configured" ]
 
     let private modeBadge (isSandbox: bool) =
         if isSandbox then
@@ -123,14 +102,7 @@ module View =
               _dl
                   [ _class_ "space-y-3" ]
                   [ infoRow "Exchange" (_span [] [ Text.raw (string account.MarketType) ])
-
-                    infoRow
-                        "API Key"
-                        (_code [ _class_ "text-sm bg-slate-100 px-2 py-1 rounded" ] [ Text.raw account.ApiKeyMasked ])
-
-                    infoRow "Mode" (modeBadge account.IsSandbox)
-
-                    infoRow "Status" (statusBadge account.HasCredentials) ] ]
+                    infoRow "Mode" (modeBadge account.IsSandbox) ] ]
 
     let private timestampsSection (account: AccountDetailsInfo) =
         _div
@@ -160,9 +132,7 @@ module View =
                         [ _div
                               [ _class_
                                     "relative transform overflow-hidden rounded-lg bg-white shadow-lg transition-all w-full max-w-2xl" ]
-                              [
-                                // header
-                                _div
+                              [ _div
                                     [ _class_ "border-b border-slate-100 px-6 py-4" ]
                                     [ _div
                                           [ _class_ "flex items-center justify-between" ]
@@ -176,16 +146,11 @@ module View =
                                                   _p
                                                       [ _class_ "text-slate-500 text-sm mt-1" ]
                                                       [ Text.raw $"{account.MarketType} • ID: {account.Id}" ] ]
-                                            _div
-                                                [ _class_ "flex items-center space-x-3" ]
-                                                [ statusBadge account.HasCredentials; closeModalButton ] ] ]
+                                            closeModalButton ] ]
 
-                                // content
                                 _div
                                     [ _class_ "px-6 py-6" ]
-                                    [
-                                      // header
-                                      _div
+                                    [ _div
                                           [ _class_ "flex items-center space-x-4 mb-6 pb-6 border-b" ]
                                           [ exchangeIcon account.MarketType
                                             _div
@@ -204,27 +169,10 @@ module View =
 
                                       _div
                                           [ _class_ "grid grid-cols-1 md:grid-cols-2 gap-6" ]
-                                          [ basicInfoSection account; timestampsSection account ]
+                                          [ basicInfoSection account; timestampsSection account ] ]
 
-                                      // warning for sandbox
-                                      if account.IsSandbox then
-                                          _div
-                                              [ _class_ "mt-6 bg-slate-50 border border-slate-200 rounded-md p-4" ]
-                                              [ _div
-                                                    [ _class_ "flex" ]
-                                                    [ _div
-                                                          [ _class_ "flex-shrink-0" ]
-                                                          [ _i [ _class_ "fas fa-info-circle text-slate-500" ] [] ]
-                                                      _div
-                                                          [ _class_ "ml-3" ]
-                                                          [ _p
-                                                                [ _class_ "text-sm text-slate-500" ]
-                                                                [ Text.raw
-                                                                      "This account is in sandbox mode. Trades are simulated and do not use real funds." ] ] ] ] ]
-
-                                // footer
                                 _div
-                                    [ _class_ "px-6 py-4 flex justify-between border-t border-slate-100" ]
+                                    [ _class_ "px-6 py-4 flex justify-end border-t border-slate-100" ]
                                     [ _button
                                           [ _type_ "button"
                                             _class_
@@ -232,16 +180,7 @@ module View =
                                             Hx.get "/accounts/modal/close"
                                             Hx.targetCss "#modal-container"
                                             Hx.swapInnerHtml ]
-                                          [ _i [ _class_ "fas fa-times mr-2" ] []; Text.raw "Close" ]
-
-                                      _button
-                                          [ _type_ "button"
-                                            _class_
-                                                "px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-medium text-sm rounded-md transition-colors"
-                                            Hx.get $"/accounts/{account.Id}/edit/modal"
-                                            Hx.targetCss "#modal-container"
-                                            Hx.swapInnerHtml ]
-                                          [ _i [ _class_ "fas fa-edit mr-2" ] []; Text.raw "Edit Account" ] ] ] ] ] ]
+                                          [ _i [ _class_ "fas fa-times mr-2" ] []; Text.raw "Close" ] ] ] ] ] ]
 
     let notFound =
         _div
@@ -274,12 +213,16 @@ module View =
                                     [ Text.raw "Close" ] ] ] ] ]
 
 module Handler =
+    open Microsoft.Extensions.Options
+    open Plutus.Core.Infrastructure
+
     let modal (marketId: int) : HttpHandler =
         fun ctx ->
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let! account = Data.getAccountDetails scopeFactory marketId ctx.RequestAborted
+                    let credentialsSettings = ctx.Plug<IOptions<MarketCredentialsSettings>>().Value
+                    let! account = Data.getAccountDetails scopeFactory credentialsSettings marketId ctx.RequestAborted
 
                     match account with
                     | Some a -> return! Response.ofHtml (View.modal a) ctx

@@ -48,13 +48,8 @@ let markets =
       get "/markets/grid" (requireAuth Markets.Handler.grid) ]
 
 let accounts =
-    [ get "/accounts/modal" (requireAuth CreateAccount.Handler.modal)
-      get "/accounts/modal/close" (requireAuth CreateAccount.Handler.closeModal)
-      post "/accounts/create" (requireAuth CreateAccount.Handler.create)
-      mapGet "/accounts/{id:int}/details/modal" _.GetInt("id") (fun id -> requireAuth (AccountDetails.Handler.modal id))
-      mapGet "/accounts/{id:int}/edit/modal" _.GetInt("id") (fun id -> requireAuth (AccountEdit.Handler.modal id))
-      mapPost "/accounts/{id:int}/edit" _.GetInt("id") (fun id -> requireAuth (AccountEdit.Handler.update id))
-      mapDelete "/accounts/{id:int}" _.GetInt("id") (fun id -> requireAuth (AccountEdit.Handler.delete id)) ]
+    [ get "/accounts/modal/close" (requireAuth (fun ctx -> Response.ofHtml (Falco.Markup.Text.raw "") ctx))
+      mapGet "/accounts/{id:int}/details/modal" _.GetInt("id") (fun id -> requireAuth (AccountDetails.Handler.modal id)) ]
 
 let orders =
     [ get "/orders/count" (requireAuth Orders.Handler.count)

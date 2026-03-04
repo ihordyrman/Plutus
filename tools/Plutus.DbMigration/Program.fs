@@ -19,4 +19,4 @@ let engine =
 engine.PerformUpgrade() |> ignore
 
 let db = new NpgsqlConnection(connectionString) :> System.Data.IDbConnection
-ensureCredentialsPopulated configuration db |> Async.AwaitTask |> Async.RunSynchronously
+ensureMarketsPopulated db |> Async.AwaitTask |> Async.RunSynchronously

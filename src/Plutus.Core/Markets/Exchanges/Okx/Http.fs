@@ -9,9 +9,7 @@ open System.Threading
 open System.Threading.Tasks
 open System.Web
 open Microsoft.Extensions.Logging
-open Plutus.Core.Domain
-open Plutus.Core.Markets.Stores
-open Plutus.Core.Markets.Stores.CredentialsStore
+open Plutus.Core.Infrastructure
 open Plutus.Core.Shared
 
 module Http =
@@ -61,17 +59,17 @@ module Http =
 
     let private addAuthHeaders
         (client: HttpClient)
-        (credentials: Credentials)
+        (credentials: MarketCredentials)
         (timestamp: string)
         (method: string)
         (path: string)
         (body: string)
         =
-        let signature = Auth.generateSignature timestamp credentials.Secret method path body
+        let signature = Auth.generateSignature timestamp credentials.SecretKey method path body
         client.DefaultRequestHeaders.Add("OK-ACCESS-SIGN", signature)
         client.DefaultRequestHeaders.Add("OK-ACCESS-TIMESTAMP", timestamp)
-        client.DefaultRequestHeaders.Add("OK-ACCESS-KEY", credentials.Key)
-        client.DefaultRequestHeaders.Add("OK-ACCESS-PASSPHRASE", credentials.Passphrase |> Option.defaultValue "")
+        client.DefaultRequestHeaders.Add("OK-ACCESS-KEY", credentials.ApiKey)
+        client.DefaultRequestHeaders.Add("OK-ACCESS-PASSPHRASE", credentials.Passphrase)
         client.DefaultRequestHeaders.Add("x-simulated-trading", if credentials.IsSandbox then "1" else "0")
 
     let private clearAuthHeaders (client: HttpClient) =
@@ -85,7 +83,7 @@ module Http =
     let private execute<'T>
         (client: HttpClient)
         (jsonOpts: JsonSerializerOptions)
-        (credentials: Credentials)
+        (credentials: MarketCredentials)
         (req: Request)
         : Task<Result<'T, ServiceError>>
         =
@@ -177,7 +175,7 @@ module Http =
     let private exec<'T>
         (httpClient: HttpClient)
         (jsonOpts: JsonSerializerOptions)
-        (credentials: Credentials)
+        (credentials: MarketCredentials)
         (logger: ILogger)
         (req: Request)
         : Task<Result<'T, ServiceError>>
@@ -191,21 +189,10 @@ module Http =
                 return Error(Unexpected ex)
         }
 
-    let create (httpClient: HttpClient) (credentialsStore: CredentialsStore.T) (logger: ILogger) : T =
+    let create (httpClient: HttpClient) (credentials: MarketCredentials) (logger: ILogger) : T =
 
         let jsonOpts = JsonSerializerOptions()
         jsonOpts.Converters.Add(OkxCandlestickConverter())
-
-        let credentials =
-            match
-                credentialsStore.GetCredentials MarketType.Okx CancellationToken.None
-                |> Async.AwaitTask
-                |> Async.RunSynchronously
-            with
-            | Ok credentials -> credentials
-            | Error err ->
-                logger.LogError("Failed to retrieve OKX credentials: {Error}", err)
-                failwith "Cannot create OkxHttp without valid credentials"
 
         let run req = exec httpClient jsonOpts credentials logger req
 

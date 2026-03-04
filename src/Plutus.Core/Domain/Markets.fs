@@ -8,12 +8,4 @@ type MarketType =
     | IBKR = 2
 
 [<CLIMutable>]
-type Market =
-    { Id: int
-      Type: MarketType
-      ApiKey: string
-      Passphrase: string option
-      SecretKey: string
-      IsSandbox: bool
-      CreatedAt: DateTime
-      UpdatedAt: DateTime }
+type Market = { Id: int; Type: MarketType; CreatedAt: DateTime; UpdatedAt: DateTime }

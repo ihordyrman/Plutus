@@ -1,13 +1,9 @@
 create table markets
 (
     id         serial primary key,
-    type       int          not null,
-    api_key    varchar(500) not null,
-    secret_key varchar(500) not null,
-    passphrase varchar(500),
-    is_sandbox boolean      not null default true,
-    created_at timestamp    not null,
-    updated_at timestamp    not null
+    type       int       not null,
+    created_at timestamp not null,
+    updated_at timestamp not null
 );
 
 create unique index ix_markets_type on markets (type);
