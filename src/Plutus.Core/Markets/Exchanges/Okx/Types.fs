@@ -210,82 +210,39 @@ type OkxHttpResponse<'T> =
       Data: 'T option }
 
 type OkxCandlestick =
-    { Data: string[] }
-
-    member x.Timestamp =
-        if x.Data.Length > 0 then
-            DateTimeOffset
-                .FromUnixTimeMilliseconds(
-                    int64 (Double.Parse(x.Data[0], NumberStyles.Any, NumberFormatInfo.InvariantInfo))
-                )
-                .UtcDateTime
-        else
-            DateTime.MinValue
-
-    member x.Open =
-        if x.Data.Length > 1 then
-            Decimal.Parse(x.Data[1], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.High =
-        if x.Data.Length > 2 then
-            Decimal.Parse(x.Data[2], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.Low =
-        if x.Data.Length > 3 then
-            Decimal.Parse(x.Data[3], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.Close =
-        if x.Data.Length > 4 then
-            Decimal.Parse(x.Data[4], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.Volume =
-        if x.Data.Length > 5 then
-            Decimal.Parse(x.Data[5], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.VolumeCurrency =
-        if x.Data.Length > 6 then
-            Decimal.Parse(x.Data[6], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.VolumeQuoteCurrency =
-        if x.Data.Length > 7 then
-            Decimal.Parse(x.Data[7], NumberStyles.Any, NumberFormatInfo.InvariantInfo)
-        else
-            0m
-
-    member x.IsCompleted =
-        if x.Data.Length > 8 then
-            String.Equals(x.Data[8], "1", StringComparison.OrdinalIgnoreCase)
-        else
-            false
+    { Timestamp: DateTime
+      Open: decimal
+      High: decimal
+      Low: decimal
+      Close: decimal
+      Volume: decimal
+      VolumeCurrency: decimal
+      VolumeQuoteCurrency: decimal
+      IsCompleted: bool }
 
 type OkxCandlestickConverter() =
     inherit JsonConverter<OkxCandlestick>()
 
-    override _.Read(reader: byref<Utf8JsonReader>, typeToConvert: Type, options: JsonSerializerOptions) =
+    override this.Read(reader, typeToConvert, options) =
         let data = JsonSerializer.Deserialize<string[]>(&reader, options)
 
         if isNull data then
             raise (JsonException("Failed to deserialize candlestick data"))
 
-        { Data = data }
+        let dec (value: string) = Decimal.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture)
+        let double (value: string) = Double.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture)
 
-    override _.Write(writer: Utf8JsonWriter, value: OkxCandlestick, options: JsonSerializerOptions) =
-        JsonSerializer.Serialize(writer, value.Data, options)
+        { Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(int64 (double data[0])).UtcDateTime
+          Open = dec data[1]
+          High = dec data[2]
+          Low = dec data[3]
+          Close = dec data[4]
+          Volume = dec data[5]
+          VolumeCurrency = dec data[6]
+          VolumeQuoteCurrency = dec data[7]
+          IsCompleted = data[8] = "1" }
 
-[<JsonConverter(typeof<OkxCandlestickConverter>)>]
-type OkxCandlestickWrapper = OkxCandlestick
+    override this.Write(_, _, _) = raise (NotSupportedException("Serialization not supported"))
 
 [<CLIMutable>]
 type OkxPlaceOrderRequest =

@@ -40,9 +40,7 @@
         <Compile Include="Repositories\ApiKeyRepository.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
-        <Compile Include="Markets\Abstractions\BalanceProvider.fs" />
-        <Compile Include="Markets\Abstractions\OrderExecutor.fs" />
-        <Compile Include="Markets\Abstractions\OrderSyncer.fs" />
+        <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />
 
         <Compile Include="Markets\Exchanges\Okx\Types.fs" />
         <Compile Include="Markets\Exchanges\Okx\Auth.fs" />

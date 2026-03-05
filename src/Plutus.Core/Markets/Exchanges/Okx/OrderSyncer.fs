@@ -8,7 +8,7 @@ open Plutus.Core.Markets.Abstractions
 
 module OrderSyncer =
 
-    let mapState =
+    let private mapState =
         function
         | "live" -> Some OrderStatus.Placed
         | "partially_filled" -> Some OrderStatus.PartiallyFilled
@@ -16,17 +16,17 @@ module OrderSyncer =
         | "canceled" -> Some OrderStatus.Cancelled
         | _ -> None
 
-    let parseDecimal (s: string) =
+    let private parseDecimal (s: string) =
         match Decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture) with
         | true, v -> Some v
         | _ -> None
 
-    let parseTimestamp (ms: string) =
+    let private parseTimestamp (ms: string) =
         match Int64.TryParse(ms) with
         | true, v -> Some(DateTimeOffset.FromUnixTimeMilliseconds(v).UtcDateTime)
         | _ -> None
 
-    let toUpdate (detail: OkxOrderDetail) (status: OrderStatus) : OrderSyncer.OrderUpdate =
+    let private toUpdate (detail: OkxOrderDetail) (status: OrderStatus) : OrderSyncer.OrderUpdate =
         let executedAt =
             match status with
             | OrderStatus.Filled -> parseTimestamp detail.LastFillTime

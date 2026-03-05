@@ -12,8 +12,9 @@ open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Repositories
 
 module OrderSync =
+    open OrderSyncer
 
-    let applyUpdate (order: Order) (update: OrderSyncer.OrderUpdate) =
+    let applyUpdate (order: Order) (update: OrderUpdate) =
         { order with
             Status = update.Status
             Fee = update.Fee
