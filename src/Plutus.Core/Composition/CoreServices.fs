@@ -25,7 +25,7 @@ module CoreServices =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
 
-        services.Configure<MarketCredentialsSettings>(configuration.GetSection(MarketCredentialsSettings.SectionName))
+        services.Configure<MarketConfigurationSettings>(configuration.GetSection(MarketConfigurationSettings.SectionName))
         |> ignore
 
     let private usePipelineOrchestrator (services: IServiceCollection) =
@@ -49,8 +49,8 @@ module CoreServices =
         services.AddScoped<Http.T>(fun provider ->
             let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxHttp")
             let httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient("Okx")
-            let creds = provider.GetRequiredService<IOptions<MarketCredentialsSettings>>().Value
-            let creds = creds.Credentials |> Array.find (fun x -> x.MarketType = "Okx")
+            let creds = provider.GetRequiredService<IOptions<MarketConfigurationSettings>>().Value
+            let creds = creds.Configurations |> Array.find (fun x -> x.MarketType = "Okx")
 
             Http.create httpClient creds logger
         )

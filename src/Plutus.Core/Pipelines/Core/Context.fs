@@ -26,7 +26,6 @@ type TradingContext =
 module TradingContext =
     open System.Text.Json
 
-    // see no reason to save whole guid, just need some random string to identify execution in logs
     let private getRandomExecutionId = fun () -> System.Guid.CreateVersion7().ToString().Substring(24, 12)
 
     let empty pipelineId instrument marketType =

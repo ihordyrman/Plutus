@@ -13,7 +13,7 @@ open Plutus.Core.Repositories
 type MarketSeedingWorker
     (
         scopeFactory: IServiceScopeFactory,
-        creds: IOptions<MarketCredentialsSettings>,
+        creds: IOptions<MarketConfigurationSettings>,
         logger: ILogger<MarketSeedingWorker>
     ) =
     inherit BackgroundService()
@@ -23,7 +23,7 @@ type MarketSeedingWorker
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            for c in creds.Value.Credentials do
+            for c in creds.Value.Configurations do
                 match System.Enum.TryParse<MarketType>(c.MarketType) with
                 | true, marketType ->
                     match! MarketRepository.ensureExists db marketType ct with

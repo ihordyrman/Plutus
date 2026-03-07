@@ -19,13 +19,10 @@ module BacktestEngine =
           Trades: BacktestTrade list
           EquityPoints: BacktestEquityPoint list }
 
-    let private forceClosePosition (state: BacktestState.T) (lastPrice: decimal) (candleTime: DateTime) =
-        match state.CurrentPosition with
+    let private finalizePosition (state: SimState ref) (lastPrice: decimal) (candleTime: DateTime) =
+        match state.Value.Position with
         | Some pos ->
             let proceeds = pos.Quantity * lastPrice
-            state.Balance <- state.Balance + proceeds
-            state.TradeCounter <- state.TradeCounter + 1
-            state.CurrentPosition <- None
 
             let trade =
                 { Id = 0
@@ -35,9 +32,16 @@ module BacktestEngine =
                   Quantity = pos.Quantity
                   Fee = 0m
                   CandleTime = candleTime
-                  Capital = state.Balance }
+                  Capital = state.Value.Balance }
 
-            state.Trades <- trade :: state.Trades
+            let tradeCount = state.Value.TradeCount + 1
+
+            state.Value <-
+                { state.Value with
+                    Balance = state.Value.Balance + proceeds
+                    Position = None
+                    Trades = trade :: state.Value.Trades
+                    TradeCount = tradeCount }
         | None -> ()
 
     let private sampleEquityPoints (points: (DateTime * decimal) list) (maxPoints: int) =
@@ -86,11 +90,10 @@ module BacktestEngine =
                             { Builder.StepTypeKey = step.StepTypeKey
                               Builder.Order = step.Order
                               Builder.IsEnabled = step.IsEnabled
-                              Builder.Parameters =
-                                step.Parameters |> Seq.map (fun kvp -> kvp.Key, kvp.Value) |> Map.ofSeq }
+                              Builder.Parameters = step.Parameters |> Seq.map (fun x -> x.Key, x.Value) |> Map.ofSeq }
                         )
 
-                    let state = BacktestState.create config
+                    let state = ref { SimState.empty with Balance = config.InitialCapital }
 
                     let backtestRegistry =
                         TradingSteps.all (BacktestAdapters.getPosition state) (BacktestAdapters.tradeExecutor state)
@@ -168,8 +171,8 @@ module BacktestEngine =
                                             ct
 
                                     let equity =
-                                        state.Balance
-                                        + (state.CurrentPosition
+                                        state.Value.Balance
+                                        + (state.Value.Position
                                            |> Option.map (fun p -> p.Quantity * candle.Close)
                                            |> Option.defaultValue 0m)
 
@@ -177,9 +180,9 @@ module BacktestEngine =
                                     nextExecution <- candle.Timestamp + intervalSpan
 
                             let lastCandle = sortedCandles |> List.last
-                            forceClosePosition state lastCandle.Close lastCandle.Timestamp
+                            finalizePosition state lastCandle.Close lastCandle.Timestamp
 
-                            let trades = state.Trades |> List.rev
+                            let trades = state.Value.Trades |> List.rev
                             let sampledEquity = sampleEquityPoints (equitySnapshots |> Seq.toList) 500
 
                             let backtestTrades = trades |> List.map (fun t -> { t with BacktestRunId = runId })
@@ -205,21 +208,21 @@ module BacktestEngine =
                             let backtestLogs =
                                 logs
                                 |> Seq.toList
-                                |> List.map (fun l ->
+                                |> List.map (fun x ->
                                     { Id = 0
                                       BacktestRunId = runId
-                                      ExecutionId = l.ExecutionId
-                                      StepTypeKey = l.StepTypeKey
+                                      ExecutionId = x.ExecutionId
+                                      StepTypeKey = x.StepTypeKey
                                       Outcome =
-                                        match l.Outcome with
+                                        match x.Outcome with
                                         | StepOutcome.Success -> 0
                                         | StepOutcome.Stopped -> 1
                                         | StepOutcome.Failed -> 2
-                                      Message = l.Message
-                                      Context = l.ContextSnapshot
-                                      CandleTime = l.StartTime
-                                      StartTime = l.StartTime
-                                      EndTime = l.EndTime }
+                                      Message = x.Message
+                                      Context = x.ContextSnapshot
+                                      CandleTime = x.StartTime
+                                      StartTime = x.StartTime
+                                      EndTime = x.EndTime }
                                 )
 
                             let! _ = BacktestRepository.insertTrades db backtestTrades ct

@@ -75,16 +75,9 @@ module BacktestsApi =
 
                                                             ()
                                                         with ex ->
-                                                            use services = scopeFactory.CreateScope()
-
-                                                            use db2 =
-                                                                services.ServiceProvider.GetRequiredService<
-                                                                    System.Data.IDbConnection
-                                                                 >()
-
                                                             let! _ =
                                                                 BacktestRepository.updateRunResults
-                                                                    db2
+                                                                    db
                                                                     { Id = runId
                                                                       PipelineId = config.PipelineId
                                                                       Status = BacktestStatus.Failed

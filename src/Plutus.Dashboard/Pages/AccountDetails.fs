@@ -19,7 +19,7 @@ module Data =
 
     let getAccountDetails
         (scopeFactory: IServiceScopeFactory)
-        (credentialsSettings: MarketCredentialsSettings)
+        (credentialsSettings: MarketConfigurationSettings)
         (marketId: int)
         (ct: CancellationToken)
         : Task<AccountDetailsInfo option>
@@ -33,7 +33,7 @@ module Data =
             | Error _ -> return None
             | Ok data ->
                 let isSandbox =
-                    credentialsSettings.Credentials
+                    credentialsSettings.Configurations
                     |> Array.tryFind (fun c -> c.MarketType = string data.Type)
                     |> Option.map (fun c -> c.IsSandbox)
                     |> Option.defaultValue false
@@ -221,7 +221,7 @@ module Handler =
             task {
                 try
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
-                    let credentialsSettings = ctx.Plug<IOptions<MarketCredentialsSettings>>().Value
+                    let credentialsSettings = ctx.Plug<IOptions<MarketConfigurationSettings>>().Value
                     let! account = Data.getAccountDetails scopeFactory credentialsSettings marketId ctx.RequestAborted
 
                     match account with

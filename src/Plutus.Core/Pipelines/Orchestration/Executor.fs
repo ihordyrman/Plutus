@@ -25,9 +25,7 @@ module Executor =
 
     let private loadPipeline (db: IDbConnection) (pipelineId: int) (ct: CancellationToken) =
         task {
-            let! pipeline = PipelineRepository.getById db pipelineId ct
-
-            match pipeline with
+            match! PipelineRepository.getById db pipelineId ct with
             | Error _ -> return None
             | Ok pipeline -> return Some pipeline
         }
@@ -81,7 +79,7 @@ module Executor =
                             match Builder.buildSteps registry scope.ServiceProvider stepConfigs with
                             | Error errors ->
                                 for err in errors do
-                                    logger.LogWarning(
+                                    logger.LogError(
                                         "Pipeline {PipelineId} step {StepKey} validation failed: {Errors}",
                                         pipelineId,
                                         err.StepKey,
@@ -102,6 +100,8 @@ module Executor =
                                         pipeline.MarketType
                                         Interval.OneMinute
                                         ct
+
+                                    // todo: we also need to verify this is recent enough
 
                                 match latestCandle with
                                 | Error error ->
@@ -194,11 +194,11 @@ module Executor =
         let stop () =
             task {
                 match state.Cts, state.Task with
-                | Some cts, Some t ->
+                | Some cts, Some task ->
                     cts.Cancel()
 
                     try
-                        do! t
+                        do! task
                     with :? OperationCanceledException ->
                         ()
 
