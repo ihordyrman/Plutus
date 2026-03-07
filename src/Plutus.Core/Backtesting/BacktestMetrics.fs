@@ -5,28 +5,11 @@ open Plutus.Core.Domain
 
 module BacktestMetrics =
 
-    type Metrics =
-        { TotalReturn: decimal
-          FinalCapital: decimal
-          TotalTrades: int
-          WinningTrades: int
-          LosingTrades: int
-          WinRate: decimal
-          AverageWin: decimal
-          AverageLoss: decimal
-          ProfitFactor: decimal
-          LargestWin: decimal
-          LargestLoss: decimal
-          MaxDrawdownPct: decimal
-          SharpeRatio: decimal
-          AverageHoldingPeriod: TimeSpan
-          EquityCurve: (DateTime * decimal) list }
-
     let calculate
         (initialCapital: decimal)
         (trades: BacktestTrade list)
         (equityPoints: BacktestEquityPoint list)
-        : Metrics
+        : BacktestMetrics
         =
         let pairs =
             trades

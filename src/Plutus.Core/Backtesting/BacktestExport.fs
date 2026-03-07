@@ -15,12 +15,7 @@ module BacktestExport =
         |> List.chunkBySize 2
         |> List.filter (fun chunk -> chunk.Length = 2)
 
-    let private addSummarySheet
-        (wb: XLWorkbook)
-        (run: BacktestRun)
-        (pipeline: Pipeline)
-        (metrics: BacktestMetrics.Metrics)
-        =
+    let private addSummarySheet (wb: XLWorkbook) (run: BacktestRun) (pipeline: Pipeline) (metrics: BacktestMetrics) =
         let ws = wb.Worksheets.Add("Summary")
         let dateFmt (d: DateTime) = d.ToString("yyyy-MM-dd")
 
@@ -140,7 +135,7 @@ module BacktestExport =
         (steps: PipelineStep list)
         (trades: BacktestTrade list)
         (equity: BacktestEquityPoint list)
-        (metrics: BacktestMetrics.Metrics)
+        (metrics: BacktestMetrics)
         : MemoryStream
         =
         let wb = new XLWorkbook()

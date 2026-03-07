@@ -12,4 +12,27 @@ type SimState =
       Equity: (DateTime * decimal) list
       TradeCount: int }
 
-    static member empty : SimState = { Balance = 0m; Position = None; Trades = []; Equity = []; TradeCount = 0 }
+    static member empty: SimState = { Balance = 0m; Position = None; Trades = []; Equity = []; TradeCount = 0 }
+
+type BacktestMetrics =
+    { TotalReturn: decimal
+      FinalCapital: decimal
+      TotalTrades: int
+      WinningTrades: int
+      LosingTrades: int
+      WinRate: decimal
+      AverageWin: decimal
+      AverageLoss: decimal
+      ProfitFactor: decimal
+      LargestWin: decimal
+      LargestLoss: decimal
+      MaxDrawdownPct: decimal
+      SharpeRatio: decimal
+      AverageHoldingPeriod: TimeSpan
+      EquityCurve: (DateTime * decimal) list }
+
+type BacktestResult =
+    { RunId: int
+      Metrics: BacktestMetrics
+      Trades: BacktestTrade list
+      EquityPoints: BacktestEquityPoint list }
