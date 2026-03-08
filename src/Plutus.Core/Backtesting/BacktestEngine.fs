@@ -3,60 +3,126 @@ namespace Plutus.Core.Backtesting
 open System
 open System.Data
 open System.Threading
+open System.Threading.Tasks
 open FsToolkit.ErrorHandling
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
 open Plutus.Core.Pipelines.Core
+open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Pipelines.Trading
 open Plutus.Core.Repositories
 open Plutus.Core.Shared
 
 module BacktestEngine =
 
-    let private emptyRun runId (config: BacktestConfig) status errorMsg =
-        { Id = runId
-          PipelineId = config.PipelineId
-          Status = status
-          StartDate = config.StartDate
-          EndDate = config.EndDate
-          IntervalMinutes = config.IntervalMinutes
-          InitialCapital = config.InitialCapital
-          FinalCapital = None
-          TotalTrades = 0
-          WinRate = None
-          MaxDrawdown = None
-          SharpeRatio = None
-          ErrorMessage = errorMsg
-          CreatedAt = DateTime.UtcNow
-          CompletedAt = None }
+    type LoopAcc = { NextExecution: DateTime; Equity: (DateTime * decimal) list; Logs: ExecutionLog list }
 
-    let private runFromMetrics runId (config: BacktestConfig) (metrics: BacktestMetrics) =
-        { Id = runId
-          PipelineId = config.PipelineId
-          Status = BacktestStatus.Completed
-          StartDate = config.StartDate
-          EndDate = config.EndDate
-          IntervalMinutes = config.IntervalMinutes
-          InitialCapital = config.InitialCapital
-          FinalCapital = Some metrics.FinalCapital
-          TotalTrades = metrics.TotalTrades
-          WinRate = Some metrics.WinRate
-          MaxDrawdown = Some metrics.MaxDrawdownPct
-          SharpeRatio = Some metrics.SharpeRatio
-          ErrorMessage = null
-          CreatedAt = DateTime.UtcNow
-          CompletedAt = Some DateTime.UtcNow }
+    let inline private orFail result = result |> TaskResult.mapError string
+
+    let finalizePosition (state: SimState ref) (lastPrice: decimal) (candleTime: DateTime) =
+        match state.Value.Position with
+        | Some pos ->
+            let proceeds = pos.Quantity * lastPrice
+
+            let trades =
+                { Id = 0
+                  BacktestRunId = 0
+                  Side = OrderSide.Sell
+                  Price = lastPrice
+                  Quantity = pos.Quantity
+                  Fee = 0m
+                  CandleTime = candleTime
+                  Capital = state.Value.Balance }
+                :: state.Value.Trades
+
+            state.Value <-
+                { state.Value with
+                    Balance = state.Value.Balance + proceeds
+                    Position = None
+                    Trades = trades
+                    TradeCount = trades.Length }
+        | None -> ()
+
+    let sampleEquityPoints (points: (DateTime * decimal) list) (maxPoints: int) =
+        if points.Length <= maxPoints then
+            points
+        else
+            let step = max 1 (points.Length / maxPoints)
+            points |> List.indexed |> List.filter (fun (x, _) -> x % step = 0) |> List.map snd
+
+    let private runCandle
+        (pipeline: Pipeline)
+        (steps: Step<TradingContext> list)
+        (stateRef: SimState ref)
+        (intervalSpan: TimeSpan)
+        (ct: CancellationToken)
+        (acc: LoopAcc)
+        (candle: Candlestick)
+        =
+        task {
+            if ct.IsCancellationRequested || candle.Timestamp < acc.NextExecution then
+                return acc
+            else
+                let ctx =
+                    { TradingContext.empty pipeline.Id pipeline.Instrument pipeline.MarketType with
+                        CurrentPrice = candle.Close }
+                    |> TradingContext.withData "backtest:currentTime" candle.Timestamp
+
+                let logs = ResizeArray()
+
+                let! _ =
+                    Runner.run
+                        pipeline.Id
+                        ctx.ExecutionId
+                        TradingContext.serializeForLog
+                        (fun log -> logs.Add({ log with StartTime = candle.Timestamp; EndTime = candle.Timestamp }))
+                        steps
+                        ctx
+                        ct
+
+                let state = stateRef.Value
+
+                let posValue =
+                    state.Position |> Option.map (fun p -> p.Quantity * candle.Close) |> Option.defaultValue 0m
+
+                return
+                    { NextExecution = candle.Timestamp + intervalSpan
+                      Equity = (candle.Timestamp, state.Balance + posValue) :: acc.Equity
+                      Logs = (logs |> Seq.toList) @ acc.Logs }
+        }
+
+    let private simulate
+        (pipeline: Pipeline)
+        (steps: Step<TradingContext> list)
+        (stateRef: SimState ref)
+        (config: BacktestConfig)
+        (candles: Candlestick list)
+        (ct: CancellationToken)
+        =
+        let intervalSpan = TimeSpan.FromMinutes(float config.IntervalMinutes)
+        let seed = { NextExecution = config.StartDate; Equity = []; Logs = [] }
+        let runOne = runCandle pipeline steps stateRef intervalSpan ct
+
+        candles
+        |> List.fold
+            (fun accTask candle ->
+                task {
+                    let! acc = accTask
+                    return! runOne acc candle
+                }
+            )
+            (Task.FromResult seed)
 
     let private loadPipeline db (config: BacktestConfig) ct =
         taskResult {
             let! pipeline =
                 PipelineRepository.getById db config.PipelineId ct
-                |> TaskResult.mapError (fun err -> $"Pipeline not found: {err}")
+                |> TaskResult.mapError (fun e -> $"Pipeline not found: {e}")
 
             let! steps =
                 PipelineStepRepository.getByPipelineId db config.PipelineId ct
-                |> TaskResult.mapError (fun err -> $"Failed to load pipeline steps: {err}")
+                |> TaskResult.mapError (fun e -> $"Failed to load pipeline steps: {e}")
 
             return (pipeline, steps)
         }
@@ -86,22 +152,6 @@ module BacktestEngine =
           Builder.IsEnabled = step.IsEnabled
           Builder.Parameters = step.Parameters |> Seq.map (fun x -> x.Key, x.Value) |> Map.ofSeq }
 
-    let private toBacktestLog runId (x: ExecutionLog) =
-        { Id = 0
-          BacktestRunId = runId
-          ExecutionId = x.ExecutionId
-          StepTypeKey = x.StepTypeKey
-          Outcome =
-            match x.Outcome with
-            | StepOutcome.Success -> 0
-            | StepOutcome.Stopped -> 1
-            | StepOutcome.Failed -> 2
-          Message = x.Message
-          Context = x.ContextSnapshot
-          CandleTime = x.StartTime
-          StartTime = x.StartTime
-          EndTime = x.EndTime }
-
     let private toEquityPoint runId (sampledEquity: (DateTime * decimal) list) (time: DateTime, equity: decimal) =
         let peak = sampledEquity |> List.filter (fun (x, _) -> x <= time) |> List.map snd |> List.max
 
@@ -116,13 +166,11 @@ module BacktestEngine =
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
-            let! _ =
-                BacktestRepository.updateRunResults db (emptyRun runId config BacktestStatus.Running null) ct
-                |> TaskResult.mapError string
+            do!
+                BacktestRepository.updateRunResults db (BacktestRun.create runId config BacktestStatus.Running null) ct
+                |> orFail
 
-            let! pipeline, steps =
-                loadPipeline db config ct |> TaskResult.mapError (fun e -> $"Failed to load pipeline: {e}")
-
+            let! pipeline, steps = loadPipeline db config ct
             let stepConfigs = steps |> List.map toStepConfig
             let stateRef = ref { SimState.empty with Balance = config.InitialCapital }
 
@@ -136,29 +184,25 @@ module BacktestEngine =
                     errors |> List.map (fun e -> $"{e.StepKey}: {e.Errors}") |> String.concat "; "
                 )
 
-            let! candles =
-                loadCandles db pipeline config ct |> TaskResult.mapError (fun e -> $"Failed to load candles: {e}")
-
-            let! loop = BacktestSimulator.simulate pipeline steps stateRef config candles ct
+            let! candles = loadCandles db pipeline config ct
+            let! loop = simulate pipeline steps stateRef config candles ct
             let lastCandle = List.last candles
-            BacktestSimulator.finalizePosition stateRef lastCandle.Close lastCandle.Timestamp
+            finalizePosition stateRef lastCandle.Close lastCandle.Timestamp
 
             let trades = stateRef.Value.Trades |> List.rev |> List.map (fun x -> { x with BacktestRunId = runId })
 
-            let sampledEquity = loop.Equity |> List.rev |> BacktestSimulator.sampleEquityPoints <| 500
+            let sampledEquity = loop.Equity |> List.rev |> sampleEquityPoints <| 500
             let equity = sampledEquity |> List.map (toEquityPoint runId sampledEquity)
             let metrics = BacktestMetrics.calculate config.InitialCapital trades equity
 
-            let! _ = BacktestRepository.insertTrades db trades ct |> TaskResult.mapError string
-            let! _ = BacktestRepository.insertEquityPoints db equity ct |> TaskResult.mapError string
+            do! BacktestRepository.insertTrades db trades ct |> orFail
+            do! BacktestRepository.insertEquityPoints db equity ct |> orFail
 
-            let! _ =
-                BacktestRepository.insertLogs db (loop.Logs |> List.map (toBacktestLog runId)) ct
-                |> TaskResult.mapError string
+            do!
+                BacktestRepository.insertLogs db (loop.Logs |> List.map (BacktestExecutionLog.ofLog runId)) ct
+                |> orFail
 
-            let! _ =
-                BacktestRepository.updateRunResults db (runFromMetrics runId config metrics) ct
-                |> TaskResult.mapError string
+            do! BacktestRepository.updateRunResults db (BacktestRun.fromMetrics runId config metrics) ct |> orFail
 
             return { RunId = runId; Metrics = metrics; Trades = trades; EquityPoints = equity }
         }
