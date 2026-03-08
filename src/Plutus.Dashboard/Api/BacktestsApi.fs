@@ -11,28 +11,33 @@ open Plutus.Core.Repositories
 
 module BacktestsApi =
 
+    let private validateRunRequest (req: ApiDtos.RunBacktestRequest) : string list =
+        let errors = ResizeArray<string>()
+
+        if req.PipelineId <= 0 then
+            errors.Add("pipelineId must be > 0")
+
+        if req.StartDate >= req.EndDate then
+            errors.Add("startDate must be before endDate")
+
+        if req.IntervalMinutes <= 0 then
+            errors.Add("intervalMinutes must be > 0")
+
+        if req.InitialCapital <= 0m then
+            errors.Add("initialCapital must be > 0")
+
+        errors |> Seq.toList
+
     let run: HttpHandler =
         fun ctx ->
             task {
                 match! ApiResponse.readBody<ApiDtos.RunBacktestRequest> ctx with
                 | Error msg -> return! ApiResponse.validationFailed "Invalid request body" msg ctx
                 | Ok req ->
-                    let errors = ResizeArray<string>()
+                    let errors = validateRunRequest req
 
-                    if req.PipelineId <= 0 then
-                        errors.Add("pipelineId must be > 0")
-
-                    if req.StartDate >= req.EndDate then
-                        errors.Add("startDate must be before endDate")
-
-                    if req.IntervalMinutes <= 0 then
-                        errors.Add("intervalMinutes must be > 0")
-
-                    if req.InitialCapital <= 0m then
-                        errors.Add("initialCapital must be > 0")
-
-                    if errors.Count > 0 then
-                        return! ApiResponse.validationFailed "Validation failed" (errors |> Seq.toList) ctx
+                    if errors.Length > 0 then
+                        return! ApiResponse.validationFailed "Validation failed" errors ctx
                     else
                         let scopeFactory = ctx.RequestServices.GetRequiredService<IServiceScopeFactory>()
                         use scope = scopeFactory.CreateScope()
