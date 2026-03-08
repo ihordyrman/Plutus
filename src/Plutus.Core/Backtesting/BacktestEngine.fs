@@ -3,6 +3,7 @@ namespace Plutus.Core.Backtesting
 open System
 open System.Data
 open System.Threading
+open FsToolkit.ErrorHandling
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
@@ -48,18 +49,21 @@ module BacktestEngine =
           CompletedAt = Some DateTime.UtcNow }
 
     let private loadPipeline db (config: BacktestConfig) ct =
-        task {
-            match! PipelineRepository.getById db config.PipelineId ct with
-            | Error err -> return Error $"Pipeline not found: {err}"
-            | Ok pipeline ->
-                match! PipelineStepRepository.getByPipelineId db config.PipelineId ct with
-                | Error err -> return Error $"Failed to load pipeline steps: {err}"
-                | Ok steps -> return Ok(pipeline, steps)
+        taskResult {
+            let! pipeline =
+                PipelineRepository.getById db config.PipelineId ct
+                |> TaskResult.mapError (fun err -> $"Pipeline not found: {err}")
+
+            let! steps =
+                PipelineStepRepository.getByPipelineId db config.PipelineId ct
+                |> TaskResult.mapError (fun err -> $"Failed to load pipeline steps: {err}")
+
+            return (pipeline, steps)
         }
 
     let private loadCandles db (pipeline: Pipeline) config ct =
-        task {
-            match!
+        taskResult {
+            let! candles =
                 CandlestickRepository.query
                     db
                     pipeline.Instrument
@@ -69,10 +73,11 @@ module BacktestEngine =
                     (Some config.EndDate)
                     None
                     ct
-            with
-            | Error e -> return Error $"Failed to load candles: {e}"
-            | Ok [] -> return Error "No candle data for the specified date range"
-            | Ok candles -> return Ok(candles |> List.sortBy _.Timestamp)
+                |> TaskResult.mapError (fun e -> $"Failed to load candles: {e}")
+
+            match candles with
+            | [] -> return! Error "No candle data for the specified date range"
+            | _ -> return candles |> List.sortBy _.Timestamp
         }
 
     let private toStepConfig (step: PipelineStep) =
@@ -107,49 +112,53 @@ module BacktestEngine =
           Drawdown = if peak > 0m then (peak - equity) / peak else 0m }
 
     let run (scopeFactory: IServiceScopeFactory) (runId: int) (config: BacktestConfig) (ct: CancellationToken) =
-        task {
+        taskResult {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-            let! _ = BacktestRepository.updateRunResults db (emptyRun runId config BacktestStatus.Running null) ct
 
-            match! loadPipeline db config ct with
-            | Error e -> return Error e
-            | Ok(pipeline, pipelineSteps) ->
+            let! _ =
+                BacktestRepository.updateRunResults db (emptyRun runId config BacktestStatus.Running null) ct
+                |> TaskResult.mapError string
 
-                let stepConfigs = pipelineSteps |> List.map toStepConfig
-                let stateRef = ref { SimState.empty with Balance = config.InitialCapital }
+            let! pipeline, steps =
+                loadPipeline db config ct |> TaskResult.mapError (fun e -> $"Failed to load pipeline: {e}")
 
-                let registry =
-                    TradingSteps.all (BacktestAdapters.getPosition stateRef) (BacktestAdapters.tradeExecutor stateRef)
-                    |> Registry.create
+            let stepConfigs = steps |> List.map toStepConfig
+            let stateRef = ref { SimState.empty with Balance = config.InitialCapital }
 
-                match Builder.buildSteps registry scope.ServiceProvider stepConfigs with
-                | Error errors ->
-                    let msg = errors |> List.map (fun e -> $"{e.StepKey}: {e.Errors}") |> String.concat "; "
-                    let! _ = BacktestRepository.updateRunResults db (emptyRun runId config BacktestStatus.Failed msg) ct
-                    return Error $"Failed to build steps: {msg}"
-                | Ok steps when steps.IsEmpty -> return Error "No enabled steps"
-                | Ok steps ->
+            let registry =
+                TradingSteps.all (BacktestAdapters.getPosition stateRef) (BacktestAdapters.tradeExecutor stateRef)
+                |> Registry.create
 
-                    match! loadCandles db pipeline config ct with
-                    | Error e -> return Error e
-                    | Ok candles ->
+            let! steps =
+                Builder.buildSteps registry scope.ServiceProvider stepConfigs
+                |> Result.mapError (fun errors ->
+                    errors |> List.map (fun e -> $"{e.StepKey}: {e.Errors}") |> String.concat "; "
+                )
 
-                        let! loop = BacktestSimulator.simulate pipeline steps stateRef config candles ct
-                        let lastCandle = List.last candles
-                        BacktestSimulator.finalizePosition stateRef lastCandle.Close lastCandle.Timestamp
+            let! candles =
+                loadCandles db pipeline config ct |> TaskResult.mapError (fun e -> $"Failed to load candles: {e}")
 
-                        let trades =
-                            stateRef.Value.Trades |> List.rev |> List.map (fun t -> { t with BacktestRunId = runId })
+            let! loop = BacktestSimulator.simulate pipeline steps stateRef config candles ct
+            let lastCandle = List.last candles
+            BacktestSimulator.finalizePosition stateRef lastCandle.Close lastCandle.Timestamp
 
-                        let sampledEquity = loop.Equity |> List.rev |> BacktestSimulator.sampleEquityPoints <| 500
-                        let equity = sampledEquity |> List.map (toEquityPoint runId sampledEquity)
-                        let metrics = BacktestMetrics.calculate config.InitialCapital trades equity
+            let trades = stateRef.Value.Trades |> List.rev |> List.map (fun x -> { x with BacktestRunId = runId })
 
-                        let! _ = BacktestRepository.insertTrades db trades ct
-                        let! _ = BacktestRepository.insertEquityPoints db equity ct
-                        let! _ = BacktestRepository.insertLogs db (loop.Logs |> List.map (toBacktestLog runId)) ct
-                        let! _ = BacktestRepository.updateRunResults db (runFromMetrics runId config metrics) ct
+            let sampledEquity = loop.Equity |> List.rev |> BacktestSimulator.sampleEquityPoints <| 500
+            let equity = sampledEquity |> List.map (toEquityPoint runId sampledEquity)
+            let metrics = BacktestMetrics.calculate config.InitialCapital trades equity
 
-                        return Ok { RunId = runId; Metrics = metrics; Trades = trades; EquityPoints = equity }
+            let! _ = BacktestRepository.insertTrades db trades ct |> TaskResult.mapError string
+            let! _ = BacktestRepository.insertEquityPoints db equity ct |> TaskResult.mapError string
+
+            let! _ =
+                BacktestRepository.insertLogs db (loop.Logs |> List.map (toBacktestLog runId)) ct
+                |> TaskResult.mapError string
+
+            let! _ =
+                BacktestRepository.updateRunResults db (runFromMetrics runId config metrics) ct
+                |> TaskResult.mapError string
+
+            return { RunId = runId; Metrics = metrics; Trades = trades; EquityPoints = equity }
         }

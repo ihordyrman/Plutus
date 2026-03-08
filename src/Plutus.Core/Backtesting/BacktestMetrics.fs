@@ -25,10 +25,10 @@ module BacktestMetrics =
                 (sell.Price - buy.Price) * sell.Quantity, sell.Price > buy.Price, sell.CandleTime - buy.CandleTime
             )
 
-        let wins = pnls |> List.filter (fun (_, w, _) -> w)
-        let losses = pnls |> List.filter (fun (_, w, _) -> not w)
-        let winPnls = wins |> List.map (fun (p, _, _) -> p)
-        let lossPnls = losses |> List.map (fun (p, _, _) -> p)
+        let wins = pnls |> List.filter (fun (_, x, _) -> x)
+        let losses = pnls |> List.filter (fun (_, x, _) -> not x)
+        let winPnls = wins |> List.map (fun (x, _, _) -> x)
+        let lossPnls = losses |> List.map (fun (x, _, _) -> x)
 
         let equityCurve = equityPoints |> List.map (fun ep -> ep.CandleTime, ep.Equity)
         let equityValues = equityPoints |> List.map _.Equity
@@ -36,22 +36,16 @@ module BacktestMetrics =
         let finalCapital = if equityValues.IsEmpty then initialCapital else equityValues |> List.last
 
         let maxDrawdownPct =
-            if equityValues.IsEmpty then
-                0m
-            else
-                let mutable peak = equityValues.Head
-                let mutable maxDd = 0m
-
-                for equity in equityValues do
-                    if equity > peak then
-                        peak <- equity
-
+            equityValues
+            |> List.fold
+                (fun (peak, maxDd) equity ->
+                    let peak = max peak equity
                     let dd = if peak > 0m then (peak - equity) / peak * 100m else 0m
-
-                    if dd > maxDd then
-                        maxDd <- dd
-
-                maxDd
+                    let maxDd = max maxDd dd
+                    (peak, maxDd)
+                )
+                (equityValues.Head, 0m)
+            |> snd
 
         let sharpeRatio =
             if equityValues.Length < 2 then
