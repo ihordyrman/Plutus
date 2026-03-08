@@ -83,7 +83,7 @@ module BacktestExport =
 
                 balance, (row + 1)
             )
-            (0m, 2)
+            (initialCapital, 2)
         |> ignore
 
         ws.Columns().AdjustToContents() |> ignore
