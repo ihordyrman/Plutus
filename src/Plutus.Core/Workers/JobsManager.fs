@@ -12,7 +12,6 @@ open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
 open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
-open Plutus.Core.Shared.Helpers
 
 module JobsManager =
 
@@ -106,9 +105,7 @@ module JobsManager =
                 | _ -> None
 
             let! result =
-                withDb
-                    scopeFactory
-                    (fun db ct -> SyncJobRepository.updateStatus db jobId (toDbStatus status) errorMsg ct)
+                withDb scopeFactory (fun db -> SyncJobRepository.updateStatus db jobId (toDbStatus status) errorMsg)
 
             match result with
             | Error err ->
@@ -125,14 +122,15 @@ module JobsManager =
         (cursor: DateTimeOffset)
         =
         task {
-            let! result =
-                withDb scopeFactory (fun db ct -> SyncJobRepository.updateProgress db jobId fetchedCount cursor ct)
+            let! result = withDb scopeFactory (fun db -> SyncJobRepository.updateProgress db jobId fetchedCount cursor)
 
             match result with
             | Error err ->
                 logger.LogError("Failed to persist progress for job {JobId}: {Error}", jobId, serviceMessage err)
             | _ -> ()
         }
+
+    type private LoopState = { Cursor: DateTimeOffset; FetchedCount: int; LastError: string option }
 
     let private runSyncLoop
         (scopeFactory: IServiceScopeFactory)
@@ -155,68 +153,75 @@ module JobsManager =
                     use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                     let ct = cts.Token
 
-                    let mutable cursor = startCursor
-                    let mutable fetchedSoFar = startFetchedCount
-                    let mutable keepGoing = true
-                    let mutable lastError: string option = None
+                    let state = { Cursor = startCursor; FetchedCount = startFetchedCount; LastError = None }
 
                     let setRunning (s: SyncJobState) = { s with Status = Running }
                     post (UpdateProgress(jobId, setRunning))
                     do! persistStatus scopeFactory jobId Running
 
-                    while keepGoing && not ct.IsCancellationRequested && cursor > fromDate do
-                        pauseEvent.Wait(ct)
+                    let rec fetchLoop (state: LoopState) : Task<LoopState> =
+                        task {
+                            match state.LastError, ct.IsCancellationRequested, state.Cursor > fromDate with
+                            | Some _, _, _ -> return state
+                            | _, true, _ -> return state
+                            | _, _, false -> return state
+                            | None, false, true ->
+                                pauseEvent.Wait(ct)
 
-                        let daysAgo = (DateTimeOffset.UtcNow - cursor).TotalDays
+                                let fetch =
+                                    match (DateTimeOffset.UtcNow - state.Cursor).TotalDays with
+                                    | x when x > float historyBoundaryDays -> http.getHistoryCandlesticks
+                                    | _ -> http.getCandlesticks
 
-                        let fetch =
-                            if daysAgo > float historyBoundaryDays then
-                                http.getHistoryCandlesticks
-                            else
-                                http.getCandlesticks
+                                let! result =
+                                    fetch
+                                        (string instrument)
+                                        { Bar = Some interval
+                                          After = Some(state.Cursor.ToUnixTimeMilliseconds().ToString())
+                                          Before = None
+                                          Limit = Some 100 }
 
-                        let afterMs = cursor.ToUnixTimeMilliseconds().ToString()
+                                match result with
+                                | Ok candles when candles.Length > 0 ->
+                                    let mapped =
+                                        candles
+                                        |> Array.map (CandlestickSync.toCandlestick instrument interval)
+                                        |> Array.toList
 
-                        let! result =
-                            fetch
-                                (string instrument)
-                                { Bar = Some interval; After = Some afterMs; Before = None; Limit = Some 100 }
+                                    let cursor = state.Cursor.AddMinutes(-100.0)
 
-                        match result with
-                        | Ok candles when candles.Length > 0 ->
-                            let mapped =
-                                candles
-                                |> Array.map (CandlestickSync.toCandlestick instrument interval)
-                                |> Array.toList
+                                    post (
+                                        UpdateProgress(
+                                            jobId,
+                                            fun x ->
+                                                { x with
+                                                    Progress =
+                                                        { x.Progress with
+                                                            FetchedCount = x.Progress.FetchedCount + candles.Length
+                                                            CurrentTimestamp = cursor
+                                                            LastUpdateAt = DateTime.UtcNow } }
+                                        )
+                                    )
 
-                            let! _ = CandlestickRepository.save db mapped ct
+                                    do! CandlestickRepository.save db mapped ct |> Task.map ignore
+                                    let fetchedCount = state.FetchedCount + candles.Length
+                                    do! persistProgress scopeFactory logger jobId fetchedCount cursor
+                                    return! fetchLoop { state with FetchedCount = fetchedCount; Cursor = cursor }
+                                | Ok _ -> return state
+                                | Error err ->
+                                    logger.LogError(
+                                        "Sync job {JobId} fetch failed: {Error}",
+                                        jobId,
+                                        serviceMessage err
+                                    )
 
-                            let newCursor = cursor.AddMinutes(-100.0)
+                                    return { state with LastError = Some(serviceMessage err) }
+                        }
 
-                            post (
-                                UpdateProgress(
-                                    jobId,
-                                    fun s ->
-                                        { s with
-                                            Progress =
-                                                { s.Progress with
-                                                    FetchedCount = s.Progress.FetchedCount + candles.Length
-                                                    CurrentTimestamp = newCursor
-                                                    LastUpdateAt = DateTime.UtcNow } }
-                                )
-                            )
-
-                            fetchedSoFar <- fetchedSoFar + candles.Length
-                            do! persistProgress scopeFactory logger jobId fetchedSoFar newCursor
-                            cursor <- newCursor
-                        | Ok _ -> keepGoing <- false
-                        | Error err ->
-                            logger.LogError("Sync job {JobId} fetch failed: {Error}", jobId, serviceMessage err)
-                            lastError <- Some(serviceMessage err)
-                            keepGoing <- false
+                    let! state = fetchLoop state
 
                     if not ct.IsCancellationRequested then
-                        match lastError with
+                        match state.LastError with
                         | Some errMsg ->
                             let setFailed (s: SyncJobState) = { s with Status = Failed errMsg }
                             post (UpdateProgress(jobId, setFailed))
@@ -341,8 +346,7 @@ module JobsManager =
                                   CreatedAt = now }
 
                             let! createResult =
-                                withDb scopeFactory (fun db ct -> SyncJobRepository.create db dbJob ct)
-                                |> Async.AwaitTask
+                                withDb scopeFactory (fun db -> SyncJobRepository.create db dbJob) |> Async.AwaitTask
 
                             match createResult with
                             | Ok saved ->
@@ -453,8 +457,10 @@ module JobsManager =
                                 cts.Cancel()
                             | _ -> ()
 
-                            let! _ =
-                                withDb scopeFactory (fun db ct -> SyncJobRepository.delete db id ct) |> Async.AwaitTask
+                            do!
+                                withDb scopeFactory (fun db -> SyncJobRepository.delete db id)
+                                |> Task.map ignore
+                                |> Async.AwaitTask
 
                             reply.Reply true
 
