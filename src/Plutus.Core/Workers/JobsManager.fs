@@ -11,6 +11,7 @@ open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
 open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
+open Plutus.Core.Shared.Helpers
 
 module JobsManager =
 
@@ -253,42 +254,43 @@ module JobsManager =
         =
         let result =
             task {
-                let! activeResult = withDb scopeFactory (fun db ct -> SyncJobRepository.getActive db ct)
-
-                match activeResult with
+                match! withDb scopeFactory SyncJobRepository.getActive with
                 | Ok activeJobs ->
-                    let mutable jobs = Map.empty
-                    let mutable pauses = Map.empty
+                    return!
+                        activeJobs
+                        |> foldAsync
+                            (fun acc job ->
+                                task {
+                                    if
+                                        job.Status = int SyncJobStatus.Running
+                                        || job.Status = int SyncJobStatus.Pending
+                                    then
+                                        let! _ =
+                                            withDb
+                                                scopeFactory
+                                                (fun db ->
+                                                    SyncJobRepository.updateStatus db job.Id SyncJobStatus.Paused None
+                                                )
 
-                    for dbJob in activeJobs do
-                        let wasRunningOrPending =
-                            dbJob.Status = int SyncJobStatus.Running || dbJob.Status = int SyncJobStatus.Pending
+                                        ()
 
-                        if wasRunningOrPending then
-                            let! _ =
-                                withDb
-                                    scopeFactory
-                                    (fun db ct ->
-                                        SyncJobRepository.updateStatus db dbJob.Id SyncJobStatus.Paused None ct
+                                    let state = { fromDbJob job with Status = Paused }
+                                    let pauseEvent = new ManualResetEventSlim(false)
+
+                                    let jobs = Map.add job.Id state (acc |> fst)
+                                    let pauses = Map.add job.Id pauseEvent (acc |> snd)
+
+                                    logger.LogInformation(
+                                        "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
+                                        job.Id,
+                                        job.Instrument,
+                                        enum<SyncJobStatus> job.Status
                                     )
 
-                            ()
-
-                        let state = { fromDbJob dbJob with Status = Paused }
-
-                        let pauseEvent = new ManualResetEventSlim(false)
-
-                        jobs <- Map.add dbJob.Id state jobs
-                        pauses <- Map.add dbJob.Id pauseEvent pauses
-
-                        logger.LogInformation(
-                            "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
-                            dbJob.Id,
-                            dbJob.Instrument,
-                            enum<SyncJobStatus> dbJob.Status
-                        )
-
-                    return (jobs, pauses)
+                                    return (jobs, pauses)
+                                }
+                            )
+                            (Map.empty, Map.empty)
                 | Error err ->
                     logger.LogError("Failed to load active sync jobs: {Error}", serviceMessage err)
                     return (Map.empty, Map.empty)
