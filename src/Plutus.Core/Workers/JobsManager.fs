@@ -4,6 +4,7 @@ open System
 open System.Data
 open System.Threading
 open System.Threading.Tasks
+open FSharp.Control
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
@@ -247,6 +248,8 @@ module JobsManager =
           removeJob: int -> bool
           getJobs: unit -> SyncJobState list }
 
+    let private previouslyActive = [ int SyncJobStatus.Running; int SyncJobStatus.Pending ]
+
     let private loadAndResume
         (scopeFactory: IServiceScopeFactory)
         (logger: ILogger)
@@ -256,41 +259,36 @@ module JobsManager =
             task {
                 match! withDb scopeFactory SyncJobRepository.getActive with
                 | Ok activeJobs ->
-                    return!
+                    let! pairs =
                         activeJobs
-                        |> foldAsync
-                            (fun acc job ->
-                                task {
-                                    if
-                                        job.Status = int SyncJobStatus.Running
-                                        || job.Status = int SyncJobStatus.Pending
-                                    then
-                                        let! _ =
-                                            withDb
-                                                scopeFactory
-                                                (fun db ->
-                                                    SyncJobRepository.updateStatus db job.Id SyncJobStatus.Paused None
-                                                )
+                        |> List.map (fun job ->
+                            task {
+                                match previouslyActive |> List.exists (fun x -> x = job.Status) with
+                                | true ->
+                                    do!
+                                        withDb
+                                            scopeFactory
+                                            (fun db ->
+                                                SyncJobRepository.updateStatus db job.Id SyncJobStatus.Paused None
+                                            )
+                                        |> Task.map ignore
+                                | _ -> ()
 
-                                        ()
+                                logger.LogInformation(
+                                    "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
+                                    job.Id,
+                                    job.Instrument,
+                                    enum<SyncJobStatus> job.Status
+                                )
 
-                                    let state = { fromDbJob job with Status = Paused }
-                                    let pauseEvent = new ManualResetEventSlim(false)
+                                return job.Id, { fromDbJob job with Status = Paused }, new ManualResetEventSlim(false)
+                            }
+                        )
+                        |> Task.WhenAll
 
-                                    let jobs = Map.add job.Id state (acc |> fst)
-                                    let pauses = Map.add job.Id pauseEvent (acc |> snd)
-
-                                    logger.LogInformation(
-                                        "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
-                                        job.Id,
-                                        job.Instrument,
-                                        enum<SyncJobStatus> job.Status
-                                    )
-
-                                    return (jobs, pauses)
-                                }
-                            )
-                            (Map.empty, Map.empty)
+                    let jobs = pairs |> Array.map (fun (id, state, _) -> id, state) |> Map.ofArray
+                    let pauses = pairs |> Array.map (fun (id, _, pause) -> id, pause) |> Map.ofArray
+                    return jobs, pauses
                 | Error err ->
                     logger.LogError("Failed to load active sync jobs: {Error}", serviceMessage err)
                     return (Map.empty, Map.empty)
