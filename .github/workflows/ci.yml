@@ -1,0 +1,21 @@
+name: CI
+
+on:
+    push:
+    pull_request:
+        branches: [ main ]
+
+jobs:
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            -   uses: actions/checkout@v4
+
+            -   name: Setup .NET
+                uses: actions/setup-dotnet@v5
+                with:
+                    dotnet-version: '10.0.x'
+
+            -   name: Run tests
+                run: dotnet test tests/Plutus.Core.UnitTests/ -v quiet
