@@ -4,6 +4,7 @@ open System
 open System.Data
 open System.Threading
 open System.Threading.Tasks
+open FSharp.Control
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
@@ -104,9 +105,7 @@ module JobsManager =
                 | _ -> None
 
             let! result =
-                withDb
-                    scopeFactory
-                    (fun db ct -> SyncJobRepository.updateStatus db jobId (toDbStatus status) errorMsg ct)
+                withDb scopeFactory (fun db -> SyncJobRepository.updateStatus db jobId (toDbStatus status) errorMsg)
 
             match result with
             | Error err ->
@@ -123,14 +122,15 @@ module JobsManager =
         (cursor: DateTimeOffset)
         =
         task {
-            let! result =
-                withDb scopeFactory (fun db ct -> SyncJobRepository.updateProgress db jobId fetchedCount cursor ct)
+            let! result = withDb scopeFactory (fun db -> SyncJobRepository.updateProgress db jobId fetchedCount cursor)
 
             match result with
             | Error err ->
                 logger.LogError("Failed to persist progress for job {JobId}: {Error}", jobId, serviceMessage err)
             | _ -> ()
         }
+
+    type private LoopState = { Cursor: DateTimeOffset; FetchedCount: int; LastError: string option }
 
     let private runSyncLoop
         (scopeFactory: IServiceScopeFactory)
@@ -153,68 +153,75 @@ module JobsManager =
                     use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
                     let ct = cts.Token
 
-                    let mutable cursor = startCursor
-                    let mutable fetchedSoFar = startFetchedCount
-                    let mutable keepGoing = true
-                    let mutable lastError: string option = None
+                    let state = { Cursor = startCursor; FetchedCount = startFetchedCount; LastError = None }
 
                     let setRunning (s: SyncJobState) = { s with Status = Running }
                     post (UpdateProgress(jobId, setRunning))
                     do! persistStatus scopeFactory jobId Running
 
-                    while keepGoing && not ct.IsCancellationRequested && cursor > fromDate do
-                        pauseEvent.Wait(ct)
+                    let rec fetchLoop (state: LoopState) : Task<LoopState> =
+                        task {
+                            match state.LastError, ct.IsCancellationRequested, state.Cursor > fromDate with
+                            | Some _, _, _ -> return state
+                            | _, true, _ -> return state
+                            | _, _, false -> return state
+                            | None, false, true ->
+                                pauseEvent.Wait(ct)
 
-                        let daysAgo = (DateTimeOffset.UtcNow - cursor).TotalDays
+                                let fetch =
+                                    match (DateTimeOffset.UtcNow - state.Cursor).TotalDays with
+                                    | x when x > float historyBoundaryDays -> http.getHistoryCandlesticks
+                                    | _ -> http.getCandlesticks
 
-                        let fetch =
-                            if daysAgo > float historyBoundaryDays then
-                                http.getHistoryCandlesticks
-                            else
-                                http.getCandlesticks
+                                let! result =
+                                    fetch
+                                        (string instrument)
+                                        { Bar = Some interval
+                                          After = Some(state.Cursor.ToUnixTimeMilliseconds().ToString())
+                                          Before = None
+                                          Limit = Some 100 }
 
-                        let afterMs = cursor.ToUnixTimeMilliseconds().ToString()
+                                match result with
+                                | Ok candles when candles.Length > 0 ->
+                                    let mapped =
+                                        candles
+                                        |> Array.map (CandlestickSync.toCandlestick instrument interval)
+                                        |> Array.toList
 
-                        let! result =
-                            fetch
-                                (string instrument)
-                                { Bar = Some interval; After = Some afterMs; Before = None; Limit = Some 100 }
+                                    let cursor = state.Cursor.AddMinutes(-100.0)
 
-                        match result with
-                        | Ok candles when candles.Length > 0 ->
-                            let mapped =
-                                candles
-                                |> Array.map (CandlestickSync.toCandlestick instrument interval)
-                                |> Array.toList
+                                    post (
+                                        UpdateProgress(
+                                            jobId,
+                                            fun x ->
+                                                { x with
+                                                    Progress =
+                                                        { x.Progress with
+                                                            FetchedCount = x.Progress.FetchedCount + candles.Length
+                                                            CurrentTimestamp = cursor
+                                                            LastUpdateAt = DateTime.UtcNow } }
+                                        )
+                                    )
 
-                            let! _ = CandlestickRepository.save db mapped ct
+                                    do! CandlestickRepository.save db mapped ct |> Task.map ignore
+                                    let fetchedCount = state.FetchedCount + candles.Length
+                                    do! persistProgress scopeFactory logger jobId fetchedCount cursor
+                                    return! fetchLoop { state with FetchedCount = fetchedCount; Cursor = cursor }
+                                | Ok _ -> return state
+                                | Error err ->
+                                    logger.LogError(
+                                        "Sync job {JobId} fetch failed: {Error}",
+                                        jobId,
+                                        serviceMessage err
+                                    )
 
-                            let newCursor = cursor.AddMinutes(-100.0)
+                                    return { state with LastError = Some(serviceMessage err) }
+                        }
 
-                            post (
-                                UpdateProgress(
-                                    jobId,
-                                    fun s ->
-                                        { s with
-                                            Progress =
-                                                { s.Progress with
-                                                    FetchedCount = s.Progress.FetchedCount + candles.Length
-                                                    CurrentTimestamp = newCursor
-                                                    LastUpdateAt = DateTime.UtcNow } }
-                                )
-                            )
-
-                            fetchedSoFar <- fetchedSoFar + candles.Length
-                            do! persistProgress scopeFactory logger jobId fetchedSoFar newCursor
-                            cursor <- newCursor
-                        | Ok _ -> keepGoing <- false
-                        | Error err ->
-                            logger.LogError("Sync job {JobId} fetch failed: {Error}", jobId, serviceMessage err)
-                            lastError <- Some(serviceMessage err)
-                            keepGoing <- false
+                    let! state = fetchLoop state
 
                     if not ct.IsCancellationRequested then
-                        match lastError with
+                        match state.LastError with
                         | Some errMsg ->
                             let setFailed (s: SyncJobState) = { s with Status = Failed errMsg }
                             post (UpdateProgress(jobId, setFailed))
@@ -246,6 +253,8 @@ module JobsManager =
           removeJob: int -> bool
           getJobs: unit -> SyncJobState list }
 
+    let private previouslyActive = [ int SyncJobStatus.Running; int SyncJobStatus.Pending ]
+
     let private loadAndResume
         (scopeFactory: IServiceScopeFactory)
         (logger: ILogger)
@@ -253,42 +262,38 @@ module JobsManager =
         =
         let result =
             task {
-                let! activeResult = withDb scopeFactory (fun db ct -> SyncJobRepository.getActive db ct)
-
-                match activeResult with
+                match! withDb scopeFactory SyncJobRepository.getActive with
                 | Ok activeJobs ->
-                    let mutable jobs = Map.empty
-                    let mutable pauses = Map.empty
+                    let! pairs =
+                        activeJobs
+                        |> List.map (fun job ->
+                            task {
+                                match previouslyActive |> List.exists (fun x -> x = job.Status) with
+                                | true ->
+                                    do!
+                                        withDb
+                                            scopeFactory
+                                            (fun db ->
+                                                SyncJobRepository.updateStatus db job.Id SyncJobStatus.Paused None
+                                            )
+                                        |> Task.map ignore
+                                | _ -> ()
 
-                    for dbJob in activeJobs do
-                        let wasRunningOrPending =
-                            dbJob.Status = int SyncJobStatus.Running || dbJob.Status = int SyncJobStatus.Pending
+                                logger.LogInformation(
+                                    "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
+                                    job.Id,
+                                    job.Instrument,
+                                    enum<SyncJobStatus> job.Status
+                                )
 
-                        if wasRunningOrPending then
-                            let! _ =
-                                withDb
-                                    scopeFactory
-                                    (fun db ct ->
-                                        SyncJobRepository.updateStatus db dbJob.Id SyncJobStatus.Paused None ct
-                                    )
-
-                            ()
-
-                        let state = { fromDbJob dbJob with Status = Paused }
-
-                        let pauseEvent = new ManualResetEventSlim(false)
-
-                        jobs <- Map.add dbJob.Id state jobs
-                        pauses <- Map.add dbJob.Id pauseEvent pauses
-
-                        logger.LogInformation(
-                            "Loaded sync job {JobId} for {Instrument} as Paused (was {OriginalStatus})",
-                            dbJob.Id,
-                            dbJob.Instrument,
-                            enum<SyncJobStatus> dbJob.Status
+                                return job.Id, { fromDbJob job with Status = Paused }, new ManualResetEventSlim(false)
+                            }
                         )
+                        |> Task.WhenAll
 
-                    return (jobs, pauses)
+                    let jobs = pairs |> Array.map (fun (id, state, _) -> id, state) |> Map.ofArray
+                    let pauses = pairs |> Array.map (fun (id, _, pause) -> id, pause) |> Map.ofArray
+                    return jobs, pauses
                 | Error err ->
                     logger.LogError("Failed to load active sync jobs: {Error}", serviceMessage err)
                     return (Map.empty, Map.empty)
@@ -341,8 +346,7 @@ module JobsManager =
                                   CreatedAt = now }
 
                             let! createResult =
-                                withDb scopeFactory (fun db ct -> SyncJobRepository.create db dbJob ct)
-                                |> Async.AwaitTask
+                                withDb scopeFactory (fun db -> SyncJobRepository.create db dbJob) |> Async.AwaitTask
 
                             match createResult with
                             | Ok saved ->
@@ -453,8 +457,10 @@ module JobsManager =
                                 cts.Cancel()
                             | _ -> ()
 
-                            let! _ =
-                                withDb scopeFactory (fun db ct -> SyncJobRepository.delete db id ct) |> Async.AwaitTask
+                            do!
+                                withDb scopeFactory (fun db -> SyncJobRepository.delete db id)
+                                |> Task.map ignore
+                                |> Async.AwaitTask
 
                             reply.Reply true
 

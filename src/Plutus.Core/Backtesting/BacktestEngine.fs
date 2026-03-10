@@ -165,6 +165,7 @@ module BacktestEngine =
         taskResult {
             use scope = scopeFactory.CreateScope()
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+            let stateRef = ref { SimState.empty with Balance = config.InitialCapital }
 
             do!
                 BacktestRepository.updateRunResults db (BacktestRun.create runId config BacktestStatus.Running null) ct
@@ -172,7 +173,6 @@ module BacktestEngine =
 
             let! pipeline, steps = loadPipeline db config ct
             let stepConfigs = steps |> List.map toStepConfig
-            let stateRef = ref { SimState.empty with Balance = config.InitialCapital }
 
             let registry =
                 TradingSteps.all (BacktestAdapters.getPosition stateRef) (BacktestAdapters.tradeExecutor stateRef)

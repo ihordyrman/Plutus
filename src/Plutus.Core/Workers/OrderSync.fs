@@ -10,9 +10,11 @@ open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
 open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Repositories
+open Plutus.Core.Shared
 
 module OrderSync =
     open OrderSyncer
+    open Helpers
 
     let applyUpdate (order: Order) (update: OrderUpdate) =
         { order with
@@ -85,12 +87,16 @@ module OrderSync =
             | Error err -> logger.LogError("Failed to load active orders: {Error}", err)
             | Ok [] -> ()
             | Ok orders ->
-                let mutable updatedCount = 0
-
-                for order in orders do
-                    match! syncOrder order with
-                    | true -> updatedCount <- updatedCount + 1
-                    | false -> ()
+                let! updatedCount =
+                    orders
+                    |> foldAsync
+                        (fun acc order ->
+                            task {
+                                let! updated = syncOrder order
+                                return if updated then acc + 1 else acc
+                            }
+                        )
+                        0
 
                 if updatedCount > 0 then
                     logger.LogInformation("Order sync: {Updated}/{Total} orders updated", updatedCount, orders.Length)
