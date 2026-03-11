@@ -74,9 +74,9 @@
         <Compile Include="Pipelines\Orchestration\Executor.fs" />
         <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />
 
+        <Compile Include="Backtesting\BacktestMetrics.fs" />
         <Compile Include="Backtesting\BacktestState.fs" />
         <Compile Include="Backtesting\BacktestAdapters.fs" />
-        <Compile Include="Backtesting\BacktestMetrics.fs" />
         <Compile Include="Backtesting\BacktestEngine.fs" />
         <Compile Include="Backtesting\BacktestExport.fs" />
         <Compile Include="Workers\MarketSeeding.fs" />

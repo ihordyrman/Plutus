@@ -40,7 +40,7 @@ type TradePair =
 type ResultsViewModel =
     { Run: BacktestRun
       Pipeline: Pipeline
-      Metrics: BacktestMetrics.Metrics
+      Metrics: BacktestMetrics
       EquityPoints: BacktestEquityPoint list
       TradePairs: TradePair list }
 
