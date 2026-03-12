@@ -18,6 +18,7 @@
         <Compile Include="Domain\Positions.fs" />
         <Compile Include="Domain\Backtests.fs" />
         <Compile Include="Domain\ApiKeys.fs" />
+        <Compile Include="Domain\User.fs" />
 
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
@@ -33,12 +34,14 @@
         <Compile Include="Repositories\MarketRepository.fs" />
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
-        <Compile Include="Repositories\UserRepository.fs" />
         <Compile Include="Repositories\InstrumentRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
         <Compile Include="Repositories\SyncJobRepository.fs" />
         <Compile Include="Repositories\BacktestRepository.fs" />
         <Compile Include="Repositories\ApiKeyRepository.fs" />
+
+        <Compile Include="Ports\User.fs" />
+        <Compile Include="Adapters\User.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />
