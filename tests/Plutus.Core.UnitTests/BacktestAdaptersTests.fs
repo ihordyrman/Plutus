@@ -10,7 +10,7 @@ open Plutus.Core.Backtesting
 
 let private btcUsdt = { Base = "BTC"; Quote = "USDT" }
 
-let private baseCtx : TradingContext =
+let private baseCtx: TradingContext =
     { PipelineId = 1
       ExecutionId = "test-exec"
       Instrument = btcUsdt
@@ -23,7 +23,7 @@ let private baseCtx : TradingContext =
       SignalWeights = Map.empty
       Data = Map.empty }
 
-let private emptyState : SimState =
+let private emptyState: SimState =
     { Balance = 1000m; Position = None; Trades = []; Equity = []; TradeCount = 0 }
 
 [<Fact>]
@@ -115,7 +115,9 @@ let ``ExecuteSell - clears ActiveOrderId BuyPrice and Quantity on returned conte
         let pos = { EntryPrice = 40000m; Quantity = 0.01m; EntryTime = DateTime.UtcNow; ExecutionId = "x" }
         let stateRef = ref { emptyState with Position = Some pos }
         let executor = BacktestAdapters.tradeExecutor stateRef
-        let ctxWithOrder = { baseCtx with ActiveOrderId = Some 1; BuyPrice = Some 40000m; Quantity = Some 0.01m }
+
+        let ctxWithOrder =
+            { baseCtx with ActiveOrderId = Some 1; BuyPrice = Some 40000m; Quantity = Some 0.01m }
 
         match! executor.ExecuteSell ctxWithOrder CancellationToken.None with
         | Ok(ctx', _) ->

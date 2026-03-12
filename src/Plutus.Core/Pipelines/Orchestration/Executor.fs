@@ -101,7 +101,7 @@ module Executor =
                                         Interval.OneMinute
                                         ct
 
-                                    // todo: we also need to verify this is recent enough
+                                // todo: we also need to verify this is recent enough
 
                                 match latestCandle with
                                 | Error error ->

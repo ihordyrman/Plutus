@@ -11,7 +11,14 @@ let private mkEquityPoint (t: DateTime) (equity: decimal) : BacktestEquityPoint 
     { Id = 0; BacktestRunId = 0; CandleTime = t; Equity = equity; Drawdown = 0m }
 
 let private mkTrade (side: OrderSide) (price: decimal) (qty: decimal) (t: DateTime) : BacktestTrade =
-    { Id = 0; BacktestRunId = 0; Side = side; Price = price; Quantity = qty; Fee = 0m; CandleTime = t; Capital = 0m }
+    { Id = 0
+      BacktestRunId = 0
+      Side = side
+      Price = price
+      Quantity = qty
+      Fee = 0m
+      CandleTime = t
+      Capital = 0m }
 
 [<Fact>]
 let ``calculate - no trades returns zero trade metrics`` () =
@@ -24,9 +31,7 @@ let ``calculate - no trades returns zero trade metrics`` () =
 [<Fact>]
 let ``calculate - one winning pair computes correct total return and trade count`` () =
     let t1 = t0.AddDays 1.0
-    let trades =
-        [ mkTrade OrderSide.Buy 100m 1m t0
-          mkTrade OrderSide.Sell 110m 1m t1 ]
+    let trades = [ mkTrade OrderSide.Buy 100m 1m t0; mkTrade OrderSide.Sell 110m 1m t1 ]
     let equity = [ mkEquityPoint t0 1000m; mkEquityPoint t1 1010m ]
     let result = BacktestMetrics.calculate 1000m trades equity
     Assert.Equal(1, result.TotalTrades)
@@ -41,6 +46,7 @@ let ``calculate - mixed pairs give correct win rate`` () =
           mkTrade OrderSide.Sell 110m 1m (t0.AddHours 1.0) // win
           mkTrade OrderSide.Buy 100m 1m (t0.AddHours 2.0)
           mkTrade OrderSide.Sell 90m 1m (t0.AddHours 3.0) ] // loss
+
     let equity = [ mkEquityPoint t0 1000m ]
     let result = BacktestMetrics.calculate 1000m trades equity
     Assert.Equal(2, result.TotalTrades)
@@ -63,9 +69,7 @@ let ``calculate - flat equity gives zero Sharpe ratio`` () =
 [<Fact>]
 let ``calculate - all losing trades gives zero profit factor`` () =
     let t1 = t0.AddHours 1.0
-    let trades =
-        [ mkTrade OrderSide.Buy 100m 1m t0
-          mkTrade OrderSide.Sell 90m 1m t1 ]
+    let trades = [ mkTrade OrderSide.Buy 100m 1m t0; mkTrade OrderSide.Sell 90m 1m t1 ]
     let equity = [ mkEquityPoint t0 1000m; mkEquityPoint t1 990m ]
     let result = BacktestMetrics.calculate 1000m trades equity
     Assert.Equal(0m, result.ProfitFactor)
@@ -78,6 +82,7 @@ let ``calculate - average holding period computed from trade timestamps`` () =
           mkTrade OrderSide.Sell 110m 1m (t0.AddHours 1.0)
           mkTrade OrderSide.Buy 100m 1m (t0.AddHours 5.0)
           mkTrade OrderSide.Sell 105m 1m (t0.AddHours 8.0) ]
+
     let equity = [ mkEquityPoint t0 1000m ]
     let result = BacktestMetrics.calculate 1000m trades equity
     Assert.Equal(TimeSpan.FromHours 2.0, result.AverageHoldingPeriod)
