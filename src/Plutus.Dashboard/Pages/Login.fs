@@ -1,15 +1,15 @@
 module Plutus.App.Pages.Login
 
 open System
-open System.Data
 open System.Security.Claims
 open Falco
 open Falco.Markup
 open Microsoft.AspNetCore.Authentication
 open Microsoft.AspNetCore.Authentication.Cookies
 open Microsoft.Extensions.DependencyInjection
+open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
-open Plutus.Core.Repositories
+open Plutus.Core.Ports
 
 module View =
     let private headContent =
@@ -145,8 +145,8 @@ module Handler =
             task {
                 let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                 use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let! hasUsers = UserRepository.userExists db ctx.RequestAborted
+                let users = scope.ServiceProvider.GetRequiredService<UserPorts>()
+                let! hasUsers = users.UserExists ctx.RequestAborted
 
                 match hasUsers with
                 | Ok true -> return! Response.ofHtml (View.loginForm None) ctx
@@ -164,29 +164,41 @@ module Handler =
 
                 let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                 use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let! userResult = UserRepository.findByUsername db username ctx.RequestAborted
+                let users = scope.ServiceProvider.GetRequiredService<UserPorts>()
 
-                match userResult with
-                | Ok(Some user) when Authentication.verifyPassword password user.PasswordHash ->
-                    let claims =
-                        [ Claim(ClaimTypes.Name, user.Username); Claim(ClaimTypes.NameIdentifier, string user.Id) ]
+                match Username.create username with
+                | Error _ -> return! Response.ofHtml (View.loginForm (Some "Invalid username or password")) ctx
+                | Ok u ->
 
-                    let identity = ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
-                    let principal = ClaimsPrincipal(identity)
+                    let! userResult = users.FindByUsername u ctx.RequestAborted
 
-                    let authProperties = AuthenticationProperties()
-                    authProperties.IsPersistent <- true
+                    match userResult with
+                    | Ok(Some user) when Authentication.verifyPassword password (PasswordHash.value user.PasswordHash) ->
+                        let claims =
+                            [ Claim(ClaimTypes.Name, Username.value user.Username)
+                              Claim(ClaimTypes.NameIdentifier, string (UserId.value user.Id)) ]
 
-                    authProperties.ExpiresUtc <-
-                        if rememberMe then
-                            DateTimeOffset.UtcNow.Add(Authentication.extendedSessionDuration)
-                        else
-                            DateTimeOffset.UtcNow.Add(Authentication.defaultSessionDuration)
+                        let identity = ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme)
+                        let principal = ClaimsPrincipal(identity)
 
-                    do! ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, authProperties)
-                    return! Response.redirectTemporarily "/" ctx
-                | _ -> return! Response.ofHtml (View.loginForm (Some "Invalid username or password")) ctx
+                        let authProperties = AuthenticationProperties()
+                        authProperties.IsPersistent <- true
+
+                        authProperties.ExpiresUtc <-
+                            if rememberMe then
+                                DateTimeOffset.UtcNow.Add(Authentication.extendedSessionDuration)
+                            else
+                                DateTimeOffset.UtcNow.Add(Authentication.defaultSessionDuration)
+
+                        do!
+                            ctx.SignInAsync(
+                                CookieAuthenticationDefaults.AuthenticationScheme,
+                                principal,
+                                authProperties
+                            )
+
+                        return! Response.redirectTemporarily "/" ctx
+                    | _ -> return! Response.ofHtml (View.loginForm (Some "Invalid username or password")) ctx
             }
 
     let setupPage: HttpHandler =
@@ -194,8 +206,8 @@ module Handler =
             task {
                 let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                 use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                let! hasUsers = UserRepository.userExists db ctx.RequestAborted
+                let users = scope.ServiceProvider.GetRequiredService<UserPorts>()
+                let! hasUsers = users.UserExists ctx.RequestAborted
 
                 match hasUsers with
                 | Ok true -> return! Response.redirectTemporarily "/login" ctx
@@ -219,15 +231,17 @@ module Handler =
                 else
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                     use scope = scopeFactory.CreateScope()
-                    use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
-                    let! hasUsers = UserRepository.userExists db ctx.RequestAborted
+                    let users = scope.ServiceProvider.GetRequiredService<UserPorts>()
+                    let! hasUsers = users.UserExists ctx.RequestAborted
 
                     match hasUsers with
                     | Ok true -> return! Response.redirectTemporarily "/login" ctx
                     | _ ->
-                        let passwordHash = Authentication.hashPassword password
-                        let! _ = UserRepository.create db username passwordHash ctx.RequestAborted
-                        return! Response.redirectTemporarily "/login" ctx
+                        match Username.create username, PasswordHash.create (Authentication.hashPassword password) with
+                        | Ok u, Ok ph ->
+                            let! _ = users.CreateUser u ph ctx.RequestAborted
+                            return! Response.redirectTemporarily "/login" ctx
+                        | _ -> return! Response.ofHtml (View.setupForm (Some "Invalid input")) ctx
             }
 
     let logout: HttpHandler =

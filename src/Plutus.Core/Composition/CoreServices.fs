@@ -5,6 +5,8 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Npgsql
+open Plutus.Core.AuthenticatedUser.Adapters
+open Plutus.Core.Ports
 open Polly
 open System
 open System.Data
@@ -25,7 +27,9 @@ module CoreServices =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
 
-        services.Configure<MarketConfigurationSettings>(configuration.GetSection(MarketConfigurationSettings.SectionName))
+        services.Configure<MarketConfigurationSettings>(
+            configuration.GetSection(MarketConfigurationSettings.SectionName)
+        )
         |> ignore
 
     let private usePipelineOrchestrator (services: IServiceCollection) =
@@ -42,6 +46,16 @@ module CoreServices =
             let logger = provider.GetRequiredService<ILogger<Orchestrator.Worker>>()
             let registry = provider.GetRequiredService<Registry.T<TradingContext>>()
             new Orchestrator.Worker(scopeFactory, logger, registry)
+        )
+        |> ignore
+
+    let private usePorts (services: IServiceCollection) =
+        services.AddScoped<UserPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { FindByUsername = UserAdapters.findByUsername db
+              UserExists = UserAdapters.userExists db
+              CreateUser = UserAdapters.createUser db }
         )
         |> ignore
 
@@ -187,6 +201,7 @@ module CoreServices =
         useDatabase services
 
         [ useMarketSeeding
+          usePorts
           useCacheStore
           useCacheWorker
           useExecuteLogger
