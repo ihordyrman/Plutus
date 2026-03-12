@@ -5,6 +5,7 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Npgsql
+open Plutus.Core.Adapters
 open Plutus.Core.AuthenticatedUser.Adapters
 open Plutus.Core.Ports
 open Polly
@@ -56,6 +57,17 @@ module CoreServices =
             { FindByUsername = UserAdapters.findByUsername db
               UserExists = UserAdapters.userExists db
               CreateUser = UserAdapters.createUser db }
+        )
+        |> ignore
+
+        services.AddScoped<KeyPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetByHash = ApiKey.getByHash db
+              GetAll = ApiKey.getAll db
+              Create = ApiKey.create db
+              Deactivate = ApiKey.deactivate db
+              UpdateLastUsed = ApiKey.updateLastUsed db }
         )
         |> ignore
 

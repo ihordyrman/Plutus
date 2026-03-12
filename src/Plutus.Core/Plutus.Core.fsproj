@@ -38,10 +38,12 @@
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
         <Compile Include="Repositories\SyncJobRepository.fs" />
         <Compile Include="Repositories\BacktestRepository.fs" />
-        <Compile Include="Repositories\ApiKeyRepository.fs" />
 
         <Compile Include="Ports\User.fs" />
+
+        <Compile Include="Ports\ApiKeys.fs" />
         <Compile Include="Adapters\User.fs" />
+        <Compile Include="Adapters\ApiKeys.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />
