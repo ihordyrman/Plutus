@@ -134,7 +134,7 @@ module ApiKey =
                             )
                         )
 
-                    if rowsAffected > 0 then return Ok() else return Error(NotFound $"API key with id {KeyId.value id}")
+                    if rowsAffected > 0 then return Ok() else return Error(NotFound $"API key with id {id}")
                 with ex ->
                     return Error(Unexpected ex)
             }
