@@ -59,7 +59,7 @@ module Http =
 
     let private addAuthHeaders
         (client: HttpClient)
-        (credentials: MarketConfiguration)
+        (credentials: MarketCredentials)
         (timestamp: string)
         (method: string)
         (path: string)
@@ -83,7 +83,7 @@ module Http =
     let private execute<'T>
         (client: HttpClient)
         (jsonOpts: JsonSerializerOptions)
-        (credentials: MarketConfiguration)
+        (credentials: MarketCredentials)
         (req: Request)
         : Task<Result<'T, ServiceError>>
         =
@@ -175,7 +175,7 @@ module Http =
     let private exec<'T>
         (httpClient: HttpClient)
         (jsonOpts: JsonSerializerOptions)
-        (credentials: MarketConfiguration)
+        (credentials: MarketCredentials)
         (logger: ILogger)
         (req: Request)
         : Task<Result<'T, ServiceError>>
@@ -189,7 +189,7 @@ module Http =
                 return Error(Unexpected ex)
         }
 
-    let create (httpClient: HttpClient) (credentials: MarketConfiguration) (logger: ILogger) : T =
+    let create (httpClient: HttpClient) (credentials: MarketCredentials) (logger: ILogger) : T =
 
         let jsonOpts = JsonSerializerOptions()
         jsonOpts.Converters.Add(OkxCandlestickConverter())
