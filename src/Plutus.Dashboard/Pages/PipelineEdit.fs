@@ -328,7 +328,7 @@ module Data =
         task {
             match formData.Instrument with
             | None -> return ValidationError "Instrument is required"
-            | Some instrument when String.IsNullOrWhiteSpace(instrument) ->
+            | Some instrument when String.IsNullOrWhiteSpace instrument ->
                 return ValidationError "Instrument is required"
             | Some instrument ->
                 use scope = scopeFactory.CreateScope()
@@ -579,7 +579,7 @@ module Data =
                         | Some value ->
                             match param.Type with
                             | Parameters.Bool -> newParams[param.Key] <- if value = "true" then "true" else "false"
-                            | Parameters.MultiChoice _ when String.IsNullOrWhiteSpace(value) -> ()
+                            | Parameters.MultiChoice _ when String.IsNullOrWhiteSpace value -> ()
                             | _ -> newParams[param.Key] <- value
                         | None ->
                             match param.Type with

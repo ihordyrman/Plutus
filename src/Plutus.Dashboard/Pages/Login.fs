@@ -222,9 +222,9 @@ module Handler =
                 let password = form.GetString("password", "")
                 let confirmPassword = form.GetString("confirmPassword", "")
 
-                if String.IsNullOrWhiteSpace(username) || username.Length < 3 then
+                if String.IsNullOrWhiteSpace username || username.Length < 3 then
                     return! Response.ofHtml (View.setupForm (Some "Username must be at least 3 characters")) ctx
-                elif String.IsNullOrWhiteSpace(password) || password.Length < 6 then
+                elif String.IsNullOrWhiteSpace password || password.Length < 6 then
                     return! Response.ofHtml (View.setupForm (Some "Password must be at least 6 characters")) ctx
                 elif password <> confirmPassword then
                     return! Response.ofHtml (View.setupForm (Some "Passwords do not match")) ctx

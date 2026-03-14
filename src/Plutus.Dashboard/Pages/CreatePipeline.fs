@@ -46,7 +46,7 @@ module Data =
         let instrument =
             match form.TryGetString "baseCurrency", form.TryGetString "quoteCurrency" with
             | Some baseCur, Some quoteCur when
-                not (String.IsNullOrWhiteSpace(baseCur)) && not (String.IsNullOrWhiteSpace(quoteCur))
+                not (String.IsNullOrWhiteSpace baseCur) && not (String.IsNullOrWhiteSpace quoteCur)
                 ->
                 Some
                     { BaseCurrency = baseCur.Trim().ToUpperInvariant()

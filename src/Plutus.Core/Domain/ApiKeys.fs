@@ -15,19 +15,19 @@ module KeyId =
 
 module KeyName =
     let create (name: string) : Result<KeyName, string> =
-        if String.IsNullOrWhiteSpace(name) then Error "Key name cannot be empty." else Ok(KeyName name)
+        if String.IsNullOrWhiteSpace name then Error "Key name cannot be empty." else Ok(KeyName name)
 
     let value (KeyName name) = name
 
 module KeyHash =
     let create (hash: string) : Result<KeyHash, string> =
-        if String.IsNullOrWhiteSpace(hash) then Error "Key hash cannot be empty." else Ok(KeyHash hash)
+        if String.IsNullOrWhiteSpace hash then Error "Key hash cannot be empty." else Ok(KeyHash hash)
 
     let value (KeyHash hash) = hash
 
 module KeyPrefix =
     let create (prefix: string) : Result<KeyPrefix, string> =
-        if String.IsNullOrWhiteSpace(prefix) then
+        if String.IsNullOrWhiteSpace prefix then
             Error "Key prefix cannot be empty."
         else
             Ok(KeyPrefix prefix)

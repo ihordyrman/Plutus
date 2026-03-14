@@ -19,7 +19,7 @@ module ApiAuth =
                 else
                     let token = authHeader.Substring(7).Trim()
 
-                    if System.String.IsNullOrEmpty(token) then
+                    if System.String.IsNullOrEmpty token then
                         return! ApiResponse.unauthorized "Empty bearer token" ctx
                     else
                         let hash = Authentication.computeSha256 token
