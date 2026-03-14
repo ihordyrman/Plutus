@@ -28,10 +28,7 @@ module CoreServices =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
 
-        services.Configure<MarketSettings>(
-            configuration.GetSection(MarketSettings.SectionName)
-        )
-        |> ignore
+        services.Configure<MarketSettings>(configuration.GetSection(MarketSettings.SectionName)) |> ignore
 
     let private usePipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
@@ -68,6 +65,15 @@ module CoreServices =
               Create = ApiKey.create db
               Deactivate = ApiKey.deactivate db
               UpdateLastUsed = ApiKey.updateLastUsed db }
+        )
+        |> ignore
+
+        services.AddScoped<InstrumentPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { UpsertBatch = Instruments.upsertBatch db
+              GetBaseCurrency = Instruments.getBaseCurrencies db
+              GetQuoteCurrency = Instruments.getQuoteCurrencies db }
         )
         |> ignore
 

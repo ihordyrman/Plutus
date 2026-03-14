@@ -234,7 +234,7 @@ module Handler =
                 let! form = Request.getForm ctx
                 let name = form.GetString("name", "")
 
-                if String.IsNullOrWhiteSpace(name) then
+                if String.IsNullOrWhiteSpace name then
                     return!
                         Response.ofHtml (_p [ _class_ "text-red-500 text-sm p-4" ] [ Text.raw "Name is required" ]) ctx
                 else

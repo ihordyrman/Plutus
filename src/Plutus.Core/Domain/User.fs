@@ -8,7 +8,7 @@ type UserId = private Id of int
 
 module Username =
     let create (username: string) : Result<Username, string> =
-        if String.IsNullOrWhiteSpace(username) then
+        if String.IsNullOrWhiteSpace username then
             Error "Username cannot be empty."
         else
             Ok(Username username)
@@ -17,7 +17,7 @@ module Username =
 
 module PasswordHash =
     let create (passwordHash: string) : Result<PasswordHash, string> =
-        if String.IsNullOrWhiteSpace(passwordHash) then
+        if String.IsNullOrWhiteSpace passwordHash then
             Error "Password hash cannot be empty."
         else
             Ok(PasswordHash passwordHash)

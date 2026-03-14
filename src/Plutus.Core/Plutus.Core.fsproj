@@ -7,12 +7,11 @@
 
     <ItemGroup>
         <Compile Include="Shared\Errors.fs" />
-        <Compile Include="Shared\Types.fs" />
         <Compile Include="Shared\Helpers.fs" />
         <Compile Include="Domain\Markets.fs" />
+        <Compile Include="Domain\Instruments.fs" />
 
         <Compile Include="Domain\Common.fs" />
-        <Compile Include="Domain\Instruments.fs" />
         <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />
@@ -34,16 +33,18 @@
         <Compile Include="Repositories\MarketRepository.fs" />
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
-        <Compile Include="Repositories\InstrumentRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
         <Compile Include="Repositories\SyncJobRepository.fs" />
         <Compile Include="Repositories\BacktestRepository.fs" />
 
-        <Compile Include="Ports\User.fs" />
+        <Compile Include="Ports\Users.fs" />
 
         <Compile Include="Ports\ApiKeys.fs" />
-        <Compile Include="Adapters\User.fs" />
+
+        <Compile Include="Ports\Instruments.fs" />
+        <Compile Include="Adapters\Users.fs" />
         <Compile Include="Adapters\ApiKeys.fs" />
+        <Compile Include="Adapters\Instruments.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />
