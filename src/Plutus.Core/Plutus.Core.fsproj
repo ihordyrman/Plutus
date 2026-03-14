@@ -30,7 +30,6 @@
         <Compile Include="Repositories\PipelineRepository.fs" />
         <Compile Include="Repositories\PipelineStepRepository.fs" />
         <Compile Include="Repositories\CandlestickRepository.fs" />
-        <Compile Include="Repositories\MarketRepository.fs" />
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
@@ -42,9 +41,12 @@
         <Compile Include="Ports\ApiKeys.fs" />
 
         <Compile Include="Ports\Instruments.fs" />
+
+        <Compile Include="Ports\Markets.fs" />
         <Compile Include="Adapters\Users.fs" />
         <Compile Include="Adapters\ApiKeys.fs" />
         <Compile Include="Adapters\Instruments.fs" />
+        <Compile Include="Adapters\Markets.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />
