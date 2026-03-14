@@ -48,7 +48,7 @@ module PipelinesApi =
     let private validatePipeline (instrument: string) (marketType: int) (intervalMinutes: int) =
         let errors = ResizeArray<string>()
 
-        if String.IsNullOrWhiteSpace(instrument) then
+        if String.IsNullOrWhiteSpace instrument then
             errors.Add("instrument is required")
 
         if marketType < 0 || marketType > 2 then

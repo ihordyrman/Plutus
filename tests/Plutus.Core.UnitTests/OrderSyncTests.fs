@@ -9,7 +9,7 @@ open Plutus.Core.Workers
 
 let private now = DateTime(2024, 1, 1, 12, 0, 0, DateTimeKind.Utc)
 
-let private baseOrder : Order =
+let private baseOrder: Order =
     { Id = 1
       PipelineId = Some 1
       MarketType = MarketType.Okx
@@ -29,7 +29,7 @@ let private baseOrder : Order =
       CreatedAt = now
       UpdatedAt = now }
 
-let private baseUpdate : OrderSyncer.OrderUpdate =
+let private baseUpdate: OrderSyncer.OrderUpdate =
     { Status = OrderStatus.Filled
       Fee = Some 1.5m
       AveragePrice = Some 45000m
@@ -54,8 +54,7 @@ let ``applyUpdate - uses original quantity when FilledQuantity is None`` () =
     Assert.Equal(baseOrder.Quantity, updated.Quantity)
 
 [<Fact>]
-let ``hasChanges - returns false for identical orders`` () =
-    Assert.False(OrderSync.hasChanges baseOrder baseOrder)
+let ``hasChanges - returns false for identical orders`` () = Assert.False(OrderSync.hasChanges baseOrder baseOrder)
 
 [<Fact>]
 let ``hasChanges - detects Status change`` () =

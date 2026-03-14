@@ -5,6 +5,9 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Npgsql
+open Plutus.Core.Adapters
+open Plutus.Core.AuthenticatedUser.Adapters
+open Plutus.Core.Ports
 open Polly
 open System
 open System.Data
@@ -25,8 +28,7 @@ module CoreServices =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
 
-        services.Configure<MarketConfigurationSettings>(configuration.GetSection(MarketConfigurationSettings.SectionName))
-        |> ignore
+        services.Configure<MarketSettings>(configuration.GetSection(MarketSettings.SectionName)) |> ignore
 
     let private usePipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
@@ -45,12 +47,42 @@ module CoreServices =
         )
         |> ignore
 
+    let private usePorts (services: IServiceCollection) =
+        services.AddScoped<UserPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { FindByUsername = UserAdapters.findByUsername db
+              UserExists = UserAdapters.userExists db
+              CreateUser = UserAdapters.createUser db }
+        )
+        |> ignore
+
+        services.AddScoped<KeyPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetByHash = ApiKey.getByHash db
+              GetAll = ApiKey.getAll db
+              Create = ApiKey.create db
+              Deactivate = ApiKey.deactivate db
+              UpdateLastUsed = ApiKey.updateLastUsed db }
+        )
+        |> ignore
+
+        services.AddScoped<InstrumentPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { UpsertBatch = Instruments.upsertBatch db
+              GetBaseCurrency = Instruments.getBaseCurrencies db
+              GetQuoteCurrency = Instruments.getQuoteCurrencies db }
+        )
+        |> ignore
+
     let private useHttpClient (services: IServiceCollection) =
         services.AddScoped<Http.T>(fun provider ->
             let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxHttp")
             let httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient("Okx")
-            let creds = provider.GetRequiredService<IOptions<MarketConfigurationSettings>>().Value
-            let creds = creds.Configurations |> Array.find (fun x -> x.MarketType = "Okx")
+            let creds = provider.GetRequiredService<IOptions<MarketSettings>>().Value
+            let creds = creds.Credentials |> Array.find (fun x -> x.MarketType = "Okx")
 
             Http.create httpClient creds logger
         )
@@ -187,6 +219,7 @@ module CoreServices =
         useDatabase services
 
         [ useMarketSeeding
+          usePorts
           useCacheStore
           useCacheWorker
           useExecuteLogger

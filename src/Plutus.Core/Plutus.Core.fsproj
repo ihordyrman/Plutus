@@ -7,17 +7,17 @@
 
     <ItemGroup>
         <Compile Include="Shared\Errors.fs" />
-        <Compile Include="Shared\Types.fs" />
         <Compile Include="Shared\Helpers.fs" />
         <Compile Include="Domain\Markets.fs" />
+        <Compile Include="Domain\Instruments.fs" />
 
         <Compile Include="Domain\Common.fs" />
-        <Compile Include="Domain\Instruments.fs" />
         <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />
         <Compile Include="Domain\Backtests.fs" />
         <Compile Include="Domain\ApiKeys.fs" />
+        <Compile Include="Domain\User.fs" />
 
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
@@ -30,15 +30,23 @@
         <Compile Include="Repositories\PipelineRepository.fs" />
         <Compile Include="Repositories\PipelineStepRepository.fs" />
         <Compile Include="Repositories\CandlestickRepository.fs" />
-        <Compile Include="Repositories\MarketRepository.fs" />
         <Compile Include="Repositories\PositionRepository.fs" />
         <Compile Include="Repositories\OrderRepository.fs" />
-        <Compile Include="Repositories\UserRepository.fs" />
-        <Compile Include="Repositories\InstrumentRepository.fs" />
         <Compile Include="Repositories\ExecutionLogRepository.fs" />
         <Compile Include="Repositories\SyncJobRepository.fs" />
         <Compile Include="Repositories\BacktestRepository.fs" />
-        <Compile Include="Repositories\ApiKeyRepository.fs" />
+
+        <Compile Include="Ports\Users.fs" />
+
+        <Compile Include="Ports\ApiKeys.fs" />
+
+        <Compile Include="Ports\Instruments.fs" />
+
+        <Compile Include="Ports\Markets.fs" />
+        <Compile Include="Adapters\Users.fs" />
+        <Compile Include="Adapters\ApiKeys.fs" />
+        <Compile Include="Adapters\Instruments.fs" />
+        <Compile Include="Adapters\Markets.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />

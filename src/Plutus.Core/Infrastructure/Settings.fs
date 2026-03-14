@@ -7,11 +7,11 @@ type DatabaseSettings =
     static member SectionName = "Database"
 
 [<CLIMutable>]
-type MarketConfiguration =
+type MarketCredentials =
     { MarketType: string; ApiKey: string; SecretKey: string; Passphrase: string; IsSandbox: bool }
 
 [<CLIMutable>]
-type MarketConfigurationSettings =
-    { Configurations: MarketConfiguration[] }
+type MarketSettings =
+    { Credentials: MarketCredentials[] }
 
-    static member SectionName = "MarketConfigurations"
+    static member SectionName = "MarketSettings"

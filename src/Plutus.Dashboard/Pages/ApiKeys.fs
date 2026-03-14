@@ -1,22 +1,23 @@
 namespace Plutus.App.Pages.ApiKeys
 
 open System
-open System.Data
 open Falco
 open Falco.Markup
 open Falco.Htmx
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
-open Plutus.Core.Repositories
+open Plutus.Core.Ports
 
 module View =
 
-    let private keyRow (key: ApiKey) =
+    let private keyRow (key: Key) =
         _tr
             [ _class_ "border-b border-slate-100" ]
-            [ _td [ _class_ "px-4 py-3 text-sm text-slate-900" ] [ Text.raw key.Name ]
-              _td [ _class_ "px-4 py-3 text-sm text-slate-500 font-mono" ] [ Text.raw $"{key.KeyPrefix}..." ]
+            [ _td [ _class_ "px-4 py-3 text-sm text-slate-900" ] [ Text.raw (KeyName.value key.Name) ]
+              _td
+                  [ _class_ "px-4 py-3 text-sm text-slate-500 font-mono" ]
+                  [ Text.raw $"{KeyPrefix.value key.Prefix}..." ]
               _td
                   [ _class_ "px-4 py-3 text-sm" ]
                   [ if key.IsActive then
@@ -30,7 +31,9 @@ module View =
               _td
                   [ _class_ "px-4 py-3 text-sm text-slate-500" ]
                   [ Text.raw (
-                        if Option.isSome key.LastUsed then key.LastUsed.Value.ToString("yyyy-MM-dd HH:mm") else "Never"
+                        match key.LastUsed with
+                        | Some d -> d.ToString("yyyy-MM-dd HH:mm")
+                        | None -> "Never"
                     ) ]
               _td
                   [ _class_ "px-4 py-3 text-sm text-slate-500" ]
@@ -40,13 +43,13 @@ module View =
                   [ if key.IsActive then
                         _button
                             [ _class_ "text-red-500 hover:text-red-700 text-sm"
-                              Hx.delete $"/settings/api-keys/{key.Id}"
+                              Hx.delete $"/settings/api-keys/{KeyId.value key.Id}"
                               Hx.targetCss "#api-keys-table"
                               Hx.swapInnerHtml
                               Hx.confirm "Are you sure you want to revoke this API key?" ]
                             [ Text.raw "Revoke" ] ] ]
 
-    let keysTable (keys: ApiKey list) =
+    let keysTable (keys: Key list) =
         _div
             [ _id_ "api-keys-table" ]
             [ if keys.IsEmpty then
@@ -115,7 +118,7 @@ module View =
                                           "w-full bg-slate-900 text-white py-2 px-4 rounded-md text-sm font-medium hover:bg-slate-800 transition-colors" ]
                                     [ Text.raw "Create Key" ] ] ] ] ]
 
-    let keyCreated (rawKey: string) (keys: ApiKey list) =
+    let keyCreated (rawKey: string) (keys: Key list) =
         _div
             []
             [ _div
@@ -206,9 +209,9 @@ module Handler =
             task {
                 let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                 use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let keys = scope.ServiceProvider.GetRequiredService<KeyPorts>()
 
-                match! ApiKeyRepository.getAll db ctx.RequestAborted with
+                match! keys.GetAll ctx.RequestAborted with
                 | Ok keys ->
                     if ctx.Request.Headers.ContainsKey("HX-Request") then
                         return! Response.ofHtml (View.keysTable keys) ctx
@@ -231,7 +234,7 @@ module Handler =
                 let! form = Request.getForm ctx
                 let name = form.GetString("name", "")
 
-                if String.IsNullOrWhiteSpace(name) then
+                if String.IsNullOrWhiteSpace name then
                     return!
                         Response.ofHtml (_p [ _class_ "text-red-500 text-sm p-4" ] [ Text.raw "Name is required" ]) ctx
                 else
@@ -241,14 +244,21 @@ module Handler =
 
                     let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                     use scope = scopeFactory.CreateScope()
-                    use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                    let keyPorts = scope.ServiceProvider.GetRequiredService<KeyPorts>()
 
-                    match! ApiKeyRepository.create db name hash prefix ctx.RequestAborted with
-                    | Ok _ ->
-                        match! ApiKeyRepository.getAll db ctx.RequestAborted with
-                        | Ok keys -> return! Response.ofHtml (View.keyCreated rawKey keys) ctx
-                        | Error _ -> return! Response.ofHtml (View.keyCreated rawKey []) ctx
-                    | Error _ ->
+                    match KeyName.create name, KeyHash.create hash, KeyPrefix.create prefix with
+                    | Ok n, Ok h, Ok p ->
+                        match! keyPorts.Create n h p ctx.RequestAborted with
+                        | Ok _ ->
+                            match! keyPorts.GetAll ctx.RequestAborted with
+                            | Ok allKeys -> return! Response.ofHtml (View.keyCreated rawKey allKeys) ctx
+                            | Error _ -> return! Response.ofHtml (View.keyCreated rawKey []) ctx
+                        | Error _ ->
+                            return!
+                                Response.ofHtml
+                                    (_p [ _class_ "text-red-500 text-sm p-4" ] [ Text.raw "Failed to create API key" ])
+                                    ctx
+                    | _ ->
                         return!
                             Response.ofHtml
                                 (_p [ _class_ "text-red-500 text-sm p-4" ] [ Text.raw "Failed to create API key" ])
@@ -260,11 +270,14 @@ module Handler =
             task {
                 let scopeFactory = ctx.Plug<IServiceScopeFactory>()
                 use scope = scopeFactory.CreateScope()
-                use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
+                let keyPorts = scope.ServiceProvider.GetRequiredService<KeyPorts>()
 
-                let! _ = ApiKeyRepository.deactivate db id ctx.RequestAborted
+                match KeyId.create id with
+                | Ok keyId ->
+                    let! _ = keyPorts.Deactivate keyId ctx.RequestAborted
 
-                match! ApiKeyRepository.getAll db ctx.RequestAborted with
-                | Ok keys -> return! Response.ofHtml (View.keysTable keys) ctx
+                    match! keyPorts.GetAll ctx.RequestAborted with
+                    | Ok keys -> return! Response.ofHtml (View.keysTable keys) ctx
+                    | Error _ -> return! Response.ofHtml (View.keysTable []) ctx
                 | Error _ -> return! Response.ofHtml (View.keysTable []) ctx
             }
