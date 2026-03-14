@@ -28,8 +28,8 @@ module CoreServices =
         services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
         |> ignore
 
-        services.Configure<MarketConfigurationSettings>(
-            configuration.GetSection(MarketConfigurationSettings.SectionName)
+        services.Configure<MarketSettings>(
+            configuration.GetSection(MarketSettings.SectionName)
         )
         |> ignore
 
@@ -75,8 +75,8 @@ module CoreServices =
         services.AddScoped<Http.T>(fun provider ->
             let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxHttp")
             let httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient("Okx")
-            let creds = provider.GetRequiredService<IOptions<MarketConfigurationSettings>>().Value
-            let creds = creds.Configurations |> Array.find (fun x -> x.MarketType = "Okx")
+            let creds = provider.GetRequiredService<IOptions<MarketSettings>>().Value
+            let creds = creds.Credentials |> Array.find (fun x -> x.MarketType = "Okx")
 
             Http.create httpClient creds logger
         )
