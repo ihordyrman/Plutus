@@ -1,7 +1,6 @@
 namespace Plutus.Core.Domain
 
 open System
-open Plutus.Core.Shared
 
 [<CLIMutable>]
 type Candlestick =

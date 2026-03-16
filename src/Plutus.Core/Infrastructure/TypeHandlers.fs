@@ -4,7 +4,6 @@ open System
 open System.Collections.Generic
 open System.Text.Json
 open Dapper
-open Plutus.Core.Shared
 
 module TypeHandlers =
 

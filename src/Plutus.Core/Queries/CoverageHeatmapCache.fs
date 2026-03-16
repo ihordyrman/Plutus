@@ -8,7 +8,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Infrastructure
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 module CoverageHeatmapCache =
     type CachedIntervalData = { Coverage: WeeklyCoverage list; InstrumentCount: int }

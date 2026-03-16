@@ -15,7 +15,6 @@ type AccountDetailsInfo = { Id: int; MarketType: MarketType; IsSandbox: bool; Cr
 module Data =
     open System.Threading
     open Plutus.Core.Infrastructure
-    open Plutus.Core.Repositories
 
     let getAccountDetails
         (scopeFactory: IServiceScopeFactory)

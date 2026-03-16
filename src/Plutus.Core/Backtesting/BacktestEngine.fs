@@ -12,7 +12,6 @@ open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Pipelines.Trading
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 module BacktestEngine =
 

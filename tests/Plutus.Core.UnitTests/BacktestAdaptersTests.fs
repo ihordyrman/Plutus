@@ -4,7 +4,6 @@ open System
 open System.Threading
 open Xunit
 open Plutus.Core.Domain
-open Plutus.Core.Shared
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Backtesting
 

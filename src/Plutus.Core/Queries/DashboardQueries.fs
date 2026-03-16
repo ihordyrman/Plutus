@@ -7,7 +7,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open FsToolkit.ErrorHandling
 open Plutus.Core.Markets.Services
-open Plutus.Core.Repositories
 
 module DashboardQueries =
     type T = { TotalBalanceUsdt: CancellationToken -> Task<decimal> }

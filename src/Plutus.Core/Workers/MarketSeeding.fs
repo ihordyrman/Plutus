@@ -8,7 +8,6 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Plutus.Core.Domain
 open Plutus.Core.Infrastructure
-open Plutus.Core.Repositories
 
 type MarketSeedingWorker
     (

@@ -3,7 +3,6 @@ module Plutus.Core.UnitTests.OrderSyncTests
 open System
 open Xunit
 open Plutus.Core.Domain
-open Plutus.Core.Shared
 open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Workers
 

@@ -6,7 +6,6 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 module PipelinesApi =
 

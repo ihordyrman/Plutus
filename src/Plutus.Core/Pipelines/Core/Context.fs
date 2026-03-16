@@ -1,7 +1,6 @@
 namespace Plutus.Core.Pipelines.Core
 
 open Plutus.Core.Domain
-open Plutus.Core.Shared
 
 type TradingAction =
     | NoAction

@@ -2,13 +2,22 @@ namespace Plutus.Core.Domain
 
 open System
 open System.Collections.Generic
-open Plutus.Core.Shared
 
 type PipelineStatus =
     | Idle = 0
     | Running = 1
     | Paused = 2
     | Error = 3
+
+type PipelineId = private PipelineId of int
+
+module PipelineId =
+    let create (id: int) : Result<PipelineId, string> =
+        match id with
+        | x when x <= 0 -> Error "Pipeline ID must be a positive integer."
+        | _ -> Ok(PipelineId id)
+
+    let value (PipelineId id) = id
 
 [<CLIMutable>]
 type Pipeline =

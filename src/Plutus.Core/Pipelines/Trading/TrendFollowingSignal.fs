@@ -5,22 +5,22 @@ open System.Data
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core.Domain
 open Plutus.Core.Pipelines.Core
-open Plutus.Core.Shared
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Repositories
 
 module TrendFollowingSignal =
-    let instruments =
-        [ { Base = "BTC"; Quote = "USDT" }
-          { Base = "ETH"; Quote = "USDT" }
-          { Base = "SOL"; Quote = "USDT" }
-          { Base = "OKB"; Quote = "USDT" }
-          { Base = "DOGE"; Quote = "USDT" }
-          { Base = "XRP"; Quote = "USDT" }
-          { Base = "BCH"; Quote = "USDT" }
-          { Base = "LTC"; Quote = "USDT" } ]
-        |> List.map string
+
+    [<Literal>]
+    let quoteCc = "USDT"
+
+    let pairs =
+        [ "BTC"; "ETH"; "SOL"; "OKB"; "DOGE"; "XRP"; "BCH"; "LTC" ]
+        |> List.map (fun baseCc ->
+            match Pair.create baseCc quoteCc with
+            | Ok pair -> pair
+            | Error e -> failwith $"Invalid pair {baseCc}-{quoteCc}: {e}"
+        )
 
     let private intervals =
         [ Interval.OneMinute
@@ -34,14 +34,26 @@ module TrendFollowingSignal =
 
     let trendFollowing: StepDefinition<TradingContext> =
         let create (params': ValidatedParams) (services: IServiceProvider) : Step<TradingContext> =
-            let selectedInstruments =
+            let selectedPairs =
                 params'
-                |> ValidatedParams.getList "instruments" [ instruments |> List.head ]
-                |> List.map Instrument.parse
+                |> ValidatedParams.getList "instruments" [ pairs |> List.head |> Pair.toString ]
+                |> List.map (fun s ->
+                    let pairs = s.Split "-"
+
+                    match Pair.create pairs[0] pairs[1] with
+                    | Ok pair -> pair
+                    | Error e -> failwith $"Invalid pair {s}: {e}"
+                )
 
             let lookbackPeriod = params' |> ValidatedParams.getInt "lookbackPeriod" 20
             let momentumThreshold = params' |> ValidatedParams.getDecimal "momentumThreshold" 2.0m
-            let interval = params' |> ValidatedParams.getString "interval" "1m" |> Interval.parse
+
+            let interval =
+                params'
+                |> ValidatedParams.getString "interval" "1m"
+                |> Interval.create
+                |> Result.defaultValue Interval.OneMinute
+
             let breadthThresholdPct = params' |> ValidatedParams.getDecimal "breadthThresholdPct" 50.0m
             let signalWeight = params' |> ValidatedParams.getDecimal "signalWeight" 1.0m
 
@@ -87,12 +99,12 @@ module TrendFollowingSignal =
                                     let mutable bearish = 0
                                     let mutable total = 0
 
-                                    for instrument in selectedInstruments do
-                                        if instrument <> ctx.Instrument then
+                                    for pairs in selectedPairs do
+                                        if pairs <> ctx.Instrument then
                                             match!
                                                 CandlestickRepository.query
                                                     db
-                                                    instrument
+                                                    pairs
                                                     ctx.MarketType
                                                     interval
                                                     None
@@ -155,9 +167,9 @@ module TrendFollowingSignal =
                 [ { Key = "instruments"
                     Name = "Trading Pairs"
                     Description = "Select which cryptocurrency pairs to monitor for trend signals."
-                    Type = MultiChoice instruments
+                    Type = MultiChoice(pairs |> List.map Pair.toString)
                     Required = true
-                    DefaultValue = Some(ListValue [ instruments |> List.head ])
+                    DefaultValue = Some(ListValue [ pairs |> List.head |> Pair.toString ])
                     Group = Some "General" }
                   { Key = "lookbackPeriod"
                     Name = "Lookback Period"

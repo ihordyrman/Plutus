@@ -4,7 +4,6 @@ open System.Data
 open Falco
 open Falco.Markup
 open Microsoft.Extensions.DependencyInjection
-open Plutus.Core.Repositories
 
 module View =
     let private renderOptions (items: (string * string * bool) list) =
