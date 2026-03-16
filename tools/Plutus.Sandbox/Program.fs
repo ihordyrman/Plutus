@@ -2,13 +2,10 @@
 
 open System.Data
 open System.IO
-open System.Threading
 open Microsoft.Extensions.Configuration
 open Microsoft.Extensions.DependencyInjection
 open Plutus.Core
-open Plutus.Core.Domain
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 type Pipeline = { Id: int; Name: string; Instrument: string }
 

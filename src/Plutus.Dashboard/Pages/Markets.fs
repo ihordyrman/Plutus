@@ -8,8 +8,6 @@ open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Falco.Markup
 open Falco.Htmx
-open Plutus.Core.Domain
-open Plutus.Core.Repositories
 
 type MarketInfo = { Id: int; Type: MarketType; Name: string; Enabled: bool }
 

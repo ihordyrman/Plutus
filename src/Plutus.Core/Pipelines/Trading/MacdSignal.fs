@@ -8,7 +8,6 @@ open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Core.Parameters
 open Plutus.Core.Pipelines.Core.Steps
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 module MacdSignal =
     let private intervals =

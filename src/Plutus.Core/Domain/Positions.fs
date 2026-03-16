@@ -1,24 +1,24 @@
 namespace Plutus.Core.Domain
 
 open System
-open Plutus.Core.Shared
 
-type PositionStatus =
-    | Open = 0
-    | Closed = 1
-    | Cancelled = 2
+type PositionState =
+    | Open of openedAt: DateTime
+    | Closed of exitPrice: PositiveDecimal * closedAt: DateTime
+    | Cancelled of cancelledAt: DateTime
 
-[<CLIMutable>]
 type Position =
-    { Id: int
-      PipelineId: int
+    { PipelineId: PipelineId
       Instrument: Instrument
-      EntryPrice: decimal
-      Quantity: decimal
-      BuyOrderId: int
-      SellOrderId: int
-      Status: PositionStatus
-      ExitPrice: decimal option
-      ClosedAt: DateTime option
-      CreatedAt: DateTime
-      UpdatedAt: DateTime }
+      EntryPrice: PositiveDecimal
+      Quantity: PositiveDecimal
+      BuyOrderId: OrderId
+      SellOrderId: OrderId option
+      PositionState: PositionState }
+
+type CreatePositionRequest =
+    { PipelineId: PipelineId
+      Instrument: Instrument
+      EntryPrice: PositiveDecimal
+      Quantity: PositiveDecimal
+      BuyOrderId: OrderId }

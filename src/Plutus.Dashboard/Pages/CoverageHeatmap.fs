@@ -10,7 +10,6 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Infrastructure
 open Plutus.Core.Queries
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 
 type HeatmapCell = { WeekStart: DateTime; Coverage: float }
 

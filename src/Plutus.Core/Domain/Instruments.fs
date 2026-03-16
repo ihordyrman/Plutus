@@ -99,4 +99,6 @@ module Pair =
 
     let value (pair: Pair) = (Currency.value pair.Base, Currency.value pair.Quote)
 
+    let toString (pair: Pair) = $"{Currency.value pair.Base}-{Currency.value pair.Quote}"
+
 type Instrument = { Id: InstrumentId; Type: InstrumentType; Pair: Pair; MarketType: MarketType }

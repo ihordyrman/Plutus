@@ -8,7 +8,6 @@ open System.Threading
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.Logging
-open Plutus.Core.Domain
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
 

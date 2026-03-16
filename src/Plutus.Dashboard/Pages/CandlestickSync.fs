@@ -4,8 +4,6 @@ open System
 open Falco
 open Falco.Htmx
 open Falco.Markup
-open Plutus.Core.Domain
-open Plutus.Core.Shared
 open Plutus.Core.Workers
 
 module View =

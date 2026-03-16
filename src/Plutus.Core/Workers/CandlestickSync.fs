@@ -11,7 +11,6 @@ open Microsoft.Extensions.Logging
 open Plutus.Core.Domain
 open Plutus.Core.Markets.Exchanges.Okx
 open Plutus.Core.Repositories
-open Plutus.Core.Shared
 open Plutus.Core.Shared.Errors
 
 module CandlestickSync =

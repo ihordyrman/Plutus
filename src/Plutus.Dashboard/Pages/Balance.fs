@@ -7,7 +7,6 @@ open Falco.Markup
 open Microsoft.Extensions.DependencyInjection
 open FsToolkit.ErrorHandling
 open Microsoft.Extensions.Logging
-open Plutus.Core.Domain
 open Plutus.Core.Markets.Services
 open Plutus.Core.Queries
 open Plutus.Core.Shared

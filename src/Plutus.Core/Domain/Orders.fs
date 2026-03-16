@@ -1,7 +1,6 @@
 namespace Plutus.Core.Domain
 
 open System
-open Plutus.Core.Shared
 
 type OrderSide =
     | Buy = 0
@@ -14,6 +13,16 @@ type OrderStatus =
     | Filled = 3
     | Cancelled = 4
     | Failed = 5
+
+type OrderId = private OrderId of int
+
+module OrderId =
+    let create (id: int) : Result<OrderId, string> =
+        match id with
+        | x when x <= 0 -> Error "Order ID must be a positive integer."
+        | _ -> Ok(OrderId id)
+
+    let value (OrderId id) = id
 
 [<CLIMutable>]
 type Order =
