@@ -14,16 +14,17 @@
 
         <Compile Include="Domain\Common.fs" />
         <Compile Include="Domain\Orders.fs" />
+        <Compile Include="Domain\Steps.fs" />
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />
         <Compile Include="Domain\Backtests.fs" />
         <Compile Include="Domain\ApiKeys.fs" />
         <Compile Include="Domain\User.fs" />
+        <Compile Include="Domain\ExecutionLogs.fs" />
 
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />
         <Compile Include="Infrastructure\Authentication.fs" />
-        <Compile Include="Infrastructure\Tracing.fs" />
         <Compile Include="Infrastructure\ExecutionLogger.fs" />
         <Compile Include="Infrastructure\CacheStore.fs" />
         <Compile Include="Infrastructure\TypeHandlers.fs" />
@@ -45,11 +46,14 @@
         <Compile Include="Ports\Markets.fs" />
 
         <Compile Include="Ports\Positions.fs" />
+
+        <Compile Include="Ports\ExecutionLogs.fs" />
         <Compile Include="Adapters\Users.fs" />
         <Compile Include="Adapters\ApiKeys.fs" />
         <Compile Include="Adapters\Instruments.fs" />
         <Compile Include="Adapters\Markets.fs" />
         <Compile Include="Adapters\Positions.fs" />
+        <Compile Include="Adapters\ExecutionLogs.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />

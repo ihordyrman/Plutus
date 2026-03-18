@@ -14,12 +14,6 @@ module Steps =
 
     type Step<'ctx> = { key: string; execute: 'ctx -> CancellationToken -> Task<StepResult<'ctx>> }
 
-    type StepCategory =
-        | Validation = 0
-        | Risk = 1
-        | Signal = 2
-        | Execution = 3
-
     type RequiredCandleData = { Instrument: string option; Interval: string; LookbackDays: int }
 
     type StepDefinition<'ctx> =
