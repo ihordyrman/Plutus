@@ -20,9 +20,10 @@ module TypeHandlers =
     type private StringListTypeHandler() =
         inherit SqlMapper.TypeHandler<string list>()
 
-        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize value
+        override _.SetValue(parameter, value) =
+            parameter.Value <- JsonSerializer.Serialize value
 
-        override _.Parse(value) =
+        override _.Parse value =
             match value with
             | :? string as json when not (String.IsNullOrEmpty json) -> JsonSerializer.Deserialize<string list> json
             | _ -> failwith "Invalid value for string list type"
@@ -30,9 +31,10 @@ module TypeHandlers =
     type private DictionaryStringStringTypeHandler() =
         inherit SqlMapper.TypeHandler<Dictionary<string, string>>()
 
-        override _.SetValue(parameter, value) = parameter.Value <- JsonSerializer.Serialize value
+        override _.SetValue(parameter, value) =
+            parameter.Value <- JsonSerializer.Serialize value
 
-        override _.Parse(value) =
+        override _.Parse value =
             match value with
             | :? string as json when not (String.IsNullOrEmpty json) ->
                 JsonSerializer.Deserialize<Dictionary<string, string>> json

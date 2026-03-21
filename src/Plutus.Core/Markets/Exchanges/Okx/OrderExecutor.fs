@@ -22,9 +22,13 @@ module OrderExecutor =
           TradeMode = "cash"
           Side = toOkxSide order.Side
           OrderType = if isLimitOrder then "limit" else "market"
-          Size = order.Quantity.ToString(CultureInfo.InvariantCulture)
-          Price = if isLimitOrder then Some(order.Price.Value.ToString(CultureInfo.InvariantCulture)) else None
-          ClientOrderId = Some(order.Id.ToString(CultureInfo.InvariantCulture))
+          Size = order.Quantity.ToString CultureInfo.InvariantCulture
+          Price =
+            if isLimitOrder then
+                Some(order.Price.Value.ToString CultureInfo.InvariantCulture)
+            else
+                None
+          ClientOrderId = Some(order.Id.ToString CultureInfo.InvariantCulture)
           Tag = Some(string order.Id)
           ReduceOnly = None
           TargetCurrency = None }
@@ -56,7 +60,7 @@ module OrderExecutor =
                     return Error(ApiError(response.StatusMessage, Some(int response.StatusCode)))
                 | Error err -> return Error err
                 | _ ->
-                    logger.LogError("Unexpected response from OKX when placing order")
+                    logger.LogError "Unexpected response from OKX when placing order"
                     return Error(ApiError("Unexpected response from OKX", None))
             }
 

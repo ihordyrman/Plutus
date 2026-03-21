@@ -19,14 +19,14 @@ type CacheWorker
 
     let lastRefresh = ConcurrentDictionary<string, DateTime>()
 
-    override _.ExecuteAsync(ct) =
+    override _.ExecuteAsync ct =
         task {
             while not ct.IsCancellationRequested do
                 let now = DateTime.UtcNow
 
                 for refresher in refreshers do
                     let last =
-                        match lastRefresh.TryGetValue(refresher.Key) with
+                        match lastRefresh.TryGetValue refresher.Key with
                         | true, v -> v
                         | _ -> DateTime.MinValue
 
@@ -38,5 +38,5 @@ type CacheWorker
                         with ex ->
                             logger.LogError(ex, "Cache refresh failed: {Key}", refresher.Key)
 
-                do! Task.Delay(TimeSpan.FromSeconds(1.0), ct)
+                do! Task.Delay(TimeSpan.FromSeconds 1.0, ct)
         }

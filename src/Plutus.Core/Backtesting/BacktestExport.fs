@@ -15,7 +15,7 @@ module BacktestExport =
 
     let private addSummarySheet (wb: XLWorkbook) (run: BacktestRun) (pipeline: Pipeline) (metrics: BacktestMetrics) =
         let ws = wb.Worksheets.Add("Summary")
-        let dateFmt (d: DateTime) = d.ToString("yyyy-MM-dd")
+        let dateFmt (d: DateTime) = d.ToString "yyyy-MM-dd"
 
         [ "Instrument", string pipeline.Instrument
           "Period", $"{dateFmt run.StartDate} to {dateFmt run.EndDate}"
@@ -45,7 +45,7 @@ module BacktestExport =
         ws.Column(1).Style.Font.Bold <- true
 
     let private addTradesSheet (wb: XLWorkbook) (trades: BacktestTrade list) (initialCapital: decimal) =
-        let ws = wb.Worksheets.Add("Trades")
+        let ws = wb.Worksheets.Add "Trades"
 
         [| "#"
            "Entry Time"
@@ -68,7 +68,13 @@ module BacktestExport =
                 let sell = pair[1]
                 let pnl = (sell.Price - buy.Price) * sell.Quantity
                 let fee = buy.Fee + sell.Fee
-                let pnlPct = if buy.Price > 0m then pnl / (buy.Price * sell.Quantity) * 100m else 0m
+
+                let pnlPct =
+                    if buy.Price > 0m then
+                        pnl / (buy.Price * sell.Quantity) * 100m
+                    else
+                        0m
+
                 let balance = acc + pnl - fee
                 ws.Cell(row, 1).Value <- string (row - 1)
                 ws.Cell(row, 2).Value <- buy.CandleTime.ToString("yyyy-MM-dd HH:mm")
@@ -81,7 +87,7 @@ module BacktestExport =
                 ws.Cell(row, 9).Value <- pnlPct
                 ws.Cell(row, 10).Value <- balance
 
-                balance, (row + 1)
+                balance, row + 1
             )
             (initialCapital, 2)
         |> ignore
@@ -89,7 +95,7 @@ module BacktestExport =
         ws.Columns().AdjustToContents() |> ignore
 
     let private addEquitySheet (wb: XLWorkbook) (equity: BacktestEquityPoint list) =
-        let ws = wb.Worksheets.Add("Equity Curve")
+        let ws = wb.Worksheets.Add "Equity Curve"
         ws.Cell(1, 1).Value <- "Timestamp"
         ws.Cell(1, 2).Value <- "Equity"
         ws.Cell(1, 3).Value <- "Drawdown%"
@@ -106,7 +112,7 @@ module BacktestExport =
         ws.Columns().AdjustToContents() |> ignore
 
     let private addConfigSheet (wb: XLWorkbook) (steps: PipelineStep list) =
-        let ws = wb.Worksheets.Add("Configuration")
+        let ws = wb.Worksheets.Add "Configuration"
         ws.Cell(1, 1).Value <- "Order"
         ws.Cell(1, 2).Value <- "Step"
         ws.Cell(1, 3).Value <- "Name"
@@ -120,9 +126,11 @@ module BacktestExport =
             ws.Cell(row, 1).Value <- x.Order
             ws.Cell(row, 2).Value <- x.StepTypeKey
             ws.Cell(row, 3).Value <- x.Name
-            ws.Cell(row, 4).Value <- (if x.IsEnabled then "Yes" else "No")
+            ws.Cell(row, 4).Value <- if x.IsEnabled then "Yes" else "No"
 
-            let paramStr = x.Parameters |> Seq.map (fun kv -> $"{kv.Key}={kv.Value}") |> String.concat "; "
+            let paramStr =
+                x.Parameters |> Seq.map (fun kv -> $"{kv.Key}={kv.Value}") |> String.concat "; "
+
             ws.Cell(row, 5).Value <- paramStr
         )
 
@@ -135,14 +143,13 @@ module BacktestExport =
         (trades: BacktestTrade list)
         (equity: BacktestEquityPoint list)
         (metrics: BacktestMetrics)
-        : MemoryStream
-        =
+        : MemoryStream =
         let wb = new XLWorkbook()
         addSummarySheet wb run pipeline metrics
         addTradesSheet wb trades run.InitialCapital
         addEquitySheet wb equity
         addConfigSheet wb steps
         let ms = new MemoryStream()
-        wb.SaveAs(ms)
+        wb.SaveAs ms
         ms.Position <- 0L
         ms

@@ -110,7 +110,7 @@ module CandlestickSync =
                             logger
                             instrument
                             DateTimeOffset.UtcNow
-                            (DateTimeOffset(latest.Timestamp))
+                            (DateTimeOffset latest.Timestamp)
                             ct
 
                     if count > 0 then
@@ -134,14 +134,14 @@ module CandlestickSync =
         (ct: CancellationToken)
         =
         task {
-            let monthAgo = DateTimeOffset.UtcNow.AddDays(-30)
+            let monthAgo = DateTimeOffset.UtcNow.AddDays -30
 
             match! CandlestickRepository.getOldest db instrument MarketType.Okx Interval.OneMinute ct with
-            | Ok(Some oldest) when DateTimeOffset(oldest.Timestamp) <= monthAgo -> ()
+            | Ok(Some oldest) when DateTimeOffset oldest.Timestamp <= monthAgo -> ()
             | Ok maybeOldest ->
                 let startFrom =
                     match maybeOldest with
-                    | Some oldest -> DateTimeOffset(oldest.Timestamp)
+                    | Some oldest -> DateTimeOffset oldest.Timestamp
                     | None -> DateTimeOffset.UtcNow
 
                 let! count = pageBackward http.getHistoryCandlesticks db logger instrument startFrom monthAgo ct
@@ -160,8 +160,8 @@ module CandlestickSync =
 
                 for gap in gaps do
                     if not ct.IsCancellationRequested then
-                        let gapEnd = DateTimeOffset(gap.GapEnd)
-                        let gapStart = DateTimeOffset(gap.GapStart)
+                        let gapEnd = DateTimeOffset gap.GapEnd
+                        let gapStart = DateTimeOffset gap.GapStart
                         let daysAgo = (DateTimeOffset.UtcNow - gapEnd).TotalDays
 
                         let fetch =
@@ -192,9 +192,9 @@ module CandlestickSync =
                         steps
                         |> List.filter (fun x -> x.StepTypeKey = "trend-following-signal")
                         |> List.iter (fun x ->
-                            match x.Parameters.TryGetValue("instruments") with
+                            match x.Parameters.TryGetValue "instruments" with
                             | true, s ->
-                                s.Split(';')
+                                s.Split ';'
                                 |> Array.iter (fun s -> instruments.Add(Instrument.parse (s.Trim())) |> ignore)
                             | _ -> ()
                         )
@@ -211,7 +211,7 @@ module CandlestickSync =
 type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogger<OkxSynchronizationWorker>) =
     inherit BackgroundService()
 
-    override _.ExecuteAsync(ct) =
+    override _.ExecuteAsync ct =
         task {
             use scope = scopeFactory.CreateScope()
             let http = scope.ServiceProvider.GetRequiredService<Http.T>()
@@ -224,14 +224,14 @@ type OkxSynchronizationWorker(scopeFactory: IServiceScopeFactory, logger: ILogge
                     do! CandlestickSync.syncHistory http db logger instrument ct
                     do! CandlestickSync.syncGaps http db logger instrument ct
 
-            logger.LogInformation("Initial candlestick sync complete")
+            logger.LogInformation "Initial candlestick sync complete"
 
             use timer = new PeriodicTimer(TimeSpan.FromMinutes 1.0)
             let mutable tickCount = 0
 
             while not ct.IsCancellationRequested do
                 try
-                    let! _ = timer.WaitForNextTickAsync(ct)
+                    let! _ = timer.WaitForNextTickAsync ct
                     tickCount <- tickCount + 1
                     let! currentInstruments = CandlestickSync.getEnabledInstruments db ct
 

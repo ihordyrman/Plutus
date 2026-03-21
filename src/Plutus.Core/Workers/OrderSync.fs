@@ -105,13 +105,13 @@ module OrderSync =
 type OrderSyncWorker(scopeFactory: IServiceScopeFactory, logger: ILogger<OrderSyncWorker>) =
     inherit BackgroundService()
 
-    override _.ExecuteAsync(ct) =
+    override _.ExecuteAsync ct =
         task {
             use timer = new PeriodicTimer(TimeSpan.FromSeconds 10.0)
 
             while not ct.IsCancellationRequested do
                 try
-                    let! _ = timer.WaitForNextTickAsync(ct)
+                    let! _ = timer.WaitForNextTickAsync ct
                     do! OrderSync.syncAll scopeFactory logger ct
                 with ex ->
                     logger.LogCritical(ex, "Error in OrderSyncWorker loop")

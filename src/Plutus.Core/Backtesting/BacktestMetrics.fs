@@ -59,7 +59,7 @@ module BacktestMetrics =
                     let peak = max peak equity
                     let dd = if peak > 0m then (peak - equity) / peak * 100m else 0m
                     let maxDd = max maxDd dd
-                    (peak, maxDd)
+                    peak, maxDd
                 )
                 (equityValues.Head, 0m)
             |> snd
@@ -76,7 +76,7 @@ module BacktestMetrics =
                 let mean = returns |> List.average
                 let variance = returns |> List.map (fun r -> (r - mean) * (r - mean)) |> List.average
                 let stdDev = decimal (sqrt (float variance))
-                if stdDev = 0m then 0m else (mean / stdDev) * (decimal (sqrt 365.0))
+                if stdDev = 0m then 0m else mean / stdDev * decimal (sqrt 365.0)
 
         let grossProfit = winPnls |> List.sum |> max 0m
         let grossLoss = lossPnls |> List.sum |> abs

@@ -20,12 +20,14 @@ type InstrumentSyncWorker
     let syncInstruments (ct: CancellationToken) =
         task {
             try
-                let client = httpFactory.CreateClient("Okx")
+                let client = httpFactory.CreateClient "Okx"
                 let! response = client.GetAsync("api/v5/public/instruments?instType=SPOT", ct)
 
                 if response.IsSuccessStatusCode then
-                    let! json = response.Content.ReadAsStringAsync(ct)
-                    let parsed = JsonSerializer.Deserialize<OkxHttpResponse<OkxInstrument[]>>(json, jsonOpts)
+                    let! json = response.Content.ReadAsStringAsync ct
+
+                    let parsed =
+                        JsonSerializer.Deserialize<OkxHttpResponse<OkxInstrument[]>>(json, jsonOpts)
 
                     match parsed.Data with
                     | Some instruments ->
@@ -59,12 +61,12 @@ type InstrumentSyncWorker
                 logger.LogError(ex, "Instrument sync failed")
         }
 
-    override _.ExecuteAsync(ct) =
+    override _.ExecuteAsync ct =
         task {
             use timer = new PeriodicTimer(TimeSpan.FromHours 24.0)
 
             while not ct.IsCancellationRequested do
                 do! syncInstruments ct
-                let! _ = timer.WaitForNextTickAsync(ct)
+                let! _ = timer.WaitForNextTickAsync ct
                 ()
         }

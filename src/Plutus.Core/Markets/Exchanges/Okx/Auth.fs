@@ -1,4 +1,4 @@
-﻿namespace Plutus.Core.Markets.Exchanges.Okx
+namespace Plutus.Core.Markets.Exchanges.Okx
 
 open System
 open System.Security.Cryptography
@@ -9,8 +9,8 @@ module Auth =
         let sign =
             match body with
             | null
-            | "" -> Encoding.UTF8.GetBytes($"{timestamp}{method}{path}")
-            | _ -> Encoding.UTF8.GetBytes($"{timestamp}{method}{path}{body}")
+            | "" -> Encoding.UTF8.GetBytes $"{timestamp}{method}{path}"
+            | _ -> Encoding.UTF8.GetBytes $"{timestamp}{method}{path}{body}"
 
         let key = Encoding.UTF8.GetBytes(secretKey)
-        using (new HMACSHA256(key)) (fun hmac -> hmac.ComputeHash(sign) |> Convert.ToBase64String)
+        using (new HMACSHA256(key)) (fun hmac -> hmac.ComputeHash sign |> Convert.ToBase64String)

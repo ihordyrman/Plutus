@@ -26,7 +26,11 @@ module Instruments =
             Pair.create instrument.BaseCurrency instrument.QuoteCurrency
         with
         | Ok id, Ok instrumentType, Ok pair ->
-            Ok { Id = id; Type = instrumentType; Pair = pair; MarketType = instrument.MarketType }
+            Ok
+                { Id = id
+                  Type = instrumentType
+                  Pair = pair
+                  MarketType = instrument.MarketType }
 
         | Error e, _, _ -> Error $"Invalid InstrumentId: {e}"
         | _, Error e, _ -> Error $"Invalid InstrumentType: {e}"
@@ -92,7 +96,8 @@ module Instruments =
                                FROM instruments
                                WHERE market_type = @MarketType AND instrument_type = @InstrumentType
                                ORDER BY base_currency""",
-                                {| MarketType = marketType; InstrumentType = instrumentType |},
+                                {| MarketType = marketType
+                                   InstrumentType = instrumentType |},
                                 cancellationToken = token
                             )
                         )
