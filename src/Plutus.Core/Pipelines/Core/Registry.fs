@@ -15,4 +15,4 @@ module Registry =
     let all (registry: T<'ctx>) : StepDefinition<'ctx> list = registry.Definitions |> Map.values |> List.ofSeq
 
     let create (definitions: StepDefinition<'ctx> list) : T<'ctx> =
-        definitions |> List.map (fun x -> x.Key, x) |> Map.ofList |> (fun x -> { Definitions = x })
+        definitions |> List.map (fun x -> x.Key, x) |> Map.ofList |> fun x -> { Definitions = x }

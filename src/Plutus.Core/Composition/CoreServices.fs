@@ -25,10 +25,11 @@ open Plutus.Core.Workers
 module CoreServices =
 
     let private useConfiguration (services: IServiceCollection) (configuration: IConfiguration) =
-        services.Configure<DatabaseSettings>(configuration.GetSection(DatabaseSettings.SectionName))
+        services.Configure<DatabaseSettings>(configuration.GetSection DatabaseSettings.SectionName)
         |> ignore
 
-        services.Configure<MarketSettings>(configuration.GetSection(MarketSettings.SectionName)) |> ignore
+        services.Configure<MarketSettings>(configuration.GetSection MarketSettings.SectionName)
+        |> ignore
 
     let private usePipelineOrchestrator (services: IServiceCollection) =
         services.AddSingleton<Registry.T<TradingContext>>(fun provider ->
@@ -79,8 +80,11 @@ module CoreServices =
 
     let private useHttpClient (services: IServiceCollection) =
         services.AddScoped<Http.T>(fun provider ->
-            let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxHttp")
-            let httpClient = provider.GetRequiredService<IHttpClientFactory>().CreateClient("Okx")
+            let logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger "OkxHttp"
+
+            let httpClient =
+                provider.GetRequiredService<IHttpClientFactory>().CreateClient "Okx"
+
             let creds = provider.GetRequiredService<IOptions<MarketSettings>>().Value
             let creds = creds.Credentials |> Array.find (fun x -> x.MarketType = "Okx")
 
@@ -92,7 +96,7 @@ module CoreServices =
         services.AddScoped<BalanceManager.T>(fun provider ->
             let loggerFactory = provider.GetRequiredService<ILoggerFactory>()
             let okxHttp = provider.GetRequiredService<Http.T>()
-            let okxLogger = loggerFactory.CreateLogger("OkxBalanceProvider")
+            let okxLogger = loggerFactory.CreateLogger "OkxBalanceProvider"
             let okxBalance = BalanceProvider.create okxHttp okxLogger
             BalanceManager.create [ okxBalance ]
         )
@@ -118,7 +122,10 @@ module CoreServices =
     let private useOrderExecutor (services: IServiceCollection) =
         services.AddScoped<OrderExecutor.T list>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
-            let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderProvider")
+
+            let okxLogger =
+                provider.GetRequiredService<ILoggerFactory>().CreateLogger "OkxOrderProvider"
+
             [ OrderExecutor.create okxHttp okxLogger ]
         )
         |> ignore
@@ -126,7 +133,10 @@ module CoreServices =
     let private useOrderSyncer (services: IServiceCollection) =
         services.AddScoped<OrderSyncer.T list>(fun provider ->
             let okxHttp = provider.GetRequiredService<Http.T>()
-            let okxLogger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("OkxOrderSyncer")
+
+            let okxLogger =
+                provider.GetRequiredService<ILoggerFactory>().CreateLogger "OkxOrderSyncer"
+
             [ OrderSyncer.create okxHttp okxLogger ]
         )
         |> ignore
@@ -171,8 +181,8 @@ module CoreServices =
         services
             .AddHttpClient("Okx")
             .ConfigureHttpClient(fun (client: HttpClient) ->
-                client.BaseAddress <- Uri("https://www.okx.com/")
-                client.Timeout <- TimeSpan.FromSeconds(300.0)
+                client.BaseAddress <- Uri "https://www.okx.com/"
+                client.Timeout <- TimeSpan.FromSeconds 300.0
                 client.DefaultRequestHeaders.Add("User-Agent", "Plutus/1.0")
             )
             .ConfigurePrimaryHttpMessageHandler(
@@ -206,9 +216,7 @@ module CoreServices =
                     )
                 :> IAsyncPolicy<HttpResponseMessage>
             )
-            .AddPolicyHandler(fun _ ->
-                Policy.TimeoutAsync<HttpResponseMessage>(10) :> IAsyncPolicy<HttpResponseMessage>
-            )
+            .AddPolicyHandler(fun _ -> Policy.TimeoutAsync<HttpResponseMessage> 10 :> IAsyncPolicy<HttpResponseMessage>)
         |> ignore
 
     let private useMarketSeeding (services: IServiceCollection) =

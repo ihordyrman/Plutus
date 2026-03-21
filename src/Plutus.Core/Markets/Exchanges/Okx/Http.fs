@@ -24,9 +24,17 @@ module Http =
             | Get -> "GET"
             | Post -> "POST"
 
-    type Request = { Endpoint: string; Method: HttpMethod; Parameters: Map<string, string>; Body: obj option }
+    type Request =
+        { Endpoint: string
+          Method: HttpMethod
+          Parameters: Map<string, string>
+          Body: obj option }
 
-    type CandlestickParams = { Bar: Interval option; After: string option; Before: string option; Limit: int option }
+    type CandlestickParams =
+        { Bar: Interval option
+          After: string option
+          Before: string option
+          Limit: int option }
 
     type T =
         { getBalance: string option -> Task<Result<OkxBalanceDetail[], ServiceError>>
@@ -39,10 +47,24 @@ module Http =
           getOrder: string -> string -> Task<Result<OkxOrderDetail[], ServiceError>>
           getInstruments: InstrumentType -> Task<Result<OkxInstrument[], ServiceError>> }
 
-    let get endpoint = { Endpoint = endpoint; Method = Get; Parameters = Map.empty; Body = None }
-    let post endpoint body = { Endpoint = endpoint; Method = Post; Parameters = Map.empty; Body = Some body }
-    let withParam key value (req: Request) = { req with Parameters = Map.add key value req.Parameters }
-    let withParamOpt key valueOpt req = valueOpt |> Option.map (fun x -> withParam key x req) |> Option.defaultValue req
+    let get endpoint =
+        { Endpoint = endpoint
+          Method = Get
+          Parameters = Map.empty
+          Body = None }
+
+    let post endpoint body =
+        { Endpoint = endpoint
+          Method = Post
+          Parameters = Map.empty
+          Body = Some body }
+
+    let withParam key value (req: Request) =
+        { req with
+            Parameters = Map.add key value req.Parameters }
+
+    let withParamOpt key valueOpt req =
+        valueOpt |> Option.map (fun x -> withParam key x req) |> Option.defaultValue req
 
     let private buildPath req =
         if Map.isEmpty req.Parameters then
@@ -65,7 +87,9 @@ module Http =
         (path: string)
         (body: string)
         =
-        let signature = Auth.generateSignature timestamp credentials.SecretKey method path body
+        let signature =
+            Auth.generateSignature timestamp credentials.SecretKey method path body
+
         client.DefaultRequestHeaders.Add("OK-ACCESS-SIGN", signature)
         client.DefaultRequestHeaders.Add("OK-ACCESS-TIMESTAMP", timestamp)
         client.DefaultRequestHeaders.Add("OK-ACCESS-KEY", credentials.ApiKey)
@@ -85,20 +109,19 @@ module Http =
         (jsonOpts: JsonSerializerOptions)
         (credentials: MarketCredentials)
         (req: Request)
-        : Task<Result<'T, ServiceError>>
-        =
+        : Task<Result<'T, ServiceError>> =
         task {
             let path = buildPath req
             let method = req.Method.ToString()
             let body = serializeBody jsonOpts req.Body
-            let timestamp = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")
+            let timestamp = DateTime.UtcNow.ToString "yyyy-MM-ddTHH:mm:ss.fffZ"
 
             addAuthHeaders client credentials timestamp method path body
 
             try
                 let! response =
                     match req.Method with
-                    | Get -> client.GetAsync(path)
+                    | Get -> client.GetAsync path
                     | Post -> client.PostAsync(path, new StringContent(body, Encoding.UTF8, "application/json"))
 
                 if not response.IsSuccessStatusCode then
@@ -116,10 +139,13 @@ module Http =
         }
 
     type private RateLimitCounter =
-        { Limit: int; Window: TimeSpan; Semaphore: SemaphoreSlim; TimeStamps: Queue<DateTime> }
+        { Limit: int
+          Window: TimeSpan
+          Semaphore: SemaphoreSlim
+          TimeStamps: Queue<DateTime> }
 
     let private rateLimits =
-        let defaultWindow = TimeSpan.FromSeconds(1.0)
+        let defaultWindow = TimeSpan.FromSeconds 1.0
 
         let create limit =
             { Limit = limit
@@ -127,15 +153,18 @@ module Http =
               Semaphore = new SemaphoreSlim(1, 1)
               TimeStamps = Queue<DateTime>() }
 
-        Map<string, RateLimitCounter>(
-            [ ("/api/v5/public/instruments", create 20)
-              ("/api/v5/market/candles", create 40)
-              ("/api/v5/market/history-candles", { create 20 with Window = TimeSpan.FromSeconds(2.0) })
-              ("/api/v5/asset/asset-valuation", { create 1 with Window = TimeSpan.FromSeconds(3.0) })
-              ("/api/v5/account/balance", create 10)
-              ("/api/v5/asset/balances", create 10)
-              ("/api/v5/trade/order", create 60) ]
-        )
+        Map<string, RateLimitCounter>
+            [ "/api/v5/public/instruments", create 20
+              "/api/v5/market/candles", create 40
+              "/api/v5/market/history-candles",
+              { create 20 with
+                  Window = TimeSpan.FromSeconds 2.0 }
+              "/api/v5/asset/asset-valuation",
+              { create 1 with
+                  Window = TimeSpan.FromSeconds 3.0 }
+              "/api/v5/account/balance", create 10
+              "/api/v5/asset/balances", create 10
+              "/api/v5/trade/order", create 60 ]
 
     let private checkRateLimit (req: Request) (logger: ILogger) =
         match rateLimits.TryFind req.Endpoint with
@@ -158,18 +187,18 @@ module Http =
                             waitTime.TotalMilliseconds
                         )
 
-                        do! Task.Delay(waitTime)
+                        do! Task.Delay waitTime
 
                         let now = DateTime.UtcNow
 
                         while counter.TimeStamps.Count > 0 && now - counter.TimeStamps.Peek() > counter.Window do
                             counter.TimeStamps.Dequeue() |> ignore
 
-                    counter.TimeStamps.Enqueue(DateTime.UtcNow)
+                    counter.TimeStamps.Enqueue DateTime.UtcNow
                 finally
                     counter.Semaphore.Release() |> ignore
             }
-        | None -> Task.FromResult<unit>(())
+        | None -> Task.FromResult<unit>()
 
 
     let private exec<'T>
@@ -178,8 +207,7 @@ module Http =
         (credentials: MarketCredentials)
         (logger: ILogger)
         (req: Request)
-        : Task<Result<'T, ServiceError>>
-        =
+        : Task<Result<'T, ServiceError>> =
         task {
             try
                 do! checkRateLimit req logger
@@ -194,13 +222,17 @@ module Http =
         let jsonOpts = JsonSerializerOptions()
         jsonOpts.Converters.Add(OkxCandlestickConverter())
 
-        let run req = exec httpClient jsonOpts credentials logger req
+        let run req =
+            exec httpClient jsonOpts credentials logger req
 
         { getBalance = fun ccy -> get "/api/v5/asset/balances" |> withParamOpt "ccy" ccy |> run
           getFundingBalance = fun ccy -> get "/api/v5/asset/balances" |> withParamOpt "ccy" ccy |> run
           getAccountBalance = fun ccy -> get "/api/v5/account/balance" |> withParamOpt "ccy" ccy |> run
           getAssetsValuation =
-            fun ccy -> get "/api/v5/asset/asset-valuation" |> withParam "ccy" (defaultArg ccy "USDT") |> run
+            fun ccy ->
+                get "/api/v5/asset/asset-valuation"
+                |> withParam "ccy" (defaultArg ccy "USDT")
+                |> run
 
           getCandlesticks =
             fun instId p ->
@@ -224,7 +256,11 @@ module Http =
 
           placeOrder = fun order -> post "/api/v5/trade/order" order |> run
           getOrder =
-            fun instId ordId -> get "/api/v5/trade/order" |> withParam "instId" instId |> withParam "ordId" ordId |> run
+            fun instId ordId ->
+                get "/api/v5/trade/order"
+                |> withParam "instId" instId
+                |> withParam "ordId" ordId
+                |> run
           getInstruments =
             fun instType ->
                 match instType with

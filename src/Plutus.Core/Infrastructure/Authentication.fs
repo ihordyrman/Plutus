@@ -14,13 +14,13 @@ module Authentication =
         with _ ->
             false
 
-    let defaultSessionDuration = TimeSpan.FromDays(7.0)
+    let defaultSessionDuration = TimeSpan.FromDays 7.0
 
-    let extendedSessionDuration = TimeSpan.FromDays(30.0)
+    let extendedSessionDuration = TimeSpan.FromDays 30.0
 
     let computeSha256 (input: string) : string =
         Convert.ToHexStringLower(SHA256.HashData(Text.Encoding.UTF8.GetBytes input))
 
     let generateApiKey () : string =
         "plts_"
-        + Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)).Replace("+", "-").Replace("/", "_").TrimEnd('=')
+        + Convert.ToBase64String(RandomNumberGenerator.GetBytes 32).Replace("+", "-").Replace("/", "_").TrimEnd '='

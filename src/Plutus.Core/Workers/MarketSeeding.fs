@@ -23,7 +23,7 @@ type MarketSeedingWorker
             use db = scope.ServiceProvider.GetRequiredService<IDbConnection>()
 
             for c in creds.Value.Credentials do
-                match System.Enum.TryParse<MarketType>(c.MarketType) with
+                match System.Enum.TryParse<MarketType> c.MarketType with
                 | true, marketType ->
                     match! MarketRepository.ensureExists db marketType ct with
                     | Ok true -> logger.LogInformation("Created market {MarketType}", c.MarketType)

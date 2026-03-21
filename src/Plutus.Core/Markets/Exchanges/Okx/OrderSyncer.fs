@@ -22,7 +22,7 @@ module OrderSyncer =
         | _ -> None
 
     let private parseTimestamp (ms: string) =
-        match Int64.TryParse(ms) with
+        match Int64.TryParse ms with
         | true, v -> Some(DateTimeOffset.FromUnixTimeMilliseconds(v).UtcDateTime)
         | _ -> None
 

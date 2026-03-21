@@ -93,12 +93,21 @@ type Pair = { Base: Currency; Quote: Currency }
 module Pair =
     let create (baseCcy: string) (quoteCcy: string) : Result<Pair, string> =
         match Currency.create baseCcy, Currency.create quoteCcy with
-        | Ok baseCurrency, Ok quoteCurrency -> Ok { Base = baseCurrency; Quote = quoteCurrency }
+        | Ok baseCurrency, Ok quoteCurrency ->
+            Ok
+                { Base = baseCurrency
+                  Quote = quoteCurrency }
         | Error e, _ -> Error $"Invalid base currency: {e}"
         | _, Error e -> Error $"Invalid quote currency: {e}"
 
-    let value (pair: Pair) = (Currency.value pair.Base, Currency.value pair.Quote)
+    let value (pair: Pair) =
+        Currency.value pair.Base, Currency.value pair.Quote
 
-    let toString (pair: Pair) = $"{Currency.value pair.Base}-{Currency.value pair.Quote}"
+    let toString (pair: Pair) =
+        $"{Currency.value pair.Base}-{Currency.value pair.Quote}"
 
-type Instrument = { Id: InstrumentId; Type: InstrumentType; Pair: Pair; MarketType: MarketType }
+type Instrument =
+    { Id: InstrumentId
+      Type: InstrumentType
+      Pair: Pair
+      MarketType: MarketType }

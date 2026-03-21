@@ -1,4 +1,4 @@
-﻿namespace Plutus.Core.Markets.Exchanges.Okx
+namespace Plutus.Core.Markets.Exchanges.Okx
 
 open Microsoft.Extensions.Logging
 open System
@@ -11,7 +11,7 @@ module BalanceProvider =
     open Errors
 
     let private parseDecimal (value: string) =
-        match Decimal.TryParse(value) with
+        match Decimal.TryParse value with
         | true, x -> x
         | false, _ -> 0m
 
@@ -59,7 +59,10 @@ module BalanceProvider =
                     match fundingResult with
                     | Ok balances ->
                         let funding =
-                            balances |> Array.map mapFundingBalance |> Array.map (fun b -> b.Currency, b) |> Map.ofArray
+                            balances
+                            |> Array.map mapFundingBalance
+                            |> Array.map (fun b -> b.Currency, b)
+                            |> Map.ofArray
 
                         snapshot <- { snapshot with Funding = funding }
                     | Error _ -> ()
@@ -74,7 +77,10 @@ module BalanceProvider =
                             |> List.map (fun b -> b.Currency, b)
                             |> Map.ofList
 
-                        snapshot <- { snapshot with Spot = spot; AccountSummary = Some(mapAccountBalance okxAccount) }
+                        snapshot <-
+                            { snapshot with
+                                Spot = spot
+                                AccountSummary = Some(mapAccountBalance okxAccount) }
                     | _ -> ()
 
                     logger.LogInformation(
@@ -96,7 +102,10 @@ module BalanceProvider =
 
                     match result with
                     | Ok balances ->
-                        match balances |> Array.tryFind _.Ccy.Equals(currency, StringComparison.OrdinalIgnoreCase) with
+                        match
+                            balances
+                            |> Array.tryFind _.Ccy.Equals(currency, StringComparison.OrdinalIgnoreCase)
+                        with
                         | Some detail -> return Ok(mapBalanceDetail detail)
                         | None -> return Error(NotFound $"Currency {currency}")
                     | Error err -> return Error err
