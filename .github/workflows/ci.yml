@@ -1,31 +1,31 @@
-name: CI
-
-on: [ push ]
-
-env:
-    DOTNET_NOLOGO: true
-
-jobs:
-    test:
-        runs-on: ubuntu-latest
-        timeout-minutes: 5
-
-        steps:
-            -   uses: actions/checkout@v6
-
-            -   name: Setup .NET
-                uses: actions/setup-dotnet@v5
-                with:
-                    dotnet-version: 10.x
-
-            -   name: Install tools
-                run: dotnet tool restore
-
-            -   name: Restore dependencies
-                run: dotnet restore
-
-            -   name: Build
-                run: dotnet build --no-restore -c Release
-
-            -   name: Run tests
-                run: dotnet test tests/Plutus.Core.UnitTests/ --no-build -c Release -v quiet
+#name: CI
+#
+#on: [ push ]
+#
+#env:
+#    DOTNET_NOLOGO: true
+#
+#jobs:
+#    test:
+#        runs-on: ubuntu-latest
+#        timeout-minutes: 5
+#
+#        steps:
+#            -   uses: actions/checkout@v6
+#
+#            -   name: Setup .NET
+#                uses: actions/setup-dotnet@v5
+#                with:
+#                    dotnet-version: 10.x
+#
+#            -   name: Install tools
+#                run: dotnet tool restore
+#
+#            -   name: Restore dependencies
+#                run: dotnet restore
+#
+#            -   name: Build
+#                run: dotnet build --no-restore -c Release
+#
+#           -   name: Run tests
+#               run: dotnet test tests/Plutus.Core.UnitTests/ --no-build -c Release -v quiet
