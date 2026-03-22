@@ -9,28 +9,36 @@ type BacktestStatus =
     | Failed = 3
     | Cancelled = 4
 
-[<CLIMutable>]
+type BacktestRunId = private BacktestRunId of int
+
+module BacktestRunId =
+    let create (id: int) : Result<BacktestRunId, string> =
+        if id <= 0 then
+            Error "Backtest run ID must be a positive integer."
+        else
+            Ok(BacktestRunId id)
+
+    let value (BacktestRunId id) = id
+
 type BacktestRun =
-    { Id: int
-      PipelineId: int
+    { Id: BacktestRunId
+      PipelineId: PipelineId
       Status: BacktestStatus
       StartDate: DateTime
       EndDate: DateTime
-      IntervalMinutes: int
-      InitialCapital: decimal
+      IntervalMinutes: PositiveInt
+      InitialCapital: PositiveDecimal
       FinalCapital: decimal option
       TotalTrades: int
       WinRate: decimal option
       MaxDrawdown: decimal option
       SharpeRatio: decimal option
-      ErrorMessage: string
+      ErrorMessage: string option
       CreatedAt: DateTime
       CompletedAt: DateTime option }
 
-[<CLIMutable>]
 type BacktestTrade =
-    { Id: int
-      BacktestRunId: int
+    { BacktestRunId: BacktestRunId
       Side: OrderSide
       Price: decimal
       Quantity: decimal
@@ -38,28 +46,32 @@ type BacktestTrade =
       CandleTime: DateTime
       Capital: decimal }
 
-[<CLIMutable>]
-type BacktestEquityPoint = { Id: int; BacktestRunId: int; CandleTime: DateTime; Equity: decimal; Drawdown: decimal }
+type BacktestEquityPoint =
+    { BacktestRunId: BacktestRunId
+      CandleTime: DateTime
+      Equity: decimal
+      Drawdown: decimal }
 
-[<CLIMutable>]
 type BacktestExecutionLog =
-    { Id: int
-      BacktestRunId: int
-      ExecutionId: string
-      StepTypeKey: string
-      Outcome: int
-      Message: string
-      Context: string
+    { BacktestRunId: BacktestRunId
+      ExecutionId: ExecutionId
+      StepTypeKey: StepTypeKey
+      Outcome: StepOutcome
+      Message: NonEmptyString
+      Context: string option
       CandleTime: DateTime
       StartTime: DateTime
       EndTime: DateTime }
 
-[<CLIMutable>]
-type ExecutionSummary = { ExecutionId: string; CandleTime: DateTime; StepCount: int; MaxOutcome: int }
+type BacktestExecutionSummary =
+    { ExecutionId: ExecutionId
+      CandleTime: DateTime
+      StepCount: PositiveInt
+      MaxOutcome: StepOutcome }
 
 type BacktestConfig =
-    { PipelineId: int
+    { PipelineId: PipelineId
       StartDate: DateTime
       EndDate: DateTime
-      IntervalMinutes: int
-      InitialCapital: decimal }
+      IntervalMinutes: PositiveInt
+      InitialCapital: PositiveDecimal }

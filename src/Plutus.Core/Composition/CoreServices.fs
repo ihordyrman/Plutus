@@ -6,7 +6,6 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Options
 open Npgsql
 open Plutus.Core.Adapters
-open Plutus.Core.AuthenticatedUser.Adapters
 open Plutus.Core.Ports
 open Polly
 open System
@@ -75,6 +74,123 @@ module CoreServices =
             { UpsertBatch = Instruments.upsertBatch db
               GetBaseCurrency = Instruments.getBaseCurrencies db
               GetQuoteCurrency = Instruments.getQuoteCurrencies db }
+        )
+        |> ignore
+
+        services.AddScoped<MarketPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetById = Markets.getById db
+              GetAll = Markets.getAll db
+              Count = Markets.count db
+              EnsureExists = Markets.ensureExists db }
+        )
+        |> ignore
+
+        services.AddScoped<PositionPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetOpen = Positions.getOpen db
+              Create = Positions.create db }
+        )
+        |> ignore
+
+        services.AddScoped<ExecutionLogPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetByExecutionId = ExecutionLogs.getByExecutionId db
+              GetFilteredExecutions = ExecutionLogs.getFilteredExecutions db
+              CountFilteredExecutions = ExecutionLogs.countFilteredExecutions db }
+        )
+        |> ignore
+
+        services.AddScoped<SyncJobPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { Create = SyncJobs.create db
+              UpdateStatus = SyncJobs.updateStatus db
+              UpdateProgress = SyncJobs.updateProgress db
+              Delete = SyncJobs.delete db
+              GetActive = SyncJobs.getActive db
+              GetAll = SyncJobs.getAll db }
+        )
+        |> ignore
+
+        services.AddScoped<CandlestickPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetLatest = Candlesticks.getLatest db
+              GetOldest = Candlesticks.getOldest db
+              FindGaps = Candlesticks.findGaps db
+              Query = Candlesticks.query db
+              Save = Candlesticks.save db
+              DeleteByInstrument = Candlesticks.deleteByInstrument db
+              GetDistinctIntervals = Candlesticks.getDistinctIntervals db
+              GetDistinctInstrumentCount = Candlesticks.getDistinctInstrumentCount db
+              GetWeeklyCoveragePaged = Candlesticks.getWeeklyCoveragePaged db
+              GetWeeklyCoverage = Candlesticks.getWeeklyCoverage db }
+        )
+        |> ignore
+
+        services.AddScoped<PipelinePorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetById = Pipelines.getById db
+              GetAll = Pipelines.getAll db
+              Create = Pipelines.create db
+              Update = Pipelines.update db
+              Delete = Pipelines.delete db
+              Count = Pipelines.count db
+              CountEnabled = Pipelines.countEnabled db
+              GetAllTags = Pipelines.getAllTags db
+              Search = Pipelines.search db }
+        )
+        |> ignore
+
+        services.AddScoped<PipelineStepPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetById = PipelineSteps.getById db
+              GetByPipelineId = PipelineSteps.getByPipelineId db
+              Create = PipelineSteps.create db
+              Update = PipelineSteps.update db
+              Delete = PipelineSteps.delete db
+              DeleteByPipelineId = PipelineSteps.deleteByPipelineId db
+              SetEnabled = PipelineSteps.setEnabled db
+              SwapOrders = PipelineSteps.swapOrders db
+              GetMaxOrder = PipelineSteps.getMaxOrder db }
+        )
+        |> ignore
+
+        services.AddScoped<OrderPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { GetActive = Orders.getActive db
+              Create = Orders.create db
+              Update = Orders.update db
+              Search = Orders.search db
+              Count = Orders.count db }
+        )
+        |> ignore
+
+        services.AddScoped<BacktestPorts>(fun x ->
+            let db = x.GetRequiredService<IDbConnection>()
+
+            { CreateRun = Backtests.createRun db
+              UpdateRunResults = Backtests.updateRunResults db
+              GetRunById = Backtests.getRunById db
+              GetRunsByPipeline = Backtests.getRunsByPipeline db
+              InsertTrades = Backtests.insertTrades db
+              GetTradesByRun = Backtests.getTradesByRun db
+              InsertEquityPoints = Backtests.insertEquityPoints db
+              GetEquityByRun = Backtests.getEquityByRun db
+              InsertLogs = Backtests.insertLogs db
+              GetExecutionSummaries = Backtests.getExecutionSummaries db
+              GetLogsByRun = Backtests.getLogsByRun db
+              GetAllRuns = Backtests.getAllRuns db
+              CountRuns = Backtests.countRuns db
+              DeleteRun = Backtests.deleteRun db
+              GetLogsByExecution = Backtests.getLogsByExecution db }
         )
         |> ignore
 

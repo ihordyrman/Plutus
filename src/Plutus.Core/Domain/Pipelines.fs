@@ -1,7 +1,6 @@
 namespace Plutus.Core.Domain
 
 open System
-open System.Collections.Generic
 
 type PipelineStatus =
     | Idle = 0
@@ -19,10 +18,20 @@ module PipelineId =
 
     let value (PipelineId id) = id
 
-[<CLIMutable>]
+type PipelineName = private PipelineName of string
+
+module PipelineName =
+    let create (value: string) : Result<PipelineName, string> =
+        if String.IsNullOrWhiteSpace value then
+            Error "Pipeline name cannot be empty."
+        else
+            Ok(PipelineName value)
+
+    let value (PipelineName v) = v
+
 type Pipeline =
-    { Id: int
-      Name: string
+    { Id: PipelineId
+      Name: PipelineName
       Instrument: Instrument
       MarketType: MarketType
       Enabled: bool
@@ -33,14 +42,35 @@ type Pipeline =
       CreatedAt: DateTime
       UpdatedAt: DateTime }
 
-[<CLIMutable>]
+type StepId = private StepId of int
+
+module StepId =
+    let create (id: int) : Result<StepId, string> =
+        if id <= 0 then
+            Error "Step ID must be a positive integer."
+        else
+            Ok(StepId id)
+
+    let value (StepId id) = id
+
+type StepOrder = private StepOrder of int
+
+module StepOrder =
+    let create (order: int) : Result<StepOrder, string> =
+        if order < 0 then
+            Error "Step order cannot be negative."
+        else
+            Ok(StepOrder order)
+
+    let value (StepOrder o) = o
+
 type PipelineStep =
-    { Id: int
-      PipelineId: int
-      StepTypeKey: string
-      Name: string
-      Order: int
+    { Id: StepId
+      PipelineId: PipelineId
+      StepTypeKey: StepTypeKey
+      Name: NonEmptyString
+      Order: StepOrder
       IsEnabled: bool
-      Parameters: Dictionary<string, string>
+      Parameters: Map<string, string>
       CreatedAt: DateTime
       UpdatedAt: DateTime }
