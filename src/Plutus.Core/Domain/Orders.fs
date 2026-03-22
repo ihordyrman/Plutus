@@ -24,12 +24,11 @@ module OrderId =
 
     let value (OrderId id) = id
 
-[<CLIMutable>]
 type Order =
-    { Id: int
-      PipelineId: int option
+    { Id: OrderId
+      PipelineId: PipelineId option
       MarketType: MarketType
-      ExchangeOrderId: string
+      ExchangeOrderId: string option
       Instrument: Instrument
       Side: OrderSide
       Status: OrderStatus

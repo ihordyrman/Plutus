@@ -1,4 +1,4 @@
-module Plutus.Core.AuthenticatedUser.Adapters
+namespace Plutus.Core.Adapters
 
 open System
 open System.Data
@@ -8,24 +8,29 @@ open Plutus.Core.Domain
 open Plutus.Core.Shared.Errors
 
 [<CLIMutable>]
-type User = { Id: int; Username: string; PasswordHash: string; CreatedAt: DateTime; UpdatedAt: DateTime }
+type private UserEntity =
+    { Id: int
+      Username: string
+      PasswordHash: string
+      CreatedAt: DateTime
+      UpdatedAt: DateTime }
 
-module internal UserAdapters =
-    let private toAuthenticatedUser (user: User) : Result<AuthenticatedUser, string> =
+module UserAdapters =
+    let private toAuthenticatedUser (user: UserEntity) : Result<AuthenticatedUser, string> =
         match UserId.create user.Id, Username.create user.Username, PasswordHash.create user.PasswordHash with
         | Ok id, Ok username, Ok passwordHash -> Ok { Id = id; Username = username; PasswordHash = passwordHash }
         | Error e, _, _ -> Error $"Invalid ID for user {user.Id}: {e}"
         | _, Error e, _ -> Error $"Invalid username for user ID {user.Id}: {e}"
         | _, _, Error e -> Error $"Invalid password hash for user ID {user.Id}: {e}"
 
-    let internal findByUsername (db: IDbConnection) : FindUserByUsername =
+    let findByUsername (db: IDbConnection) : FindUserByUsername =
         fun username ct ->
             task {
                 try
                     let value = Username.value username
 
                     let! users =
-                        db.QueryAsync<User>(
+                        db.QueryAsync<UserEntity>(
                             CommandDefinition(
                                 "SELECT id, username, password_hash, created_at, updated_at
                                 FROM users WHERE username = @Username LIMIT 1",
@@ -44,7 +49,7 @@ module internal UserAdapters =
                     return Error(Unexpected ex)
             }
 
-    let internal userExists (db: IDbConnection) : UserExists =
+    let userExists (db: IDbConnection) : UserExists =
         fun ct ->
             task {
                 try
@@ -58,7 +63,7 @@ module internal UserAdapters =
                     return Error(Unexpected ex)
             }
 
-    let internal createUser (db: IDbConnection) : CreateUser =
+    let createUser (db: IDbConnection) : CreateUser =
         fun username passwordHash ct ->
             task {
                 try

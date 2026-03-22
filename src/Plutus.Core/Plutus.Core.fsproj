@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -13,10 +13,10 @@
         <Compile Include="Domain\Instruments.fs" />
 
         <Compile Include="Domain\Common.fs" />
-        <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Steps.fs" />
         <Compile Include="Domain\Pipelines.fs" />
         <Compile Include="Domain\Positions.fs" />
+        <Compile Include="Domain\Orders.fs" />
         <Compile Include="Domain\Backtests.fs" />
         <Compile Include="Domain\ApiKeys.fs" />
         <Compile Include="Domain\User.fs" />
@@ -29,31 +29,32 @@
         <Compile Include="Infrastructure\CacheStore.fs" />
         <Compile Include="Infrastructure\TypeHandlers.fs" />
 
-        <Compile Include="Repositories\PipelineRepository.fs" />
-        <Compile Include="Repositories\PipelineStepRepository.fs" />
-        <Compile Include="Repositories\CandlestickRepository.fs" />
-        <Compile Include="Repositories\OrderRepository.fs" />
-        <Compile Include="Repositories\ExecutionLogRepository.fs" />
-        <Compile Include="Repositories\SyncJobRepository.fs" />
-        <Compile Include="Repositories\BacktestRepository.fs" />
-
         <Compile Include="Ports\Users.fs" />
-
         <Compile Include="Ports\ApiKeys.fs" />
-
         <Compile Include="Ports\Instruments.fs" />
-
         <Compile Include="Ports\Markets.fs" />
-
         <Compile Include="Ports\Positions.fs" />
-
         <Compile Include="Ports\ExecutionLogs.fs" />
+        <Compile Include="Ports\SyncJobs.fs" />
+        <Compile Include="Ports\Candlesticks.fs" />
+        <Compile Include="Ports\Pipelines.fs" />
+        <Compile Include="Ports\PipelineSteps.fs" />
+        <Compile Include="Ports\Orders.fs" />
+        <Compile Include="Ports\Backtests.fs" />
+        <Compile Include="Ports\Transaction.fs" />
+
         <Compile Include="Adapters\Users.fs" />
         <Compile Include="Adapters\ApiKeys.fs" />
         <Compile Include="Adapters\Instruments.fs" />
         <Compile Include="Adapters\Markets.fs" />
         <Compile Include="Adapters\Positions.fs" />
         <Compile Include="Adapters\ExecutionLogs.fs" />
+        <Compile Include="Adapters\SyncJobs.fs" />
+        <Compile Include="Adapters\Candlesticks.fs" />
+        <Compile Include="Adapters\Pipelines.fs" />
+        <Compile Include="Adapters\PipelineSteps.fs" />
+        <Compile Include="Adapters\Orders.fs" />
+        <Compile Include="Adapters\Backtests.fs" />
 
         <Compile Include="Markets\Abstractions\Types.fs" />
         <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />

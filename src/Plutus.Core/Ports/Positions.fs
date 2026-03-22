@@ -7,3 +7,5 @@ open Plutus.Core.Shared.Errors
 
 type GetOpen = PipelineId -> CancellationToken -> Task<Result<Position, ServiceError>>
 type Create = CreatePositionRequest -> CancellationToken -> Task<Result<Position, ServiceError>>
+
+type PositionPorts = { GetOpen: GetOpen; Create: Create }

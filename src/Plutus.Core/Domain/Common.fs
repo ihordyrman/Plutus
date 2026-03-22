@@ -2,10 +2,8 @@ namespace Plutus.Core.Domain
 
 open System
 
-[<CLIMutable>]
 type Candlestick =
-    { Id: int
-      Instrument: Instrument
+    { Instrument: Instrument
       MarketType: MarketType
       Timestamp: DateTime
       Open: decimal
@@ -17,6 +15,13 @@ type Candlestick =
       IsCompleted: bool
       Interval: Interval }
 
+type CandlestickGap = { GapStart: DateTime; GapEnd: DateTime }
+
+type WeeklyCoverage =
+    { Instrument: Instrument
+      WeekStart: DateTime
+      Count: int }
+
 type SyncJobStatus =
     | Pending = 0
     | Running = 1
@@ -25,16 +30,26 @@ type SyncJobStatus =
     | Failed = 4
     | Stopped = 5
 
-[<CLIMutable>]
+type SyncJobId = private SyncJobId of int
+
+module SyncJobId =
+    let create (id: int) : Result<SyncJobId, string> =
+        if id <= 0 then
+            Error "SyncJob ID must be a positive integer."
+        else
+            Ok(SyncJobId id)
+
+    let value (SyncJobId id) = id
+
 type SyncJob =
-    { Id: int
+    { Id: SyncJobId
       Instrument: Instrument
       MarketType: MarketType
       Interval: Interval
       FromDate: DateTimeOffset
       ToDate: DateTimeOffset
-      Status: int
-      ErrorMessage: string
+      Status: SyncJobStatus
+      ErrorMessage: string option
       FetchedCount: int
       EstimatedTotal: int
       CurrentCursor: DateTimeOffset
