@@ -42,7 +42,7 @@ module ApiKey =
     let mapApiKey (apiKey: ApiKey) : Result<Key option, ServiceError> =
         match toKey apiKey with
         | Ok key -> Ok(Some key)
-        | Error e -> Error(Unexpected(Exception $"Failed to map API key: {e}"))
+        | Error e -> Error(Unexpected(Exception($"Failed to map API key: {e}")))
 
     let getByHash (db: IDbConnection) : GetByHash =
         fun hash token ->
@@ -61,7 +61,7 @@ module ApiKey =
 
                     match keys |> Seq.tryHead with
                     | None -> return Ok None
-                    | Some key -> return mapApiKey key
+                    | Some key -> return (mapApiKey key)
                 with ex ->
                     return Error(Unexpected ex)
             }
@@ -85,7 +85,7 @@ module ApiKey =
                         |> List.foldBack (fun result acc ->
                             match result, acc with
                             | Ok key, Ok keys -> Ok(key :: keys)
-                            | Error e, _ -> Error(Unexpected(Exception e))
+                            | Error e, _ -> Error(Unexpected(Exception(e)))
                             | _, Error e -> Error e
                         )
                         <| Ok []
@@ -107,14 +107,16 @@ module ApiKey =
                                 """INSERT INTO api_keys (name, key_hash, key_prefix, created_at)
                                      VALUES (@Name, @KeyHash, @KeyPrefix, now())
                                      RETURNING *""",
-                                {| Name = name; KeyHash = hash; KeyPrefix = prefix |},
+                                {| Name = name
+                                   KeyHash = hash
+                                   KeyPrefix = prefix |},
                                 cancellationToken = token
                             )
                         )
 
                     match toKey key with
                     | Ok k -> return Ok k
-                    | Error e -> return Error(Unexpected(Exception $"Failed to map API key: {e}"))
+                    | Error e -> return Error(Unexpected(Exception($"Failed to map API key: {e}")))
                 with ex ->
                     return Error(Unexpected ex)
             }
@@ -134,7 +136,10 @@ module ApiKey =
                             )
                         )
 
-                    if rowsAffected > 0 then return Ok() else return Error(NotFound $"API key with id {id}")
+                    if rowsAffected > 0 then
+                        return Ok()
+                    else
+                        return Error(NotFound $"API key with id {id} not found")
                 with ex ->
                     return Error(Unexpected ex)
             }

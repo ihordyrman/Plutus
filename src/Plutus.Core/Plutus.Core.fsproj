@@ -15,12 +15,12 @@
         <Compile Include="Domain\Common.fs" />
         <Compile Include="Domain\Steps.fs" />
         <Compile Include="Domain\Pipelines.fs" />
-        <Compile Include="Domain\Positions.fs" />
         <Compile Include="Domain\Orders.fs" />
+        <Compile Include="Domain\Positions.fs" />
+        <Compile Include="Domain\ExecutionLogs.fs" />
         <Compile Include="Domain\Backtests.fs" />
         <Compile Include="Domain\ApiKeys.fs" />
         <Compile Include="Domain\User.fs" />
-        <Compile Include="Domain\ExecutionLogs.fs" />
 
         <Compile Include="Infrastructure\Settings.fs" />
         <Compile Include="Infrastructure\Transaction.fs" />

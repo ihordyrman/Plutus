@@ -29,7 +29,7 @@ type BacktestRun =
       IntervalMinutes: PositiveInt
       InitialCapital: PositiveDecimal
       FinalCapital: decimal option
-      TotalTrades: int
+      TotalTrades: PositiveInt
       WinRate: decimal option
       MaxDrawdown: decimal option
       SharpeRatio: decimal option

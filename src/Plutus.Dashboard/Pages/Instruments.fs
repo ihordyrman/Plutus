@@ -11,11 +11,13 @@ module View =
 
         for (value, text, selected) in items do
             let enc = System.Web.HttpUtility.HtmlEncode
+            let value = enc value
+            let text = enc text
 
             if selected then
-                sb.Append($"<option value=\"{enc value}\" selected>{enc text}</option>") |> ignore
+                sb.Append($"<option value=\"{value}\" selected>{text}</option>") |> ignore
             else
-                sb.Append($"<option value=\"{enc value}\">{enc text}</option>") |> ignore
+                sb.Append($"<option value=\"{value}\">{text}</option>") |> ignore
 
         Text.raw (sb.ToString())
 

@@ -19,7 +19,7 @@ type ExecutionLog =
       StepTypeKey: StepTypeKey
       Outcome: StepOutcome
       Message: NonEmptyString
-      ContextSnapshot: string option
+      ContextSnapshot: NonEmptyString option
       StartTime: DateTime
       EndTime: DateTime }
 

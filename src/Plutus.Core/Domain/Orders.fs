@@ -28,18 +28,18 @@ type Order =
     { Id: OrderId
       PipelineId: PipelineId option
       MarketType: MarketType
-      ExchangeOrderId: string option
+      ExchangeOrderId: NonEmptyString option
       Instrument: Instrument
       Side: OrderSide
       Status: OrderStatus
-      Quantity: decimal
-      Price: decimal option
-      StopPrice: decimal option
-      Fee: decimal option
+      Quantity: PositiveDecimal
+      Price: PositiveDecimal option
+      StopPrice: PositiveDecimal option
+      Fee: PositiveDecimal option
       PlacedAt: DateTime option
       ExecutedAt: DateTime option
       CancelledAt: DateTime option
-      TakeProfit: decimal option
-      StopLoss: decimal option
+      TakeProfit: PositiveDecimal option
+      StopLoss: PositiveDecimal option
       CreatedAt: DateTime
       UpdatedAt: DateTime }

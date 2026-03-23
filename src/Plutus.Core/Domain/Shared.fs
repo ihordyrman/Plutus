@@ -3,7 +3,6 @@ namespace Plutus.Core.Domain
 type PositiveDecimal = private PositiveDecimal of decimal
 type PositiveInt = private PositiveInt of int
 type NonEmptyString = private NonEmptyString of string
-type JsonString = private JsonString of string
 
 module PositiveDecimal =
     let create (value: decimal) : Result<PositiveDecimal, string> =

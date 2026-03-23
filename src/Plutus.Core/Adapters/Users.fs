@@ -11,14 +11,16 @@ open Plutus.Core.Shared.Errors
 type private UserEntity =
     { Id: int
       Username: string
-      PasswordHash: string
-      CreatedAt: DateTime
-      UpdatedAt: DateTime }
+      PasswordHash: string }
 
 module UserAdapters =
     let private toAuthenticatedUser (user: UserEntity) : Result<AuthenticatedUser, string> =
         match UserId.create user.Id, Username.create user.Username, PasswordHash.create user.PasswordHash with
-        | Ok id, Ok username, Ok passwordHash -> Ok { Id = id; Username = username; PasswordHash = passwordHash }
+        | Ok id, Ok username, Ok passwordHash ->
+            Ok
+                { Id = id
+                  Username = username
+                  PasswordHash = passwordHash }
         | Error e, _, _ -> Error $"Invalid ID for user {user.Id}: {e}"
         | _, Error e, _ -> Error $"Invalid username for user ID {user.Id}: {e}"
         | _, _, Error e -> Error $"Invalid password hash for user ID {user.Id}: {e}"
