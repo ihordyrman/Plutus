@@ -6,12 +6,12 @@ type Candlestick =
     { Instrument: Instrument
       MarketType: MarketType
       Timestamp: DateTime
-      Open: decimal
-      High: decimal
-      Low: decimal
-      Close: decimal
-      Volume: decimal
-      VolumeQuote: decimal
+      Open: PositiveDecimal
+      High: PositiveDecimal
+      Low: PositiveDecimal
+      Close: PositiveDecimal
+      Volume: PositiveDecimal
+      VolumeQuote: PositiveDecimal
       IsCompleted: bool
       Interval: Interval }
 
@@ -20,7 +20,7 @@ type CandlestickGap = { GapStart: DateTime; GapEnd: DateTime }
 type WeeklyCoverage =
     { Instrument: Instrument
       WeekStart: DateTime
-      Count: int }
+      Count: PositiveInt }
 
 type SyncJobStatus =
     | Pending = 0
@@ -50,8 +50,8 @@ type SyncJob =
       ToDate: DateTimeOffset
       Status: SyncJobStatus
       ErrorMessage: string option
-      FetchedCount: int
-      EstimatedTotal: int
+      FetchedCount: PositiveInt
+      EstimatedTotal: PositiveInt
       CurrentCursor: DateTimeOffset
       StartedAt: DateTime
       LastUpdateAt: DateTime

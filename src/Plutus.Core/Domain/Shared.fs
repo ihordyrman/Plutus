@@ -18,7 +18,6 @@ module PositiveInt =
         | x when x <= 0 -> Error "Value must be a positive integer."
         | _ -> Ok(PositiveInt value)
 
-
 module NonEmptyString =
     let create (value: string) : Result<NonEmptyString, string> =
         match value with
