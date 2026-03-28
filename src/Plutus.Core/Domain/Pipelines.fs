@@ -29,6 +29,16 @@ module PipelineName =
 
     let value (PipelineName v) = v
 
+type PipelineTag = private PipelineTag of string
+
+module PipelineTag =
+    let create (tag: string) : Result<PipelineTag, string> =
+        match tag with
+        | x when x.Length > 1 && x.Length <= 10 -> Ok(PipelineTag tag)
+        | _ -> Error "Pipeline tag must be between 2 and 10 characters."
+
+    let value (PipelineTag tag) = tag
+
 type Pipeline =
     { Id: PipelineId
       Name: PipelineName
@@ -38,7 +48,7 @@ type Pipeline =
       ExecutionInterval: TimeSpan
       LastExecutedAt: DateTime option
       Status: PipelineStatus
-      Tags: string list
+      Tags: PipelineTag list
       CreatedAt: DateTime
       UpdatedAt: DateTime }
 
