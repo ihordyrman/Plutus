@@ -8,6 +8,13 @@
     <ItemGroup>
         <Compile Include="Shared\Errors.fs" />
         <Compile Include="Shared\Helpers.fs" />
+
+
+        <Compile Include="Identity\Domain.fs" />
+        <Compile Include="Identity\Entities.fs" />
+        <Compile Include="Identity\Ports.fs" />
+        <Compile Include="Identity\GetAllKeys.fs" />
+
         <Compile Include="Domain\Shared.fs" />
         <Compile Include="Domain\Markets.fs" />
         <Compile Include="Domain\Instruments.fs" />

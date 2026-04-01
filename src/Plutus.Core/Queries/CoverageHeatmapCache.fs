@@ -7,12 +7,15 @@ open FsToolkit.ErrorHandling
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Logging
 open Plutus.Core.Infrastructure
-open Plutus.Core.Repositories
 
 module CoverageHeatmapCache =
-    type CachedIntervalData = { Coverage: WeeklyCoverage list; InstrumentCount: int }
+    type CachedIntervalData =
+        { Coverage: WeeklyCoverage list
+          InstrumentCount: int }
 
-    type CachedHeatmapData = { Intervals: Interval list; ByInterval: Map<Interval, CachedIntervalData> }
+    type CachedHeatmapData =
+        { Intervals: Interval list
+          ByInterval: Map<Interval, CachedIntervalData> }
 
     [<Literal>]
     let Key = "coverage-heatmap"
@@ -37,16 +40,29 @@ module CoverageHeatmapCache =
 
             for interval in intervals do
                 let! coverage =
-                    CandlestickRepository.getWeeklyCoverage db interval ct |> Task.map (Result.defaultValue [])
+                    CandlestickRepository.getWeeklyCoverage db interval ct
+                    |> Task.map (Result.defaultValue [])
 
                 let! count =
-                    CandlestickRepository.getDistinctInstrumentCount db interval ct |> Task.map (Result.defaultValue 0)
+                    CandlestickRepository.getDistinctInstrumentCount db interval ct
+                    |> Task.map (Result.defaultValue 0)
 
-                byInterval <- byInterval |> Map.add interval { Coverage = coverage; InstrumentCount = count }
+                byInterval <-
+                    byInterval
+                    |> Map.add
+                        interval
+                        { Coverage = coverage
+                          InstrumentCount = count }
 
-            store.Set(Key, { Intervals = intervals; ByInterval = byInterval })
+            store.Set(
+                Key,
+                { Intervals = intervals
+                  ByInterval = byInterval }
+            )
 
         }
 
     let refresher: CacheRefresher =
-        { Key = Key; Interval = TimeSpan.FromSeconds(RefreshIntervalSeconds); Refresh = refresh }
+        { Key = Key
+          Interval = TimeSpan.FromSeconds(RefreshIntervalSeconds)
+          Refresh = refresh }

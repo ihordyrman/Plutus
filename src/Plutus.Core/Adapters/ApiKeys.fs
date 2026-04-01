@@ -7,16 +7,6 @@ open Plutus.Core.Domain
 open Plutus.Core.Ports
 open Plutus.Core.Shared.Errors
 
-[<CLIMutable>]
-type ApiKey =
-    { Id: int
-      Name: string
-      KeyHash: string
-      KeyPrefix: string
-      IsActive: bool
-      LastUsed: DateTime option
-      CreatedAt: DateTime }
-
 module ApiKey =
     let toKey (apiKey: ApiKey) : Result<Key, string> =
         match
@@ -66,32 +56,6 @@ module ApiKey =
                     return Error(Unexpected ex)
             }
 
-    let getAll (db: IDbConnection) : GetAll =
-        fun token ->
-            task {
-                try
-                    let! keys =
-                        db.QueryAsync<ApiKey>(
-                            CommandDefinition(
-                                "SELECT * FROM api_keys ORDER BY created_at DESC",
-                                cancellationToken = token
-                            )
-                        )
-
-                    return
-                        keys
-                        |> Seq.toList
-                        |> List.map toKey
-                        |> List.foldBack (fun result acc ->
-                            match result, acc with
-                            | Ok key, Ok keys -> Ok(key :: keys)
-                            | Error e, _ -> Error(Unexpected(Exception(e)))
-                            | _, Error e -> Error e
-                        )
-                        <| Ok []
-                with ex ->
-                    return Error(Unexpected ex)
-            }
 
     let create (db: IDbConnection) : Create =
         fun name hash prefix token ->

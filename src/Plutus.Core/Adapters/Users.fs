@@ -7,12 +7,6 @@ open Plutus.Core.Ports
 open Plutus.Core.Domain
 open Plutus.Core.Shared.Errors
 
-[<CLIMutable>]
-type private UserEntity =
-    { Id: int
-      Username: string
-      PasswordHash: string }
-
 module UserAdapters =
     let private toAuthenticatedUser (user: UserEntity) : Result<AuthenticatedUser, string> =
         match UserId.create user.Id, Username.create user.Username, PasswordHash.create user.PasswordHash with

@@ -9,9 +9,11 @@ open FsToolkit.ErrorHandling
 open Plutus.Core.Markets.Services
 
 module DashboardQueries =
-    type T = { TotalBalanceUsdt: CancellationToken -> Task<decimal> }
+    type T =
+        { TotalBalanceUsdt: CancellationToken -> Task<decimal> }
 
-    let logError fmt (log: ILogger) = Result.teeError (fun err -> log.LogError(fmt, box err))
+    let logError fmt (log: ILogger) =
+        Result.teeError (fun err -> log.LogError(fmt, box err))
 
     let private getTotalBalanceUsdt (scopeFactory: IServiceScopeFactory) (ct: CancellationToken) =
         task {
@@ -29,7 +31,8 @@ module DashboardQueries =
                 |> List.map (fun market ->
                     BalanceManager.getTotalUsdtValue balanceManager market.Type ct
                     |> Task.map (
-                        logError $"Error getting balance for {market.Type}: {0}" log >> Result.defaultValue 0M
+                        logError $"Error getting balance for {market.Type}: {0}" log
+                        >> Result.defaultValue 0M
                     )
                 )
                 |> Task.WhenAll
@@ -37,4 +40,5 @@ module DashboardQueries =
             return balances |> Array.sum
         }
 
-    let create (scopeFactory: IServiceScopeFactory) : T = { TotalBalanceUsdt = getTotalBalanceUsdt scopeFactory }
+    let create (scopeFactory: IServiceScopeFactory) : T =
+        { TotalBalanceUsdt = getTotalBalanceUsdt scopeFactory }

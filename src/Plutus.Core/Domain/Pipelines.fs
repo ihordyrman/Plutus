@@ -21,11 +21,12 @@ module PipelineId =
 type PipelineName = private PipelineName of string
 
 module PipelineName =
-    let create (value: string) : Result<PipelineName, string> =
-        if String.IsNullOrWhiteSpace value then
-            Error "Pipeline name cannot be empty."
-        else
-            Ok(PipelineName value)
+    let create (name: string) : Result<PipelineName, string> =
+        match name with
+        | x when String.IsNullOrWhiteSpace x -> Error "Pipeline name cannot be empty."
+        | x when x.Length < 3 -> Error "Pipeline name must be at least 3 characters long."
+        | x when x.Length > 50 -> Error "Pipeline name cannot exceed 50 characters."
+        | _ -> Ok(PipelineName name)
 
     let value (PipelineName v) = v
 
@@ -63,6 +64,47 @@ module StepId =
 
     let value (StepId id) = id
 
+type StepOutcome =
+    | Success
+    | Stopped
+    | Failed
+
+type StepCategory =
+    | Validation = 0
+    | Risk = 1
+    | Signal = 2
+    | Execution = 3
+
+module StepKey =
+    let create (value: string) : Result<StepKey, string> =
+        match value with
+        | null
+        | "" -> Error "Step key must be a non-empty string."
+        | _ -> Ok(StepKey value)
+
+    let value (StepKey value) = value
+
+module StepOutcome =
+    let fromInt =
+        function
+        | 0 -> Ok Success
+        | 1 -> Ok Stopped
+        | 2 -> Ok Failed
+        | v -> Error $"Invalid step outcome: {v}"
+
+    let toInt =
+        function
+        | Success -> 0
+        | Stopped -> 1
+        | Failed -> 2
+
+module StepTypeKey =
+    let create (value: string) : Result<StepTypeKey, string> =
+        match value with
+        | null
+        | "" -> Error "Step type key must be a non-empty string."
+        | _ -> Ok(StepTypeKey value)
+
 type StepOrder = private StepOrder of int
 
 module StepOrder =
@@ -74,13 +116,38 @@ module StepOrder =
 
     let value (StepOrder o) = o
 
+type StepParameters = private StepParameters of Map<string, string>
+
+module StepParameters =
+    let create (parameters: Map<string, string>) : Result<StepParameters, string> =
+        match parameters with
+        | x when x |> Map.exists (fun k _ -> String.IsNullOrWhiteSpace k) ->
+            Error "Step parameters cannot contain empty keys."
+        | x when x |> Map.exists (fun _ v -> String.IsNullOrWhiteSpace v) ->
+            Error "Step parameters cannot contain empty values."
+        | _ -> Ok(StepParameters parameters)
+
+    let value (StepParameters param) = param
+
+type StepName = private StepName of string
+
+module StepName =
+    let create (name: string) : Result<StepName, string> =
+        match name with
+        | x when String.IsNullOrWhiteSpace x -> Error "Step name cannot be empty."
+        | x when x.Length < 3 -> Error "Step name must be at least 3 characters long."
+        | x when x.Length > 50 -> Error "Step name cannot exceed 50 characters."
+        | _ -> Ok(StepName name)
+
+    let value (StepName n) = n
+
 type PipelineStep =
     { Id: StepId
       PipelineId: PipelineId
       StepTypeKey: StepTypeKey
-      Name: NonEmptyString
+      Name: StepName
       Order: StepOrder
       IsEnabled: bool
-      Parameters: Map<string, string>
+      Parameters: StepParameters
       CreatedAt: DateTime
       UpdatedAt: DateTime }
