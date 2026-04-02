@@ -12,6 +12,7 @@ open System
 open System.Data
 open System.Net
 open System.Net.Http
+open Plutus.Core.Identity
 open Plutus.Core.Infrastructure
 open Plutus.Core.Markets.Abstractions
 open Plutus.Core.Markets.Exchanges.Okx
@@ -19,6 +20,7 @@ open Plutus.Core.Markets.Services
 open Plutus.Core.Pipelines.Core
 open Plutus.Core.Pipelines.Orchestration
 open Plutus.Core.Pipelines.Trading
+open Plutus.Core.Identity.Ports
 open Plutus.Core.Workers
 
 module CoreServices =
@@ -51,20 +53,20 @@ module CoreServices =
         services.AddScoped<UserPorts>(fun x ->
             let db = x.GetRequiredService<IDbConnection>()
 
-            { FindByUsername = UserAdapters.findByUsername db
-              UserExists = UserAdapters.userExists db
-              CreateUser = UserAdapters.createUser db }
+            { FindByUsername = Adapter.findByUsername db
+              UserExists = Adapter.userExists db
+              CreateUser = Adapter.createUser db }
         )
         |> ignore
 
         services.AddScoped<KeyPorts>(fun x ->
             let db = x.GetRequiredService<IDbConnection>()
 
-            { GetByHash = ApiKey.getByHash db
-              GetAll = ApiKey.getAll db
-              Create = ApiKey.create db
-              Deactivate = ApiKey.deactivate db
-              UpdateLastUsed = ApiKey.updateLastUsed db }
+            { GetByHash = Adapter.getByHash db
+              GetAll = Adapter.getAll db
+              Create = Adapter.create db
+              Deactivate = Adapter.deactivate db
+              UpdateLastUsed = Adapter.updateLastUsed db }
         )
         |> ignore
 

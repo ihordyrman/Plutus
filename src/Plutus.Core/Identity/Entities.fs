@@ -3,7 +3,7 @@ namespace Plutus.Core.Identity.Entities
 open System
 
 [<CLIMutable>]
-type ApiKey =
+type internal ApiKey =
     { Id: int
       Name: string
       KeyHash: string
@@ -13,7 +13,7 @@ type ApiKey =
       CreatedAt: DateTime }
 
 [<CLIMutable>]
-type UserEntity =
+type internal UserEntity =
     { Id: int
       Username: string
       PasswordHash: string }

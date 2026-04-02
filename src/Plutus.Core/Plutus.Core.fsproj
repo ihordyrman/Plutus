@@ -13,7 +13,15 @@
         <Compile Include="Identity\Domain.fs" />
         <Compile Include="Identity\Entities.fs" />
         <Compile Include="Identity\Ports.fs" />
+        <Compile Include="Identity\Helpers.fs" />
+        <Compile Include="Identity\Create.fs" />
+        <Compile Include="Identity\GetByHash.fs" />
         <Compile Include="Identity\GetAllKeys.fs" />
+        <Compile Include="Identity\Deactivate.fs" />
+        <Compile Include="Identity\UpdateLastUsed.fs" />
+        <Compile Include="Identity\CreateUser.fs" />
+        <Compile Include="Identity\FindByUsername.fs" />
+        <Compile Include="Identity\UserExists.fs" />
 
         <Compile Include="Domain\Shared.fs" />
         <Compile Include="Domain\Markets.fs" />

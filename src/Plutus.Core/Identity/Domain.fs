@@ -66,7 +66,7 @@ module KeyName =
 module KeyHash =
     let create (hash: string) : Result<KeyHash, string> =
         match hash with
-        | x when String.IsNullOrWhiteSpace hash -> Error "Key hash cannot be empty."
+        | _ when String.IsNullOrWhiteSpace hash -> Error "Key hash cannot be empty."
         | _ -> Ok(KeyHash hash)
 
     let value (KeyHash hash) = hash
