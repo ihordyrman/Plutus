@@ -13,6 +13,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src\Plutus.Core\Plutus.Core.fsproj"></Project>
+    <Project Path="src\Plutus.Core.Old\Plutus.Core.Old.fsproj"></Project>
     <Project Path="src\Plutus.Api\Plutus.Api.fsproj"></Project>
   </Folder>
   <Folder Name="/tests/">

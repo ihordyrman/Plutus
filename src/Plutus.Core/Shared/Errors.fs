@@ -1,5 +1,7 @@
 namespace Plutus.Core.Shared
 
+
+// todo: questionable. Review if I need such separation of errors.
 module Errors =
 
     type ServiceError =

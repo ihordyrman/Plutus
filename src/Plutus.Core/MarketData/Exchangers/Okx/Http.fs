@@ -1,4 +1,4 @@
-namespace Plutus.Core.Markets.Exchanges.Okx
+namespace Plutus.Core.MarketData.Exchangers.Okx
 
 open System
 open System.Collections.Generic
@@ -9,7 +9,9 @@ open System.Threading
 open System.Threading.Tasks
 open System.Web
 open Microsoft.Extensions.Logging
-open Plutus.Core.Infrastructure
+open Plutus.Core.MarketData
+open Plutus.Core.MarketData.Domain
+open Plutus.Core.MarketData.Exchangers.Okx
 open Plutus.Core.Shared
 
 module Http =
@@ -36,7 +38,7 @@ module Http =
           Before: string option
           Limit: int option }
 
-    type T =
+    type internal T =
         { getBalance: string option -> Task<Result<OkxBalanceDetail[], ServiceError>>
           getFundingBalance: string option -> Task<Result<OkxFundingBalance[], ServiceError>>
           getAccountBalance: string option -> Task<Result<OkxAccountBalance[], ServiceError>>
@@ -217,7 +219,7 @@ module Http =
                 return Error(Unexpected ex)
         }
 
-    let create (httpClient: HttpClient) (credentials: MarketCredentials) (logger: ILogger) : T =
+    let internal create (httpClient: HttpClient) (credentials: MarketCredentials) (logger: ILogger) : T =
 
         let jsonOpts = JsonSerializerOptions()
         jsonOpts.Converters.Add(OkxCandlestickConverter())

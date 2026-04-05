@@ -1,11 +1,11 @@
-namespace Plutus.Core.Markets.Exchanges.Okx
+namespace Plutus.Core.MarketData.Exchangers.Okx
 
 open System
 open System.Globalization
 open System.Text.Json
 open System.Text.Json.Serialization
 
-type InstrumentType =
+type internal InstrumentType =
     | Spot
     | Margin
     | Swap
@@ -14,7 +14,7 @@ type InstrumentType =
     | Any
 
 [<JsonConverter(typeof<JsonStringEnumConverter>)>]
-type OkxResponseCode =
+type internal OkxResponseCode =
     | Success = 0
     | InvalidTimestamp = 60004
     | InvalidApiKey = 60005
@@ -34,7 +34,7 @@ type OkxResponseCode =
     | SystemBusy = 50026
 
 [<CLIMutable>]
-type OkxAssetsValuationDetail =
+type internal OkxAssetsValuationDetail =
     { [<JsonPropertyName("classic")>]
       Classic: string
       [<JsonPropertyName("earn")>]
@@ -45,7 +45,7 @@ type OkxAssetsValuationDetail =
       Trading: string }
 
 [<CLIMutable>]
-type OkxAssetsValuation =
+type internal OkxAssetsValuation =
     { [<JsonPropertyName("details")>]
       Details: OkxAssetsValuationDetail
       [<JsonPropertyName("totalBal")>]
@@ -54,7 +54,7 @@ type OkxAssetsValuation =
       Timestamp: string }
 
 [<CLIMutable>]
-type OkxBalanceDetail =
+type internal OkxBalanceDetail =
     { [<JsonPropertyName("accAvgPx")>]
       AccAvgPx: string
       [<JsonPropertyName("autoLendAmt")>]
@@ -153,7 +153,7 @@ type OkxBalanceDetail =
       UplLiab: string }
 
 [<CLIMutable>]
-type OkxAccountBalance =
+type internal OkxAccountBalance =
     { [<JsonPropertyName("adjEq")>]
       AdjEq: string
       [<JsonPropertyName("availEq")>]
@@ -190,7 +190,7 @@ type OkxAccountBalance =
       Details: OkxBalanceDetail list }
 
 [<CLIMutable>]
-type OkxFundingBalance =
+type internal OkxFundingBalance =
     { [<JsonPropertyName("availBal")>]
       AvailBal: string
       [<JsonPropertyName("bal")>]
@@ -201,7 +201,7 @@ type OkxFundingBalance =
       FrozenBal: string }
 
 [<CLIMutable>]
-type OkxHttpResponse<'T> =
+type internal OkxHttpResponse<'T> =
     { [<JsonPropertyName("code")>]
       Code: OkxResponseCode
       [<JsonPropertyName("msg")>]
@@ -209,7 +209,7 @@ type OkxHttpResponse<'T> =
       [<JsonPropertyName("data")>]
       Data: 'T option }
 
-type OkxCandlestick =
+type internal OkxCandlestick =
     { Timestamp: DateTime
       Open: decimal
       High: decimal
@@ -220,17 +220,20 @@ type OkxCandlestick =
       VolumeQuoteCurrency: decimal
       IsCompleted: bool }
 
-type OkxCandlestickConverter() =
+type internal OkxCandlestickConverter() =
     inherit JsonConverter<OkxCandlestick>()
 
-    override this.Read(reader, typeToConvert, options) =
+    override _.Read(reader, _, options) =
         let data = JsonSerializer.Deserialize<string[]>(&reader, options)
 
         if isNull data then
-            raise (JsonException("Failed to deserialize candlestick data"))
+            raise (JsonException "Failed to deserialize candlestick data")
 
-        let dec (value: string) = Decimal.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture)
-        let double (value: string) = Double.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture)
+        let dec (value: string) =
+            Decimal.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture)
+
+        let double (value: string) =
+            Double.Parse(value, NumberStyles.Any, CultureInfo.InvariantCulture)
 
         { Timestamp = DateTimeOffset.FromUnixTimeMilliseconds(int64 (double data[0])).UtcDateTime
           Open = dec data[1]
@@ -242,10 +245,11 @@ type OkxCandlestickConverter() =
           VolumeQuoteCurrency = dec data[7]
           IsCompleted = data[8] = "1" }
 
-    override this.Write(_, _, _) = raise (NotSupportedException("Serialization not supported"))
+    override _.Write(_, _, _) =
+        raise (NotSupportedException "Serialization not supported")
 
 [<CLIMutable>]
-type OkxPlaceOrderRequest =
+type internal OkxPlaceOrderRequest =
     { [<JsonPropertyName("instId")>]
       InstrumentId: string
       [<JsonPropertyName("tdMode")>]
@@ -268,7 +272,7 @@ type OkxPlaceOrderRequest =
       TargetCurrency: string option }
 
 [<CLIMutable>]
-type OkxPlaceOrderResponse =
+type internal OkxPlaceOrderResponse =
     { [<JsonPropertyName("ordId")>]
       OrderId: string
       [<JsonPropertyName("clOrdId")>]
@@ -285,7 +289,7 @@ type OkxPlaceOrderResponse =
     member x.IsSuccess = x.StatusCode = "0"
 
 [<CLIMutable>]
-type OkxOrderDetail =
+type internal OkxOrderDetail =
     { [<JsonPropertyName("ordId")>]
       OrderId: string
       [<JsonPropertyName("clOrdId")>]
@@ -321,7 +325,7 @@ type OkxOrderDetail =
       [<JsonPropertyName("cTime")>]
       CreateTime: string }
 
-type OkxInstrument =
+type internal OkxInstrument =
     { [<JsonPropertyName("instId")>]
       InstrumentId: string
       [<JsonPropertyName("instType")>]

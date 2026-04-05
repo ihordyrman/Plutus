@@ -17,7 +17,7 @@ webapp.Host.UseSerilog(fun context services configuration ->
 )
 |> ignore
 
-CoreServices.register webapp.Services webapp.Configuration
+// CoreServices.register webapp.Services webapp.Configuration
 
 let app = webapp.Build()
 

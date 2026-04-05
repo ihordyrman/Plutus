@@ -1,0 +1,103 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Domain\Shared.fs" />
+    <Compile Include="Domain\Markets.fs" />
+    <Compile Include="Domain\Instruments.fs" />
+
+    <Compile Include="Domain\Common.fs" />
+    <Compile Include="Domain\Steps.fs" />
+    <Compile Include="Domain\Pipelines.fs" />
+    <Compile Include="Domain\Orders.fs" />
+    <Compile Include="Domain\Positions.fs" />
+    <Compile Include="Domain\ExecutionLogs.fs" />
+    <Compile Include="Domain\Backtests.fs" />
+
+    <Compile Include="Infrastructure\Settings.fs" />
+    <Compile Include="Infrastructure\Transaction.fs" />
+    <Compile Include="Infrastructure\Authentication.fs" />
+    <Compile Include="Infrastructure\ExecutionLogger.fs" />
+    <Compile Include="Infrastructure\CacheStore.fs" />
+    <Compile Include="Infrastructure\TypeHandlers.fs" />
+
+    <Compile Include="Ports\Users.fs" />
+    <Compile Include="Ports\ApiKeys.fs" />
+    <Compile Include="Ports\Instruments.fs" />
+    <Compile Include="Ports\Markets.fs" />
+    <Compile Include="Ports\Positions.fs" />
+    <Compile Include="Ports\ExecutionLogs.fs" />
+    <Compile Include="Ports\SyncJobs.fs" />
+    <Compile Include="Ports\Candlesticks.fs" />
+    <Compile Include="Ports\Pipelines.fs" />
+    <Compile Include="Ports\PipelineSteps.fs" />
+    <Compile Include="Ports\Orders.fs" />
+    <Compile Include="Ports\Backtests.fs" />
+    <Compile Include="Ports\Transaction.fs" />
+
+    <Compile Include="Adapters\Users.fs" />
+    <Compile Include="Adapters\ApiKeys.fs" />
+    <Compile Include="Adapters\Instruments.fs" />
+    <Compile Include="Adapters\Markets.fs" />
+    <Compile Include="Adapters\Positions.fs" />
+    <Compile Include="Adapters\ExecutionLogs.fs" />
+    <Compile Include="Adapters\SyncJobs.fs" />
+    <Compile Include="Adapters\Candlesticks.fs" />
+    <Compile Include="Adapters\Pipelines.fs" />
+    <Compile Include="Adapters\PipelineSteps.fs" />
+    <Compile Include="Adapters\Orders.fs" />
+    <Compile Include="Adapters\Backtests.fs" />
+
+    <Compile Include="Markets\Abstractions\Types.fs" />
+    <Compile Include="Markets\Abstractions\ExchangeContracts.fs" />
+
+    <Compile Include="Markets\Exchanges\Okx\BalanceProvider.fs" />
+    <Compile Include="Markets\Exchanges\Okx\OrderExecutor.fs" />
+    <Compile Include="Markets\Exchanges\Okx\OrderSyncer.fs" />
+
+    <Compile Include="Markets\Services\BalanceManager.fs" />
+    <Compile Include="Pipelines\Core\Context.fs" />
+    <Compile Include="Pipelines\Core\Parameters.fs" />
+    <Compile Include="Pipelines\Core\Steps.fs" />
+    <Compile Include="Pipelines\Core\Ports.fs" />
+    <Compile Include="Pipelines\Core\Registry.fs" />
+    <Compile Include="Pipelines\Core\Builder.fs" />
+    <Compile Include="Pipelines\Core\Runner.fs" />
+    <Compile Include="Pipelines\Trading\Indicators.fs" />
+    <Compile Include="Pipelines\Trading\CheckPosition.fs" />
+    <Compile Include="Pipelines\Trading\PositionGateStep.fs" />
+    <Compile Include="Pipelines\Trading\EntryStep.fs" />
+    <Compile Include="Pipelines\Trading\LiveAdapters.fs" />
+    <Compile Include="Pipelines\Trading\EmaSignal.fs" />
+    <Compile Include="Pipelines\Trading\MacdSignal.fs" />
+    <Compile Include="Pipelines\Trading\VwapSignal.fs" />
+    <Compile Include="Pipelines\Trading\EwmacSignal.fs" />
+    <Compile Include="Pipelines\Trading\TrendFollowingSignal.fs" />
+    <Compile Include="Pipelines\Trading\TradingSteps.fs" />
+    <Compile Include="Pipelines\Orchestration\Executor.fs" />
+    <Compile Include="Pipelines\Orchestration\Orchestrator.fs" />
+
+    <Compile Include="Backtesting\BacktestMetrics.fs" />
+    <Compile Include="Backtesting\BacktestState.fs" />
+    <Compile Include="Backtesting\BacktestAdapters.fs" />
+    <Compile Include="Backtesting\BacktestEngine.fs" />
+    <Compile Include="Backtesting\BacktestExport.fs" />
+
+    <Compile Include="Workers\MarketSeeding.fs" />
+    <Compile Include="Workers\CacheWorker.fs" />
+    <Compile Include="Workers\CandlestickSync.fs" />
+    <Compile Include="Workers\InstrumentSync.fs" />
+    <Compile Include="Workers\OrderSync.fs" />
+    <Compile Include="Workers\JobsManager.fs" />
+
+    <Compile Include="Composition\CoreServices.fs" />
+
+    <Compile Include="Queries\DashboardQueries.fs" />
+    <Compile Include="Queries\CoverageHeatmapCache.fs" />
+  </ItemGroup>
+
+</Project>
