@@ -5,9 +5,6 @@
   <Folder Name="/docs/">
     <File Path="docs\index.md"></File>
   </Folder>
-  <Folder Name="/domain-modeling/">
-    <File Path="domain-modeling\domain.md"></File>
-  </Folder>
   <Folder Name="/items/">
     <File Path="README.md"></File>
     <File Path=".github\workflows\ci.yml"></File>
@@ -16,7 +13,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src\Plutus.Core\Plutus.Core.fsproj"></Project>
-    <Project Path="src\Plutus.Dashboard\Plutus.Dashboard.fsproj"></Project>
+    <Project Path="src\Plutus.Api\Plutus.Api.fsproj"></Project>
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Plutus.Core.UnitTests/Plutus.Core.UnitTests.fsproj"></Project>

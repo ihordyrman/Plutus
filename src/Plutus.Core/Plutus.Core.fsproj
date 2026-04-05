@@ -9,6 +9,7 @@
         <Compile Include="Shared\Errors.fs" />
         <Compile Include="Shared\Helpers.fs" />
 
+        <Compile Include="MarketData\Domain.fs" />
 
         <Compile Include="Identity\Domain.fs" />
         <Compile Include="Identity\Entities.fs" />
