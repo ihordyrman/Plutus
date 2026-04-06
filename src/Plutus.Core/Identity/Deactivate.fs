@@ -1,4 +1,4 @@
-namespace Plutus.Core.Identity
+namespace Plutus.Core.Identity.Deactivate
 
 open System.Data
 open Dapper

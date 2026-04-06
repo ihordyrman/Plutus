@@ -1,4 +1,4 @@
-namespace Plutus.Core.Identity
+namespace Plutus.Core.Identity.CreateUser
 
 open System
 open System.Data

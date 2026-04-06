@@ -8,14 +8,17 @@
     <ItemGroup>
         <Compile Include="Shared\Errors.fs" />
         <Compile Include="Shared\Helpers.fs" />
+        <Compile Include="Shared\Settings.fs" />
+        <Compile Include="Shared\Domain.fs" />
+
+        <Compile Include="Infrastructure\TypeHandlers.fs" />
+        <Compile Include="Infrastructure\Okx\Types.fs" />
+        <Compile Include="Infrastructure\Okx\Auth.fs" />
+        <Compile Include="Infrastructure\Okx\Http.fs" />
 
         <Compile Include="MarketData\Domain.fs" />
+        <Compile Include="MarketData\Infrastructure.fs" />
         <Compile Include="MarketData\Ports.fs" />
-        <Compile Include="MarketData\Settings.fs" />
-        <Compile Include="MarketData\Exchangers\Abstractions.fs" />
-        <Compile Include="MarketData\Exchangers\Okx\Types.fs" />
-        <Compile Include="MarketData\Exchangers\Okx\Auth.fs" />
-        <Compile Include="MarketData\Exchangers\Okx\Http.fs" />
         <Compile Include="MarketData\QueryCoverage\Query.fs" />
         <Compile Include="MarketData\RecoverGaps\Adapter.fs" />
         <Compile Include="MarketData\RecoverGaps\Workflow.fs" />
@@ -35,6 +38,7 @@
         <Compile Include="Identity\FindByUsername.fs" />
         <Compile Include="Identity\UserExists.fs" />
 
+        <Compile Include="Composition.fs" />
      </ItemGroup>
 
     <ItemGroup>

@@ -6,17 +6,6 @@ open System.Text.Json
 open Dapper
 
 module TypeHandlers =
-
-    type private InstrumentTypeHandler() =
-        inherit SqlMapper.TypeHandler<Instrument>()
-
-        override _.SetValue(parameter, value) = parameter.Value <- string value
-
-        override _.Parse(value) =
-            match value with
-            | :? string as str when not (String.IsNullOrEmpty str) -> Instrument.parse str
-            | _ -> failwith $"Invalid value for Instrument type: {value}"
-
     type private StringListTypeHandler() =
         inherit SqlMapper.TypeHandler<string list>()
 
@@ -40,16 +29,6 @@ module TypeHandlers =
                 JsonSerializer.Deserialize<Dictionary<string, string>> json
             | _ -> failwith "Invalid value for dictionary<string, string> type"
 
-    type private IntervalTypeHandler() =
-        inherit SqlMapper.TypeHandler<Interval>()
-
-        override _.SetValue(parameter, value) = parameter.Value <- value.ToString()
-
-        override _.Parse(value) =
-            match value with
-            | :? string as str when not (String.IsNullOrEmpty str) -> Interval.parse str
-            | _ -> failwith $"Invalid value for Interval type: {value}"
-
     type OptionHandler<'T>() =
         inherit SqlMapper.TypeHandler<option<'T>>()
 
@@ -71,7 +50,5 @@ module TypeHandlers =
             SqlMapper.AddTypeHandler(typeof<option<string>>, OptionHandler<string>())
             SqlMapper.AddTypeHandler(typeof<option<decimal>>, OptionHandler<decimal>())
             SqlMapper.AddTypeHandler(typeof<option<DateTime>>, OptionHandler<DateTime>())
-            SqlMapper.AddTypeHandler(InstrumentTypeHandler())
             SqlMapper.AddTypeHandler(StringListTypeHandler())
             SqlMapper.AddTypeHandler(DictionaryStringStringTypeHandler())
-            SqlMapper.AddTypeHandler(IntervalTypeHandler())

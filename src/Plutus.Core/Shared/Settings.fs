@@ -13,3 +13,11 @@ type internal MarketSettings =
     { Credentials: MarketCredentials[] }
 
     static member SectionName = "MarketSettings"
+
+[<CLIMutable>]
+type DatabaseSettings =
+    { ConnectionString: string }
+
+    static member SectionName = "Database"
+
+

@@ -1,7 +1,6 @@
 open Falco
 open Falco.Routing
 open Microsoft.AspNetCore.Builder
-open Plutus.Core.Infrastructure
 open Plutus.Core
 open Serilog
 

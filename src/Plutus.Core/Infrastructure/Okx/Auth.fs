@@ -1,4 +1,4 @@
-namespace Plutus.Core.MarketData.Exchangers.Okx
+namespace Plutus.Core.Infrastructure.Okx
 
 open System
 open System.Security.Cryptography

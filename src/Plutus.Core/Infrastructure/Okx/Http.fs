@@ -1,4 +1,4 @@
-namespace Plutus.Core.MarketData.Exchangers.Okx
+namespace Plutus.Core.Infrastructure.Okx
 
 open System
 open System.Collections.Generic
@@ -10,11 +10,9 @@ open System.Threading.Tasks
 open System.Web
 open Microsoft.Extensions.Logging
 open Plutus.Core.MarketData
-open Plutus.Core.MarketData.Domain
-open Plutus.Core.MarketData.Exchangers.Okx
 open Plutus.Core.Shared
 
-module Http =
+module internal Http =
     open Errors
 
     type HttpMethod =
@@ -33,12 +31,12 @@ module Http =
           Body: obj option }
 
     type CandlestickParams =
-        { Bar: Interval option
+        { Bar: string option
           After: string option
           Before: string option
           Limit: int option }
 
-    type internal T =
+    type T =
         { getBalance: string option -> Task<Result<OkxBalanceDetail[], ServiceError>>
           getFundingBalance: string option -> Task<Result<OkxFundingBalance[], ServiceError>>
           getAccountBalance: string option -> Task<Result<OkxAccountBalance[], ServiceError>>
@@ -202,7 +200,6 @@ module Http =
             }
         | None -> Task.FromResult<unit>()
 
-
     let private exec<'T>
         (httpClient: HttpClient)
         (jsonOpts: JsonSerializerOptions)
@@ -219,8 +216,7 @@ module Http =
                 return Error(Unexpected ex)
         }
 
-    let internal create (httpClient: HttpClient) (credentials: MarketCredentials) (logger: ILogger) : T =
-
+    let create (httpClient: HttpClient) (credentials: MarketCredentials) (logger: ILogger) : T =
         let jsonOpts = JsonSerializerOptions()
         jsonOpts.Converters.Add(OkxCandlestickConverter())
 
@@ -235,27 +231,24 @@ module Http =
                 get "/api/v5/asset/asset-valuation"
                 |> withParam "ccy" (defaultArg ccy "USDT")
                 |> run
-
           getCandlesticks =
             fun instId p ->
                 get "/api/v5/market/candles"
                 |> withParam "instId" instId
-                |> withParamOpt "bar" (p.Bar |> Option.map string)
+                |> withParamOpt "bar" p.Bar
                 |> withParamOpt "after" p.After
                 |> withParamOpt "before" p.Before
                 |> withParamOpt "limit" (p.Limit |> Option.map string)
                 |> run
-
           getHistoryCandlesticks =
             fun instId p ->
                 get "/api/v5/market/history-candles"
                 |> withParam "instId" instId
-                |> withParamOpt "bar" (p.Bar |> Option.map string)
+                |> withParamOpt "bar" p.Bar
                 |> withParamOpt "after" p.After
                 |> withParamOpt "before" p.Before
                 |> withParamOpt "limit" (p.Limit |> Option.map string)
                 |> run
-
           placeOrder = fun order -> post "/api/v5/trade/order" order |> run
           getOrder =
             fun instId ordId ->
@@ -266,8 +259,8 @@ module Http =
           getInstruments =
             fun instType ->
                 match instType with
-                | InstrumentType.Spot -> get "/api/v5/public/instruments" |> withParam "instType" "SPOT" |> run
-                | InstrumentType.Futures -> get "/api/v5/public/instruments" |> withParam "instType" "FUTURES" |> run
-                | InstrumentType.Swap -> get "/api/v5/public/instruments" |> withParam "instType" "SWAP" |> run
-                | InstrumentType.Option -> get "/api/v5/public/instruments" |> withParam "instType" "OPTION" |> run
+                | Spot -> get "/api/v5/public/instruments" |> withParam "instType" "SPOT" |> run
+                | Futures -> get "/api/v5/public/instruments" |> withParam "instType" "FUTURES" |> run
+                | Swap -> get "/api/v5/public/instruments" |> withParam "instType" "SWAP" |> run
+                | Option -> get "/api/v5/public/instruments" |> withParam "instType" "OPTION" |> run
                 | _ -> failwith "Unsupported instrument type" }
