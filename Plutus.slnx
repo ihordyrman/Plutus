@@ -12,15 +12,12 @@
     <File Path=".editorconfig"></File>
   </Folder>
   <Folder Name="/src/">
-    <Project Path="src\Plutus.Core\Plutus.Core.fsproj"></Project>
-    <Project Path="src\Plutus.Core.Old\Plutus.Core.Old.fsproj"></Project>
-    <Project Path="src\Plutus.Api\Plutus.Api.fsproj"></Project>
+    <Project Path="src\Plutus\Plutus.fsproj"></Project>
+    <Project Path="src\Plutus.DbMigration\Plutus.DbMigration.fsproj"></Project>
+    <Project Path="src\Plutus.Sandbox\Plutus.Sandbox.fsproj"></Project>
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Plutus.Core.UnitTests/Plutus.Core.UnitTests.fsproj"></Project>
   </Folder>
-  <Folder Name="/tools/">
-    <Project Path="tools\Plutus.DbMigration\Plutus.DbMigration.fsproj"></Project>
-    <Project Path="tools\Plutus.Sandbox\Plutus.Sandbox.fsproj"></Project>
-  </Folder>
+  <Folder Name="/tools/"></Folder>
 </Solution>

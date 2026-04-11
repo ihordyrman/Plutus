@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <UserSecretsId>90b1b531-55ba-4a18-a28e-d7ed7e5f201d</UserSecretsId>
+        <PackageId>Plutus</PackageId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="Shared\ApiResponse.fs" />
+        <Compile Include="Shared\Errors.fs" />
+        <Compile Include="Shared\Helpers.fs" />
+        <Compile Include="Shared\Settings.fs" />
+        <Compile Include="Shared\Domain.fs" />
+
+        <Compile Include="Infrastructure\TypeHandlers.fs" />
+        <Compile Include="Infrastructure\Okx\Types.fs" />
+        <Compile Include="Infrastructure\Okx\Auth.fs" />
+        <Compile Include="Infrastructure\Okx\Http.fs" />
+
+        <Compile Include="MarketData\Domain.fs" />
+        <Compile Include="MarketData\Infrastructure.fs" />
+        <Compile Include="MarketData\Ports.fs" />
+        <Compile Include="MarketData\QueryCoverage\Query.fs" />
+        <Compile Include="MarketData\RecoverGaps\Adapter.fs" />
+        <Compile Include="MarketData\RecoverGaps\Workflow.fs" />
+        <Compile Include="MarketData\SyncCandlesticks\Adapter.fs" />
+        <Compile Include="MarketData\SyncCandlesticks\Workflow.fs" />
+
+        <Compile Include="Identity\Domain.fs" />
+        <Compile Include="Identity\Entities.fs" />
+        <Compile Include="Identity\Ports.fs" />
+        <Compile Include="Identity\Helpers.fs" />
+        <Compile Include="Identity\Create\Dto.fs" />
+        <Compile Include="Identity\Create\Workflow.fs" />
+        <Compile Include="Identity\Create\Adapter.fs" />
+        <Compile Include="Identity\Create\Endpoint.fs" />
+        <Compile Include="Identity\GetByHash\Dto.fs" />
+        <Compile Include="Identity\GetByHash\Workflow.fs" />
+        <Compile Include="Identity\GetByHash\Adapter.fs" />
+        <Compile Include="Identity\GetByHash\Endpoint.fs" />
+        <Compile Include="Identity\GetAllKeys\Dto.fs" />
+        <Compile Include="Identity\GetAllKeys\Workflow.fs" />
+        <Compile Include="Identity\GetAllKeys\Adapter.fs" />
+        <Compile Include="Identity\GetAllKeys\Endpoint.fs" />
+        <Compile Include="Identity\Deactivate\Dto.fs" />
+        <Compile Include="Identity\Deactivate\Workflow.fs" />
+        <Compile Include="Identity\Deactivate\Adapter.fs" />
+        <Compile Include="Identity\Deactivate\Endpoint.fs" />
+        <Compile Include="Identity\UpdateLastUsed\Dto.fs" />
+        <Compile Include="Identity\UpdateLastUsed\Workflow.fs" />
+        <Compile Include="Identity\UpdateLastUsed\Adapter.fs" />
+        <Compile Include="Identity\UpdateLastUsed\Endpoint.fs" />
+        <Compile Include="Identity\CreateUser\Dto.fs" />
+        <Compile Include="Identity\CreateUser\Workflow.fs" />
+        <Compile Include="Identity\CreateUser\Adapter.fs" />
+        <Compile Include="Identity\CreateUser\Endpoint.fs" />
+        <Compile Include="Identity\FindByUsername\Dto.fs" />
+        <Compile Include="Identity\FindByUsername\Workflow.fs" />
+        <Compile Include="Identity\FindByUsername\Adapter.fs" />
+        <Compile Include="Identity\FindByUsername\Endpoint.fs" />
+        <Compile Include="Identity\UserExists\Dto.fs" />
+        <Compile Include="Identity\UserExists\Workflow.fs" />
+        <Compile Include="Identity\UserExists\Adapter.fs" />
+        <Compile Include="Identity\UserExists\Endpoint.fs" />
+
+        <Compile Include="Composition.fs" />
+
+        <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+        <PackageReference Include="ClosedXML" Version="0.105.0" />
+        <PackageReference Include="Dapper.FSharp" Version="4.9.0" />
+        <PackageReference Include="FSharp.Control.TaskSeq" Version="0.4.0" />
+        <PackageReference Include="Falco" Version="5.2.0" />
+        <PackageReference Include="FsToolkit.ErrorHandling.TaskResult" Version="4.18.0" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Http.Polly" Version="10.0.2" />
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.2" />
+        <PackageReference Include="Npgsql" Version="10.0.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Update="FSharp.Core" Version="10.0.102" />
+    </ItemGroup>
+
+
+</Project>
