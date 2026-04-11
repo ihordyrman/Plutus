@@ -6,56 +6,11 @@ open Dapper
 open FsToolkit.ErrorHandling
 open Plutus.MarketData
 open Plutus.MarketData.Domain
+open Plutus.MarketData.Entities
 open Plutus.Shared.Domain
 open Plutus.Shared.Errors
 
-[<CLIMutable>]
-type private CandlestickEntity =
-    { Id: int
-      Instrument: Instrument
-      MarketType: MarketType
-      Timestamp: DateTime
-      Open: decimal
-      High: decimal
-      Low: decimal
-      Close: decimal
-      Volume: decimal
-      VolumeQuote: decimal
-      IsCompleted: bool
-      Interval: Interval }
-
-[<CLIMutable>]
-type private GapEntity =
-    { GapStart: DateTime
-      GapEnd: DateTime }
-
-module Candlesticks =
-    let private toCandlestick (e: CandlestickEntity) : Candlestick =
-        result { 
-
-            let! instrument = Instrument.create e.Instrument
-
-            return
-                { Instrument = e.Instrument
-                    MarketType = e.MarketType
-                    Timestamp = e.Timestamp
-                    Open = e.Open
-                    High = e.High
-                    Low = e.Low
-                    Close = e.Close
-                    Volume = e.Volume
-                    VolumeQuote = e.VolumeQuote
-                    IsCompleted = e.IsCompleted
-                    Interval = e.Interval }
-        }
-
-        
-    let private toGap (e: GapEntity) : CandlestickGap =
-        { GapStart = e.GapStart; GapEnd = e.GapEnd }
-
-    let private toWeeklyCoverage (e: WeeklyCoverageEntity) : WeeklyCoverage =
-        { Instrument = e.Instrument; WeekStart = e.WeekStart; Count = e.Count }
-
+module internal Adapter =
     let getLatest (db: IDbConnection) : GetLatestCandlestick =
         fun instrument marketType interval token ->
             task {
@@ -66,12 +21,19 @@ module Candlesticks =
                                 """SELECT * FROM candlesticks
                                    WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval
                                    ORDER BY timestamp DESC LIMIT 1""",
-                                {| Instrument = instrument; MarketType = int marketType; Interval = interval |},
+                                {| Instrument = InstrumentId.value instrument.Id
+                                   MarketType = int marketType
+                                   Interval = Interval.value interval |},
                                 cancellationToken = token
                             )
                         )
 
-                    return Ok(results |> Seq.tryHead |> Option.map toCandlestick)
+                    return
+                        results
+                        |> Seq.tryHead
+                        |> Option.map (Helpers.toCandlestick instrument)
+                        |> Option.sequenceResult
+                        |> Result.mapError (fun e -> Unexpected(Exception e))
                 with ex ->
                     return Error(Unexpected ex)
             }
@@ -86,38 +48,19 @@ module Candlesticks =
                                 """SELECT * FROM candlesticks
                                    WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval
                                    ORDER BY timestamp ASC LIMIT 1""",
-                                {| Instrument = instrument; MarketType = int marketType; Interval = interval |},
+                                {| Instrument = InstrumentId.value instrument.Id
+                                   MarketType = int marketType
+                                   Interval = Interval.value interval |},
                                 cancellationToken = token
                             )
                         )
 
-                    return Ok(results |> Seq.tryHead |> Option.map toCandlestick)
-                with ex ->
-                    return Error(Unexpected ex)
-            }
-
-    let findGaps (db: IDbConnection) : FindCandlestickGaps =
-        fun instrument marketType interval token ->
-            task {
-                try
-                    let! results =
-                        db.QueryAsync<GapEntity>(
-                            CommandDefinition(
-                                """WITH ordered AS (
-                                    SELECT timestamp, LEAD(timestamp) OVER (ORDER BY timestamp) as next_ts
-                                    FROM candlesticks
-                                    WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval
-                                )
-                                SELECT timestamp + interval '1 minute' as gap_start,
-                                       next_ts - interval '1 minute' as gap_end
-                                FROM ordered
-                                WHERE next_ts - timestamp > interval '2 minutes'""",
-                                {| Instrument = instrument; MarketType = int marketType; Interval = interval |},
-                                cancellationToken = token
-                            )
-                        )
-
-                    return Ok(results |> Seq.toList |> List.map toGap)
+                    return
+                        results
+                        |> Seq.tryHead
+                        |> Option.map (Helpers.toCandlestick instrument)
+                        |> Option.sequenceResult
+                        |> Result.mapError (fun e -> Unexpected(Exception e))
                 with ex ->
                     return Error(Unexpected ex)
             }
@@ -126,39 +69,42 @@ module Candlesticks =
         fun q token ->
             task {
                 try
-                    let baseSql =
-                        "SELECT * FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval"
-
-                    let conditions = ResizeArray<string>()
                     let parameters = DynamicParameters()
-                    parameters.Add("Instrument", q.Instrument)
+                    parameters.Add("Instrument", InstrumentId.value q.Instrument.Id)
                     parameters.Add("MarketType", int q.MarketType)
-                    parameters.Add("Interval", q.Interval)
+                    parameters.Add("Interval", Interval.value q.Interval)
+                    q.FromDate |> Option.iter (fun d -> parameters.Add("FromDate", d))
+                    q.ToDate |> Option.iter (fun d -> parameters.Add("ToDate", d))
 
-                    match q.FromDate with
-                    | Some from ->
-                        conditions.Add("AND timestamp >= @FromDate")
-                        parameters.Add("FromDate", from)
-                    | None -> ()
-
-                    match q.ToDate with
-                    | Some toDate ->
-                        conditions.Add("AND timestamp <= @ToDate")
-                        parameters.Add("ToDate", toDate)
-                    | None -> ()
+                    let whereClause =
+                        [ if q.FromDate.IsSome then
+                              "AND timestamp >= @FromDate"
+                          if q.ToDate.IsSome then
+                              "AND timestamp <= @ToDate" ]
+                        |> String.concat " "
 
                     let limitClause =
                         match q.Limit with
                         | Some l -> $"LIMIT {l}"
                         | None -> "LIMIT 1000"
 
-                    let whereClause = String.Join(" ", conditions)
-                    let finalSql = $"{baseSql} {whereClause} ORDER BY timestamp DESC {limitClause}"
+                    let sql =
+                        $"SELECT * FROM candlesticks WHERE instrument = @Instrument AND market_type = @MarketType AND interval = @Interval {whereClause} ORDER BY timestamp DESC {limitClause}"
 
                     let! results =
-                        db.QueryAsync<CandlestickEntity>(CommandDefinition(finalSql, parameters, cancellationToken = token))
+                        db.QueryAsync<CandlestickEntity>(CommandDefinition(sql, parameters, cancellationToken = token))
 
-                    return Ok(results |> Seq.toList |> List.map toCandlestick)
+                    return
+                        results
+                        |> Seq.toList
+                        |> List.map (Helpers.toCandlestick q.Instrument)
+                        |> List.foldBack (fun result acc ->
+                            match result, acc with
+                            | Ok c, Ok cs -> Ok(c :: cs)
+                            | Error e, _ -> Error(Unexpected(Exception e))
+                            | _, Error e -> Error e
+                        )
+                        <| Ok []
                 with ex ->
                     return Error(Unexpected ex)
             }
@@ -173,17 +119,18 @@ module Candlesticks =
                         let parameters =
                             candlesticks
                             |> List.map (fun c ->
-                                {| Instrument = c.Instrument
-                                   MarketType = int c.MarketType
-                                   Interval = c.Interval
+                                {| Instrument = InstrumentId.value c.Instrument.Id
+                                   MarketType = int c.Instrument.MarketType
+                                   Interval = Interval.value c.Interval
                                    Timestamp = c.Timestamp
-                                   Open = c.Open
-                                   High = c.High
-                                   Low = c.Low
-                                   Close = c.Close
-                                   Volume = c.Volume
-                                   VolumeQuote = c.VolumeQuote
-                                   IsCompleted = c.IsCompleted |})
+                                   Open = PositiveDecimal.value c.Open
+                                   High = PositiveDecimal.value c.High
+                                   Low = PositiveDecimal.value c.Low
+                                   Close = PositiveDecimal.value c.Close
+                                   Volume = NonNegativeDecimal.value c.Volume
+                                   VolumeQuote = NonNegativeDecimal.value c.VolumeQuote
+                                   IsCompleted = c.IsCompleted |}
+                            )
 
                         let! result =
                             db.ExecuteAsync(
@@ -221,4 +168,3 @@ module Candlesticks =
                 with ex ->
                     return Error(Unexpected ex)
             }
-

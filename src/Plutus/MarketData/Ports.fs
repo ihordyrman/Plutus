@@ -47,9 +47,13 @@ type GetWeeklyCoveragePaged =
 
 type GetWeeklyCoverage = Interval -> CancellationToken -> Task<Result<WeeklyCoverage list, ServiceError>>
 
+type FindCandlestickGaps =
+    Instrument -> MarketType -> Interval -> CancellationToken -> Task<Result<CandlestickGap list, ServiceError>>
+
 type CandlestickPorts =
     { GetLatest: GetLatestCandlestick
       GetOldest: GetOldestCandlestick
+      FindGaps: FindCandlestickGaps
       Query: QueryCandlesticks
       Save: SaveCandlesticks
       DeleteByInstrument: DeleteCandlesticksByInstrument

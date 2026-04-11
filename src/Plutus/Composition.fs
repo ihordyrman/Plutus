@@ -5,6 +5,9 @@ open Microsoft.Extensions.Options
 open Microsoft.Extensions.DependencyInjection
 open Plutus.MarketData
 open Plutus.Infrastructure
+open Plutus.Identity.GetByHash
+open Plutus.Identity.UpdateLastUsed
+open Plutus.Shared
 open Npgsql
 open System.Data
 
@@ -15,6 +18,15 @@ module CoreServices =
         |> ignore
 
         services.Configure<MarketSettings>(configuration.GetSection MarketSettings.SectionName)
+        |> ignore
+
+    let private useAuthorization (services: IServiceCollection) =
+        services.AddScoped<AuthorizeApiKey>(
+            System.Func<System.IServiceProvider, AuthorizeApiKey>(fun x ->
+                let db = x.GetRequiredService<IDbConnection>()
+                Plutus.Identity.Authorize.Adapter.authorize (Adapter.getByHash db) (Adapter.updateLastUsed db)
+            )
+        )
         |> ignore
 
     //    let private usePipelineOrchestrator (services: IServiceCollection) =
@@ -344,6 +356,7 @@ module CoreServices =
     let register (services: IServiceCollection) (config: IConfiguration) =
         useConfiguration services config
         useDatabase services
+        useAuthorization services
 
     //        [ useMarketSeeding
     //          usePorts

@@ -8,8 +8,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="Shared\ApiResponse.fs" />
         <Compile Include="Shared\Errors.fs" />
+        <Compile Include="Shared\ApiResponse.fs" />
+        <Compile Include="Shared\Authorization.fs" />
         <Compile Include="Shared\Helpers.fs" />
         <Compile Include="Shared\Settings.fs" />
         <Compile Include="Shared\Domain.fs" />
@@ -20,9 +21,11 @@
         <Compile Include="Infrastructure\Okx\Http.fs" />
 
         <Compile Include="MarketData\Domain.fs" />
+        <Compile Include="MarketData\Entities.fs" />
         <Compile Include="MarketData\Infrastructure.fs" />
         <Compile Include="MarketData\Ports.fs" />
-        <Compile Include="MarketData\QueryCoverage\Query.fs" />
+        <Compile Include="MarketData\Helpers.fs" />
+        <Compile Include="MarketData\QueryCoverage\Adapter.fs" />
         <Compile Include="MarketData\RecoverGaps\Adapter.fs" />
         <Compile Include="MarketData\RecoverGaps\Workflow.fs" />
         <Compile Include="MarketData\SyncCandlesticks\Adapter.fs" />
@@ -32,6 +35,7 @@
         <Compile Include="Identity\Entities.fs" />
         <Compile Include="Identity\Ports.fs" />
         <Compile Include="Identity\Helpers.fs" />
+        <Compile Include="Identity\Authorize\Adapter.fs" />
         <Compile Include="Identity\Create\Dto.fs" />
         <Compile Include="Identity\Create\Workflow.fs" />
         <Compile Include="Identity\Create\Adapter.fs" />

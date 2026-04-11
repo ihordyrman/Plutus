@@ -166,3 +166,5 @@ type SyncJob =
       StartedAt: DateTime
       LastUpdateAt: DateTime
       CreatedAt: DateTime }
+
+type CandlestickGap = { GapStart: DateTime; GapEnd: DateTime }
